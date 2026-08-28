@@ -79,6 +79,25 @@ export async function enrollFree(courseId: string): Promise<ActionResult> {
 }
 
 /**
+ * Mark a lesson complete (video/article/resource lessons).
+ * Quiz lessons complete automatically when passed.
+ */
+export async function completeLesson(lessonId: string): Promise<ActionResult> {
+  try {
+    const user = await requireRole("STUDENT", "TEACHER", "ADMIN", "SUPER_ADMIN");
+    const lesson = await db.lesson.findUnique({ where: { id: lessonId }, include: { module: true } });
+    if (!lesson) return actionError("Lesson not found.");
+
+    await markLessonComplete(user.id, lessonId);
+    revalidatePath(`/dashboard/courses/${lesson.module.courseId}/learn`);
+    revalidatePath("/dashboard/courses");
+    return { ok: true };
+  } catch (e) {
+    return err(e);
+  }
+}
+
+/**
  * Submit quiz answers. Scoring happens server-side only:
  * score = points earned / points possible × 100.
  */
@@ -97,8 +116,8 @@ export async function submitQuiz(
       where: { id: quizId },
       include: { questions: true, lesson: { include: { module: { include: { course: true } } } } },
     });
-    if (!quiz) return actionError("Quiz not found.");
-    if (quiz.questions.length === 0) return actionError("This quiz has no questions yet.");
+    if (!quiz) return { ok: false, error: "Quiz not found." };
+    if (quiz.questions.length === 0) return { ok: false, error: "This quiz has no questions yet." };
 
     const questionMap = new Map(quiz.questions.map((q) => [q.id, q]));
     let earnedPoints = 0;
@@ -139,7 +158,10 @@ export async function submitQuiz(
     revalidatePath(`/dashboard/courses/${quiz.lesson?.module.courseId}/learn`);
     return { ok: true, score, passed, total: quiz.questions.length, correct, earnedPoints, totalPoints };
   } catch (e) {
-    return err(e);
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Something went wrong.",
+    };
   }
 }
 

@@ -134,7 +134,7 @@ export function Hero({ stats }: HeroProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.62 }}
           >
-            <Button href="/#courses" size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
+            <Button href="/courses" size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
               Explore courses
             </Button>
             <Button href="/register" size="lg" variant="secondary" leftIcon={<GraduationCap className="h-4 w-4" />}>

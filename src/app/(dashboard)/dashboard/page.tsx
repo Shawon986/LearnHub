@@ -72,6 +72,7 @@ export default async function StudentDashboardPage() {
 
   const recCards: CourseCardData[] = recommendations.map((c) => ({
     id: c.id,
+    slug: c.slug,
     title: c.title,
     type: c.type,
     price: c.price,
@@ -223,7 +224,7 @@ export default async function StudentDashboardPage() {
         </div>
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {recCards.map((c) => (
-            <CourseCard key={c.id} course={c} />
+            <CourseCard key={c.id} course={c} href={`/courses/${c.slug}`} />
           ))}
         </div>
       </section>

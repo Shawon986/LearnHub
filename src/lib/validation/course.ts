@@ -17,11 +17,13 @@ export const courseUpdateSchema = z.object({
 });
 
 export const moduleSchema = z.object({
+  id: z.string().optional(),
   title: z.string().trim().min(2, "Module title required.").max(140),
   description: z.string().trim().max(500).optional().nullable(),
 });
 
 export const lessonSchema = z.object({
+  id: z.string().optional(),
   title: z.string().trim().min(2, "Lesson title required.").max(140),
   description: z.string().trim().max(1000).optional().nullable(),
   type: z.enum(LESSON_TYPES),
@@ -37,6 +39,7 @@ export const quizSchema = z.object({
 });
 
 export const questionSchema = z.object({
+  id: z.string().optional(),
   text: z.string().trim().min(2).max(500),
   options: z.array(z.string().trim().min(1).max(200)).min(2).max(6),
   correctIndex: z.coerce.number().int().min(0).max(5),

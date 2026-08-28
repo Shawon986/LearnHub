@@ -8,7 +8,8 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 |---|---|---|---|
 | 1 | Architecture · Database · Auth · Design system | ✅ Complete | build ✅ lint ✅ smoke tests ✅ |
 | 2 | Profiles & dashboards | ✅ Complete | build ✅ lint ✅ 31 pages smoke-tested ✅ |
-| 3–15 | … | ⬜ Pending | — |
+| 3 | Courses/LMS | ✅ Complete | build ✅ lint ✅ progress rollup tested ✅ |
+| 4–15 | … | ⬜ Pending | — |
 
 ## Phase 1 — delivered
 
@@ -40,10 +41,23 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 - [x] **Server actions**: 30+ actions across student/teacher/admin with requireRole + zod + audit + revalidatePath
 - [x] Verified: lint clean, build green (49 routes), all 31 dashboard pages render 200 under correct roles, notification API round-trip, role guards intact, zero server errors
 
-## Known next steps (Phase 3 kickoff)
+## Phase 3 — delivered
 
-1. Course curriculum builder (modules → lessons → videos → quizzes CRUD), publish flow with admin review
-2. Public course detail page (`/courses/[slug]`) with SEO metadata + enrollment (purchase unlocks with payments — Phase 6; free courses can enroll immediately)
-3. Quiz engine (attempts, scoring, review) + assignments (submit, grade)
-4. Lesson/progress tracking wiring (mark complete, course percent rollups)
+- [x] **Course builder** (`/teacher/courses/[id]`): overview editor (meta, pricing, outcomes, requirements, tags), module/lesson CRUD with up/down reordering, article content, preview flags — editable in DRAFT/UNPUBLISHED
+- [x] **Quiz engine**: quiz settings (passing score, time limit), question CRUD (MCQ, 2–6 options, points, explanations), student quiz taker with **server-side scoring**, pass → auto lesson completion, retry support
+- [x] **Assignments**: teacher creates per lesson, students submit (editable until graded), teacher grades with score + feedback + student notification
+- [x] **Publish flow**: teacher submits for review → admins notified → `/admin/courses` approve (→ live + teacher notification) / reject with reason / unpublish / archive — all audited
+- [x] **Public pages**: `/courses` listing with category chips; `/courses/[slug]` detail with SEO metadata, outcomes, curriculum accordion, requirements, reviews, teacher card, sticky enrollment card
+- [x] **Enrollment**: free courses enroll immediately (real Enrollment + progress row + teacher notification); paid CTA honestly marked for Phase 6 payments; "Continue learning" for enrolled users
+- [x] **Learning page** (`/dashboard/courses/[id]/learn`): curriculum sidebar with completion ticks, article viewer, video placeholder (Phase 8), quiz taker, assignment panel, mark-complete + prev/next, progress ring
+- [x] **Progress rollup**: lesson completion → course percent → enrollment COMPLETED at 100% + FIRST_COURSE_COMPLETED achievement + notifications (verified live: 0% → 25% with 1/4 lessons)
+- [x] Seed: 3 quizzes (8 questions), 2 assignments wired into courses
+- [x] Verified: lint clean, build green (51 routes), course/list/detail/learn/builder/admin pages 200, zero server errors
+
+## Known next steps (Phase 4 kickoff)
+
+1. Public teacher profile page (`/teachers/[id]`) with bio, skills, reviews, availability + booking CTA (booking itself Phase 5)
+2. Advanced search page (`/search`): courses + teachers + live classes, filters (price, rating, difficulty, language, type), sort, pagination
+3. Review writing: rate + review courses (verified-purchase), teachers, with moderation/report flags
+4. Wishlist add/remove everywhere (course pages, teacher cards) + price-drop notification groundwork
 5. `docs/` deep-dives as their subsystems land: database.md, authentication.md, payments.md, live-classes.md, recorded-classes.md, video-storage.md, security.md, deployment.md, environment-variables.md

@@ -1,7 +1,6 @@
 "use client";
 
 import { useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Lock, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";

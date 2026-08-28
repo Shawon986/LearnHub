@@ -5,7 +5,7 @@ const COLUMNS = [
   {
     title: "Explore",
     links: [
-      { label: "All courses", href: "/#courses" },
+      { label: "All courses", href: "/courses" },
       { label: "Find teachers", href: "/#teachers" },
       { label: "Live classes", href: "/#live" },
       { label: "Recorded classes", href: "/#recorded" },

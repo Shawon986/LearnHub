@@ -68,10 +68,10 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
   if (!course || course.status !== "PUBLISHED") notFound();
 
-  const session = await getCurrentUser();
-  const enrollment = session
+  const currentUser = await getCurrentUser();
+  const enrollment = currentUser
     ? await db.enrollment.findUnique({
-        where: { studentId_courseId: { studentId: session.sub, courseId: course.id } },
+        where: { studentId_courseId: { studentId: currentUser.id, courseId: course.id } },
       })
     : null;
 
@@ -170,7 +170,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
                     courseId={course.id}
                     price={course.price}
                     enrolled={Boolean(enrollment)}
-                    hasSession={Boolean(session)}
+                    hasSession={Boolean(currentUser)}
                   />
 
                   <ul className="space-y-2.5 border-t border-line pt-4 text-[13px] text-muted-fg">

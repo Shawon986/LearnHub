@@ -11,7 +11,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
 
 const NAV_LINKS = [
-  { label: "Courses", href: "/#courses" },
+  { label: "Courses", href: "/courses" },
   { label: "Teachers", href: "/#teachers" },
   { label: "Live Classes", href: "/#live" },
   { label: "Recorded Classes", href: "/#recorded" },

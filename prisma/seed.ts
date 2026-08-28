@@ -731,6 +731,136 @@ async function main() {
     }
   }
 
+  // ---------------- Quizzes & assignments (Phase 3) ----------------
+  const quizSeed: Record<
+    string,
+    { title: string; passingScore: number; questions: { text: string; options: string[]; correctIndex: number; points?: number; explanation?: string }[] }
+  > = {
+    "Module quiz": {
+      title: "JavaScript & React module quiz",
+      passingScore: 60,
+      questions: [
+        {
+          text: "What does JSX compile to?",
+          options: ["HTML", "React.createElement calls", "CSS", "WebAssembly"],
+          correctIndex: 1,
+          explanation: "JSX is syntactic sugar for React.createElement.",
+        },
+        {
+          text: "Which hook manages local state in a function component?",
+          options: ["useEffect", "useState", "useContext", "useMemo"],
+          correctIndex: 1,
+        },
+        {
+          text: "What is a pure component's key characteristic?",
+          options: ["Same output for same props", "Always re-renders", "Uses Redux", "Has no hooks"],
+          correctIndex: 0,
+          points: 2,
+        },
+      ],
+    },
+    "Model evaluation": {
+      title: "Model evaluation quiz",
+      passingScore: 50,
+      questions: [
+        {
+          text: "Which metric is the ratio of true positives to all actual positives?",
+          options: ["Precision", "Recall", "Accuracy", "F1"],
+          correctIndex: 1,
+          explanation: "Recall = TP / (TP + FN).",
+        },
+        {
+          text: "Overfitting happens when…",
+          options: ["Training error is much lower than test error", "Test error is lower than training error", "The dataset is too large", "Learning rate is zero"],
+          correctIndex: 0,
+        },
+      ],
+    },
+    "Weekly problem set": {
+      title: "Weekly DSA problem set",
+      passingScore: 50,
+      questions: [
+        {
+          text: "What is the time complexity of binary search?",
+          options: ["O(n)", "O(log n)", "O(n log n)", "O(1)"],
+          correctIndex: 1,
+        },
+        {
+          text: "Which data structure is LIFO?",
+          options: ["Queue", "Stack", "Heap", "Graph"],
+          correctIndex: 1,
+          points: 2,
+        },
+        {
+          text: "Dynamic programming is most useful when…",
+          options: ["Subproblems overlap", "The input is sorted", "The graph is a tree", "Only one variable exists"],
+          correctIndex: 0,
+          explanation: "DP exploits overlapping subproblems and optimal substructure.",
+        },
+      ],
+    },
+  };
+  for (const [lessonTitle, data] of Object.entries(quizSeed)) {
+    const lessons = await db.lesson.findMany({
+      where: { title: lessonTitle },
+      include: { module: { include: { course: true } } },
+    });
+    for (const lesson of lessons) {
+      await db.quiz.create({
+        data: {
+          lessonId: lesson.id,
+          courseId: lesson.module.course.id,
+          title: data.title,
+          passingScore: data.passingScore,
+          questions: {
+            create: data.questions.map((q, i) => ({
+              text: q.text,
+              options: q.options,
+              correctAnswer: { index: q.correctIndex },
+              points: q.points ?? 1,
+              explanation: q.explanation ?? null,
+              sortOrder: i,
+            })),
+          },
+        },
+      });
+    }
+  }
+
+  const assignmentSeed: Record<string, { title: string; description: string; maxScore: number }> = {
+    "Build your portfolio project": {
+      title: "Portfolio website",
+      description:
+        "Build a personal portfolio with at least 3 sections (hero, projects, contact). Deploy it anywhere and submit the live URL + a short reflection on your design decisions.",
+      maxScore: 100,
+    },
+    "Portfolio project": {
+      title: "Design portfolio case study",
+      description:
+        "Pick one real project, document the research → wireframes → final design journey, and submit a written case study with screenshots.",
+      maxScore: 100,
+    },
+  };
+  for (const [lessonTitle, data] of Object.entries(assignmentSeed)) {
+    const lessons = await db.lesson.findMany({
+      where: { title: lessonTitle },
+      include: { module: { include: { course: true } } },
+    });
+    for (const lesson of lessons) {
+      await db.assignment.create({
+        data: {
+          lessonId: lesson.id,
+          courseId: lesson.module.course.id,
+          teacherId: lesson.module.course.teacherId,
+          title: data.title,
+          description: data.description,
+          maxScore: data.maxScore,
+          dueDate: daysFromNow(14),
+        },
+      });
+    }
+  }
+
   // ---------------- Teacher reviews ----------------
   const teacherReviewDefs: { teacherKey: string; rating: number; content: string }[] = [
     { teacherKey: "ayesha", rating: 5, content: "Ayesha apu's 1-on-1 sessions completely transformed my understanding of React. Worth every taka." },

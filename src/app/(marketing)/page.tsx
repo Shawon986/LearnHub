@@ -129,6 +129,7 @@ export default async function HomePage() {
 
   const courseCards: CourseCardData[] = courses.map((c) => ({
     id: c.id,
+    slug: c.slug,
     title: c.title,
     type: c.type,
     price: c.price,
@@ -207,8 +208,8 @@ export default async function HomePage() {
           />
           <RevealGroup className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
             {courseCards.map((c) => (
-              <RevealItem key={c.id}>
-                <CourseCard course={c} />
+              <RevealItem key={c.id} className="h-full">
+                <CourseCard course={c} href={`/courses/${c.slug}`} />
               </RevealItem>
             ))}
           </RevealGroup>

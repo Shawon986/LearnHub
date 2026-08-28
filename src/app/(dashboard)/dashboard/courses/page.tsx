@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BookOpen, CheckCircle2, Clock } from "lucide-react";
+import { BookOpen, CheckCircle2, Clock, PlayCircle } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/card";
@@ -98,6 +98,13 @@ export default async function MyCoursesPage() {
                       {e.pricePaid === 0 ? "Free" : formatBDT(e.pricePaid)}
                     </span>
                   </div>
+                  <Link
+                    href={`/dashboard/courses/${e.courseId}/learn`}
+                    className="inline-flex items-center gap-1 text-[12px] font-bold text-brand-fg transition-colors hover:underline"
+                  >
+                    <PlayCircle className="h-3.5 w-3.5" />
+                    {completed ? "Review course" : pct > 0 ? "Continue learning" : "Start learning"}
+                  </Link>
                 </div>
               </Card>
             );
