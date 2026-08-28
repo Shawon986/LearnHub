@@ -12,6 +12,7 @@ import { ActionButton } from "@/components/action-button";
 import { submitCourseForReview } from "@/lib/actions/course";
 import { OverviewForm } from "./overview-form";
 import { CurriculumEditor, type SerializedModule } from "./curriculum-editor";
+import { AiTeacherTools } from "./ai-teacher-tools";
 
 export const metadata: Metadata = { title: "Course Builder" };
 
@@ -155,6 +156,8 @@ export default async function CourseBuilderPage({
           <ButtonLink slug={course.slug} />
         )}
       </div>
+
+      <AiTeacherTools courseTitle={course.title} />
 
       <OverviewForm
         courseId={course.id}

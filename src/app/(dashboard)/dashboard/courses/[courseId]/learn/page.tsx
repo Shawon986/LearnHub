@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { safeJsonParse } from "@/lib/utils";
 import { LearnShell, type SerializedCourse } from "./learn-shell";
+import { AiAssistant } from "./ai-assistant";
 
 export const metadata: Metadata = { title: "Learning" };
 
@@ -60,13 +61,18 @@ export default async function LearnPage({
   });
   if (!course) notFound();
 
-  const [progress, lessonProgress, mySubmissionRows] = await Promise.all([
+  const [progress, lessonProgress, mySubmissionRows, aiConversation] = await Promise.all([
     db.courseProgress.findUnique({
       where: { studentId_courseId: { studentId: user.id, courseId } },
     }),
     db.lessonProgress.findMany({ where: { studentId: user.id, lesson: { module: { courseId } } } }),
     db.assignmentSubmission.findMany({
       where: { studentId: user.id, assignment: { courseId } },
+    }),
+    db.aIConversation.findFirst({
+      where: { userId: user.id, type: "STUDY_ASSISTANT" },
+      include: { messages: { orderBy: { createdAt: "desc" }, take: 12 } },
+      orderBy: { updatedAt: "desc" },
     }),
   ]);
 
@@ -148,6 +154,8 @@ export default async function LearnPage({
     );
   }
 
+  const currentLesson = flat.find((l) => l.id === currentId) ?? flat[0];
+
   return (
     <div className="space-y-4">
       <Link
@@ -157,6 +165,19 @@ export default async function LearnPage({
         <ArrowLeft className="h-3.5 w-3.5" /> My courses
       </Link>
       <LearnShell course={serialized} currentLessonId={currentId} />
+      <AiAssistant
+        courseTitle={course.title}
+        lessonTitle={currentLesson.title}
+        articleSnippet={currentLesson.articleContent ?? undefined}
+        initialConversationId={aiConversation?.id ?? null}
+        initialMessages={
+          aiConversation?.messages
+            ? [...aiConversation.messages]
+                .reverse()
+                .map((m) => ({ id: m.id, role: m.role as "USER" | "ASSISTANT", content: m.content }))
+            : []
+        }
+      />
     </div>
   );
 }

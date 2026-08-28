@@ -16,7 +16,8 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 | 8 | Recorded classes | ✅ Complete | build ✅ lint ✅ streaming/auth/security tested ✅ |
 | 9 | Messaging & notifications | ✅ Complete | build ✅ lint ✅ bus/SSE/cron tested ✅ |
 | 10 | Certificates · Gamification · Coupons · Referrals · Disputes | ✅ Complete | build ✅ lint ✅ engine tests pass ✅ |
-| 11–15 | … | ⬜ Pending | — |
+| 11 | AI features | ✅ Complete | build ✅ lint ✅ provider/matching tested ✅ |
+| 12–15 | … | ⬜ Pending | — |
 
 ## Phase 1 — delivered
 
@@ -134,11 +135,20 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 - [x] **Disputes**: student opening (payments/bookings without active disputes), message threads, admin queue with status filters + detail page with evidence panel, resolution (REFUND → engine refund / RELEASE / CLOSE) with notifications
 - [x] Verified: lint clean, build green (68 routes), certificate/coupon/referral engine tests pass, all pages render, zero server errors
 
-## Known next steps (Phase 11 kickoff)
+## Phase 11 — delivered
 
-1. AI provider abstraction (`src/lib/ai/`): interface + deterministic DEV provider + OpenAI/Anthropic/AI Gateway adapters with documented credentials
-2. AI study assistant: chat UI on the learning page (context: lesson/course), conversation persistence (AIConversation/AIMessage tables exist)
-3. AI teacher matching: "I need a Python teacher for beginners" → ranked teacher recommendations from real profile data
-4. AI course recommendations: based on the student's enrollments/progress/interests (falls back to popular when cold)
-5. AI teacher assistant: generate course descriptions, lesson outlines, quiz questions and learning objectives from a topic
-6. `docs/` deep-dives as their subsystems land: database.md, authentication.md, live-classes.md, recorded-classes.md, security.md, deployment.md, environment-variables.md
+- [x] **Provider abstraction** (`src/lib/ai/`): `AIProvider` interface, deterministic DEV provider (templated tutoring + generation, no keys, clearly labeled), OpenAI/Anthropic/AI-Gateway REST adapters with documented credentials
+- [x] **AI study assistant**: floating "Ask the AI tutor" in the lesson viewer — persisted conversations, lesson/course/article context, suggested prompts (verified: dev tutoring replies)
+- [x] **AI teacher matching**: keyword extraction + LLM-JSON path (production), scoring against real skills/headlines/ratings with reason chips (verified: "Python" → Tanvir Hasan)
+- [x] **AI course recommendations**: enrollment-category affinity + interest overlap + popularity with per-course reasons
+- [x] **AI teacher assistant**: description / outline / quiz-question generators in the course builder (dev templates; production structured JSON)
+- [x] **/ai showcase page** with matching + recommendations demos; landing AI section links to it
+- [x] Docs: `docs/ai.md` · Verified: lint clean, build green (69 routes), all pages render, zero server errors
+
+## Known next steps (Phase 12 kickoff)
+
+1. Analytics dashboards: admin (revenue over time, enrollments, bookings, refunds, conversion, AOV — line/bar/donut charts with date ranges), teacher (course performance, engagement, earnings)
+2. SEO: sitemap.xml + robots.txt, JSON-LD structured data (Course/Product schema), per-page OG images
+3. Audit log UI (/admin/audit-logs with filters) + reports export (CSV of payments/withdrawals)
+4. Full withdrawal processing UI for admins (approve/reject/pay with wallet release)
+5. `docs/` deep-dives as their subsystems land: database.md, authentication.md, live-classes.md, recorded-classes.md, security.md, deployment.md, environment-variables.md

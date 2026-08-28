@@ -42,6 +42,12 @@ export function AiSection() {
             <Sparkles className="h-3.5 w-3.5" />
             Powered by AI
           </Badge>
+          <a
+            href="/ai"
+            className="rounded-full border border-white/25 bg-white/10 px-4 py-2 text-[12px] font-bold text-white transition-colors hover:bg-white/20"
+          >
+            Try it live →
+          </a>
           <h2 className="max-w-xl font-display text-2xl font-extrabold text-white sm:text-3xl">
             Smarter learning, built into every step
           </h2>
