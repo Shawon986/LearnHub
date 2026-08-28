@@ -1,5 +1,3 @@
-"use server";
-
 import { requireUser } from "@/lib/auth/session";
 import { markNotificationsRead } from "@/lib/notifications";
 

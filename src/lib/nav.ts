@@ -1,6 +1,7 @@
 import {
   Award,
   BarChart3,
+  Bell,
   BookOpen,
   CalendarDays,
   CircleDollarSign,
@@ -46,6 +47,7 @@ export const STUDENT_NAV: NavItem[] = [
   { href: "/messages", label: "Messages", icon: MessageSquare },
   { href: "/dashboard/certificates", label: "Certificates", icon: Award },
   { href: "/dashboard/payments", label: "Payments", icon: Wallet },
+  { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
@@ -63,6 +65,7 @@ export const TEACHER_NAV: NavItem[] = [
   { href: "/teacher/earnings", label: "Earnings", icon: CircleDollarSign },
   { href: "/teacher/coupons", label: "Coupons", icon: Tags },
   { href: "/teacher/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/teacher/notifications", label: "Notifications", icon: Bell },
   { href: "/teacher/settings", label: "Settings", icon: Settings },
 ];
 
@@ -82,6 +85,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin/certificates", label: "Certificates", icon: Award },
   { href: "/admin/disputes", label: "Disputes", icon: ShieldCheck },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/admin/notifications", label: "Announcements", icon: Bell },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

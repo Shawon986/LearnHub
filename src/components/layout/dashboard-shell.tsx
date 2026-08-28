@@ -4,12 +4,12 @@ import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Bell, ChevronsLeft, ChevronsRight, Menu } from "lucide-react";
+import { ChevronsLeft, ChevronsRight, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/layout/logo";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
-import { Dropdown, DropdownSeparator } from "@/components/ui/dropdown";
+import { NotificationBell } from "@/components/layout/notification-bell";
 import { Badge } from "@/components/ui/badge";
 import { navFor } from "@/lib/nav";
 
@@ -19,6 +19,7 @@ interface DashboardShellProps {
   role: string;
   accent?: "student" | "teacher" | "admin";
   title?: string;
+  unreadNotifications?: number;
   children: ReactNode;
 }
 
@@ -34,7 +35,14 @@ const ACCENT_PILL = {
   admin: "bg-gold",
 };
 
-export function DashboardShell({ user, role, accent = "student", title, children }: DashboardShellProps) {
+export function DashboardShell({
+  user,
+  role,
+  accent = "student",
+  title,
+  unreadNotifications = 0,
+  children,
+}: DashboardShellProps) {
   const nav = navFor(role);
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
@@ -173,28 +181,7 @@ export function DashboardShell({ user, role, accent = "student", title, children
           </div>
 
           <div className="flex items-center gap-1.5">
-            <Dropdown
-              align="end"
-              trigger={
-                <button
-                  type="button"
-                  aria-label="Notifications"
-                  className="relative inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-fg transition-colors hover:bg-card-2 hover:text-foreground"
-                >
-                  <Bell className="h-[18px] w-[18px]" />
-                  <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-danger ring-2 ring-card" aria-hidden />
-                </button>
-              }
-            >
-              <div className="border-b border-line px-3.5 py-2.5">
-                <p className="text-[13px] font-bold text-foreground">Notifications</p>
-                <p className="text-[11px] text-faint-fg">Real-time alerts arrive in Phase 9</p>
-              </div>
-              <div className="px-3.5 py-6 text-center text-xs text-faint-fg">
-                No new notifications yet
-              </div>
-              <DropdownSeparator />
-            </Dropdown>
+            <NotificationBell initialUnread={unreadNotifications} />
             <UserMenu user={user} />
           </div>
         </header>

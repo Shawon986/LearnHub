@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BookOpen, Clock, MonitorPlay, Users, Video } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +9,7 @@ import { gradientFor } from "@/lib/utils";
 
 export interface CourseCardData {
   id: string;
+  slug?: string;
   title: string;
   type: string;
   price: number;
@@ -31,14 +33,23 @@ const TYPE_META: Record<string, { icon: typeof Video; label: string }> = {
   ONE_ON_ONE: { icon: Users, label: "1-on-1" },
 };
 
-export function CourseCard({ course }: { course: CourseCardData }) {
+export function CourseCard({
+  course,
+  href,
+  progress,
+}: {
+  course: CourseCardData;
+  href?: string;
+  /** Optional progress percent (0–100) shown under the price row. */
+  progress?: number;
+}) {
   const meta = TYPE_META[course.type] ?? TYPE_META.RECORDED;
   const discount = course.compareAtPrice
     ? Math.round((1 - course.price / course.compareAtPrice) * 100)
     : 0;
 
-  return (
-    <Card hoverable className="group overflow-hidden">
+  const inner = (
+    <Card hoverable={Boolean(href)} className="group h-full overflow-hidden">
       {/* Thumbnail */}
       <div
         className={`relative flex h-40 items-center justify-center bg-gradient-to-br ${gradientFor(course.title)}`}
@@ -89,7 +100,29 @@ export function CourseCard({ course }: { course: CourseCardData }) {
             <Clock className="h-3 w-3" /> Self-paced
           </span>
         </div>
+        {progress !== undefined && (
+          <div className="flex items-center gap-2 pt-1">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-card-2">
+              <div
+                className="h-full rounded-full bg-brand transition-[width] duration-500"
+                style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+              />
+            </div>
+            <span className="text-[11px] font-bold tabular-nums text-muted-fg">
+              {Math.round(progress)}%
+            </span>
+          </div>
+        )}
       </div>
     </Card>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="block h-full" aria-label={course.title}>
+        {inner}
+      </Link>
+    );
+  }
+  return inner;
 }

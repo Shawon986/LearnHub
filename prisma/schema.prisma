@@ -676,7 +676,7 @@ model Booking {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  student  User?     @relation("BookingStudent", fields: [studentId], references: [id])
+  student  User      @relation("BookingStudent", fields: [studentId], references: [id])
   teacher  User      @relation("BookingTeacher", fields: [teacherId], references: [id])
   course   Course?   @relation(fields: [courseId], references: [id], onDelete: SetNull)
   payment  Payment?
@@ -774,7 +774,7 @@ model Review {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  reviewer      User?          @relation("ReviewAuthor", fields: [reviewerId], references: [id])
+  reviewer      User           @relation("ReviewAuthor", fields: [reviewerId], references: [id])
   teacher       User?          @relation("ReviewTeacher", fields: [teacherId], references: [id], onDelete: SetNull)
   course        Course?        @relation(fields: [courseId], references: [id], onDelete: SetNull)
   booking       Booking?       @relation(fields: [bookingId], references: [id], onDelete: SetNull)

@@ -9,7 +9,7 @@ interface StatCardProps {
   /** e.g. "+12.4%" — positive if `up` is true */
   delta?: string;
   up?: boolean;
-  tone?: "neutral" | "brand" | "accent" | "gold";
+  tone?: "neutral" | "brand" | "accent" | "gold" | "success";
   className?: string;
 }
 
@@ -18,6 +18,7 @@ const TONES = {
   brand: "bg-brand-soft text-brand-fg",
   accent: "bg-accent-soft text-accent",
   gold: "bg-gold-soft text-gold",
+  success: "bg-success-soft text-success",
 };
 
 export function StatCard({ label, value, icon, delta, up = true, tone = "neutral", className }: StatCardProps) {
