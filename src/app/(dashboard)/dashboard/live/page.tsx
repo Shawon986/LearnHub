@@ -7,7 +7,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ActionButton } from "@/components/action-button";
-import { registerLiveClass, unregisterLiveClass } from "@/lib/actions/student";
+import { unregisterLiveClass } from "@/lib/actions/student";
+import { LiveRegisterButton } from "./live-register-button";
 import { formatBDT, formatDate, formatTime } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Live Classes" };
@@ -89,24 +90,28 @@ export default async function LiveClassesPage() {
                       </Badge>
                     )}
                     {registered ? (
-                      <ActionButton
-                        variant="outline"
-                        size="sm"
-                        action={unregisterLiveClass.bind(null, live.id)}
-                        confirm="Leave this class? Your seat will be freed."
-                      >
-                        Leave
-                      </ActionButton>
+                      <>
+                        {live.status === "LIVE" && (
+                          <a
+                            href={`/classroom/${live.id}`}
+                            className="inline-flex h-9 items-center rounded-xl bg-success px-4 text-[13px] font-bold text-white transition-colors hover:bg-success/90"
+                          >
+                            Join now →
+                          </a>
+                        )}
+                        <ActionButton
+                          variant="outline"
+                          size="sm"
+                          action={unregisterLiveClass.bind(null, live.id)}
+                          confirm="Leave this class? Your seat will be freed."
+                        >
+                          Leave
+                        </ActionButton>
+                      </>
                     ) : full || started ? (
                       <Badge variant="danger">{full ? "Full" : "Started"}</Badge>
                     ) : (
-                      <ActionButton
-                        size="sm"
-                        action={registerLiveClass.bind(null, live.id)}
-                        successMessage={`Registered for "${live.title}" 🎉`}
-                      >
-                        Register
-                      </ActionButton>
+                      <LiveRegisterButton liveClassId={live.id} />
                     )}
                   </div>
                 </Card>

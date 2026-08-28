@@ -616,6 +616,8 @@ model LiveClass {
   status           String   @default("SCHEDULED") // SCHEDULED|LIVE|ENDED|CANCELLED
   recordingEnabled Boolean  @default(false)
   price            Int      @default(0)
+  chatLocked       Boolean  @default(false)
+  remindedAt       DateTime?
   materials        Json?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -625,6 +627,7 @@ model LiveClass {
   participants LiveClassParticipant[]
   recording  LiveClassRecording?
   resources  Resource[]
+  payments   Payment[]
 
   @@index([startsAt, status])
   @@index([teacherId, status])
@@ -635,6 +638,7 @@ model LiveClassParticipant {
   liveClassId      String
   userId           String
   role             String    @default("STUDENT") // HOST|CO_HOST|STUDENT
+  muted            Boolean   @default(false)
   joinedAt         DateTime?
   leftAt           DateTime?
   attendanceStatus String    @default("REGISTERED") // REGISTERED|PRESENT|LATE|ABSENT
@@ -798,9 +802,10 @@ model Payment {
   providerPaymentId String?   @unique
   providerTrxId     String?
   status            String    @default("PENDING") // PENDING|COMPLETED|FAILED|REFUNDED|PARTIALLY_REFUNDED
-  purpose           String // COURSE_PURCHASE|BOOKING
+  purpose           String // COURSE_PURCHASE|BOOKING|LIVE_CLASS
   courseId          String?
   bookingId         String?   @unique
+  liveClassId       String?   @unique
   metadata          Json?
   paidAt            DateTime?
   createdAt         DateTime  @default(now())
@@ -809,6 +814,7 @@ model Payment {
   student          User               @relation(fields: [studentId], references: [id])
   course           Course?            @relation(fields: [courseId], references: [id], onDelete: SetNull)
   booking          Booking?           @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  liveClass        LiveClass?         @relation(fields: [liveClassId], references: [id], onDelete: SetNull)
   transactions     Transaction[]
   commission       Commission?
   refund           Refund?

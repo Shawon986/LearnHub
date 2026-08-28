@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ActionButton } from "@/components/action-button";
 import { cancelLiveClass } from "@/lib/actions/teacher";
+import { endLiveClass, startLiveClass } from "@/lib/actions/live";
 import { formatBDT, formatDate, formatTime } from "@/lib/format";
 import { ScheduleLiveClassModal } from "./schedule-modal";
 
@@ -76,14 +77,45 @@ export default async function LiveClassesPage() {
                     {live.price > 0 ? formatBDT(live.price) : "Free"}
                   </p>
                 </div>
-                <ActionButton
-                  variant="outline"
-                  size="sm"
-                  action={cancelLiveClass.bind(null, live.id)}
-                  confirm="Cancel this live class? Registered students will be notified."
-                >
-                  Cancel class
-                </ActionButton>
+                {live.status === "LIVE" && (
+                  <a
+                    href={`/classroom/${live.id}`}
+                    className="inline-flex h-9 items-center rounded-xl bg-success px-4 text-[13px] font-bold text-white transition-colors hover:bg-success/90"
+                  >
+                    Open classroom
+                  </a>
+                )}
+                {live.status === "SCHEDULED" && (
+                  <ActionButton
+                    size="sm"
+                    action={startLiveClass.bind(null, live.id)}
+                    confirm={`Start "${live.title}" now? Registered students will be notified.`}
+                    successMessage="Class is live — students have been notified."
+                  >
+                    Start class
+                  </ActionButton>
+                )}
+                {live.status === "LIVE" && (
+                  <ActionButton
+                    size="sm"
+                    variant="outline"
+                    action={endLiveClass.bind(null, live.id)}
+                    confirm="End this class? Attendance will be recorded."
+                    successMessage="Class ended — attendance recorded."
+                  >
+                    End class
+                  </ActionButton>
+                )}
+                {live.status === "SCHEDULED" && (
+                  <ActionButton
+                    variant="outline"
+                    size="sm"
+                    action={cancelLiveClass.bind(null, live.id)}
+                    confirm="Cancel this live class? Registered students will be notified."
+                  >
+                    Cancel class
+                  </ActionButton>
+                )}
               </Card>
             ))}
           </div>

@@ -12,7 +12,8 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 | 4 | Discovery | ✅ Complete | build ✅ lint ✅ search/profile/reviews tested ✅ |
 | 5 | Booking & tutoring | ✅ Complete | build ✅ lint ✅ availability engine + reminders tested ✅ |
 | 6 | Payments & wallet | ✅ Complete | build ✅ lint ✅ lifecycle/idempotency/mismatch/refund tested ✅ |
-| 7–15 | … | ⬜ Pending | — |
+| 7 | Live classes | ✅ Complete | build ✅ lint ✅ SSE stream + bus tested ✅ |
+| 8–15 | … | ⬜ Pending | — |
 
 ## Phase 1 — delivered
 
@@ -91,11 +92,19 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 - [x] Docs: `docs/payments.md` (architecture, credentials, invariants, webhooks)
 - [x] Verified: lint clean, build green (56 routes), lifecycle/idempotency/mismatch/refund tests pass, checkout + sandbox + admin pages render, zero server errors
 
-## Known next steps (Phase 7 kickoff)
+## Phase 7 — delivered
 
-1. Live classroom: teacher "start class" → LIVE state, student "join" (registered/paid only), participant presence
-2. Classroom UI: main video area, participant/chat side panel, bottom control bar, mobile layout; WebRTC via a provider abstraction (credential requirements documented) with a local dev fallback
-3. Realtime layer: chat messages, raised hands, reactions, polls with results, attendance tracking (joinedAt/leftAt → PRESENT/LATE/ABSENT)
-4. Recording toggle → LiveClassRecording row (actual capture with provider in production; statuses wired)
-5. Reminders for live classes (like booking reminders) + "starting now" notifications
-6. `docs/` deep-dives as their subsystems land: database.md, authentication.md, live-classes.md, recorded-classes.md, video-storage.md, security.md, deployment.md, environment-variables.md
+- [x] **Realtime layer**: in-process classroom event bus + SSE stream (`/api/classrooms/[id]/stream`, force-dynamic, immediate heartbeat, snapshot replay for late joiners); mutations flow server action → bus → SSE (Redis pub/sub swap documented for multi-instance)
+- [x] **Classroom UI** (`/classroom/[id]`): video/avatar tiles with mic states, chat panel, participants panel with raised hands + host mute/remove, polls (create/vote/close with live result bars), emoji reactions overlay, collaborative whiteboard (pointer strokes, colors, eraser, host clear, session replay), bottom control bar, mobile drawer layout
+- [x] **Lifecycle**: teacher Start/End class (attendance rollup → PRESENT/LATE/ABSENT), student Join now button, join/leave presence, chat lock, participant moderation, recording toggle event, start notifications to all registered students
+- [x] **WebRTC abstraction** (`src/lib/live/webrtc.ts`): provider interface; LiveKit implementation mints real access tokens with jose (HS256, no SDK); dev provider shows honest avatar-tile mode
+- [x] **Paid live classes**: registration creates a payment order → checkout → engine creates the participant on completion (Payment.liveClassId)
+- [x] Verified: bus pub/sub all event types (chat/poll/hand/reaction/stroke), SSE stream connects for student + host (403 for outsiders), classroom renders both roles with correct controls, zero server errors
+
+## Known next steps (Phase 8 kickoff)
+
+1. Admin recorded-class upload flow: /admin/recorded-classes (All/Upload/Drafts/Processing/Published/Archived), course→module→lesson picker, thumbnail + resources + metadata, upload progress, retry on failure
+2. Video storage abstraction: local file storage with HMAC-signed streaming URLs (protected playback — never expose raw URLs), Cloudflare Stream / Mux / S3 adapters
+3. Premium custom video player: playback speed, quality, captions, PiP, keyboard shortcuts, resume, bookmarks, in-player notes, progress tracking
+4. Public recorded-class library (/recorded-classes) + watch page with authorization checks
+5. `docs/` deep-dives as their subsystems land: database.md, authentication.md, live-classes.md, recorded-classes.md, video-storage.md, security.md, deployment.md, environment-variables.md

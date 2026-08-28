@@ -96,7 +96,9 @@ export async function removeWishlistItem(id: string): Promise<ActionResult> {
   }
 }
 
-export async function registerLiveClass(liveClassId: string): Promise<ActionResult> {
+export async function registerLiveClass(
+  liveClassId: string,
+): Promise<ActionResult & { redirectUrl?: string; paid?: boolean }> {
   try {
     const user = await requireUser();
     const live = await db.liveClass.findUnique({
@@ -115,6 +117,30 @@ export async function registerLiveClass(liveClassId: string): Promise<ActionResu
       where: { liveClassId_userId: { liveClassId, userId: user.id } },
     });
     if (existing) return actionError("You are already registered for this class.");
+
+    // Paid classes go through checkout (verified server-side).
+    if (live.price > 0) {
+      const openOrder = await db.payment.findFirst({
+        where: { studentId: user.id, liveClassId, purpose: "LIVE_CLASS", status: "PENDING" },
+        orderBy: { createdAt: "desc" },
+      });
+      const payment = openOrder
+        ? openOrder
+        : await db.payment.create({
+            data: {
+              studentId: user.id,
+              amount: live.price,
+              currency: "BDT",
+              method: "DEV",
+              provider: "DEV",
+              status: "PENDING",
+              purpose: "LIVE_CLASS",
+              liveClassId,
+              metadata: { description: `Live class: ${live.title}` },
+            },
+          });
+      return { ok: true, redirectUrl: `/checkout/${payment.id}`, paid: true };
+    }
 
     await db.liveClassParticipant.create({
       data: { liveClassId, userId: user.id, role: "STUDENT", attendanceStatus: "REGISTERED" },
