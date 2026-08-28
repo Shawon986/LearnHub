@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/session";
 import { logAudit } from "@/lib/audit";
-import { createNotification, createNotificationMany } from "@/lib/notifications";
+import { createNotification, createNotificationMany, emailIfEnabled } from "@/lib/notifications";
 import { getWithdrawalMinimum } from "@/lib/settings";
 import { slugify } from "@/lib/utils";
 import {
@@ -403,6 +403,12 @@ export async function respondBooking(input: { bookingId: string; action: "ACCEPT
           : `${user.name} declined your session on ${booking.startsAt.toDateString()}.`,
       ...(checkoutPath ? { data: { checkoutPath } } : {}),
     });
+    emailIfEnabled(
+      booking.studentId,
+      data.action === "ACCEPT" ? "BOOKING_ACCEPTED" : "BOOKING_CANCELLED",
+      data.action === "ACCEPT" ? "Your booking was accepted 🎉" : "Your booking was declined",
+      `${user.name} ${data.action === "ACCEPT" ? "accepted" : "declined"} your 1-on-1 session on ${booking.startsAt.toDateString()}.`,
+    ).catch(() => {});
     await logAudit({
       actorId: user.id,
       actorEmail: user.email,

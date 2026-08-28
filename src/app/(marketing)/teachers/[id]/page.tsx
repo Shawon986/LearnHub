@@ -22,6 +22,7 @@ import { CourseCard, type CourseCardData } from "@/components/shared/course-card
 import { WishlistButton } from "@/components/shared/wishlist-button";
 import { ReviewForm } from "@/components/shared/review-form";
 import { BookingButton } from "@/components/booking/booking-modal";
+import { MessageButton } from "@/components/shared/message-button";
 import { formatBDT, formatDate } from "@/lib/format";
 
 interface PageProps {
@@ -405,15 +406,16 @@ export default async function TeacherProfilePage({ params }: PageProps) {
                 ? `${formatBDT(profile.hourlyRate)} per hour — choose a time from the teacher's availability.`
                 : "Contact for pricing."}
             </p>
-            <div className="mt-4">
+            <div className="mt-4 space-y-2">
               <BookingButton
                 teacherId={id}
                 teacherName={teacher.name}
                 hourlyRate={profile?.hourlyRate ?? 0}
               />
+              <MessageButton teacherId={id} teacherName={teacher.name} />
             </div>
             <p className="mt-3 text-center text-[11px] leading-relaxed text-faint-fg">
-              Payment is collected when the teacher confirms (Phase 6) · Messaging arrives in Phase 9
+              Payment is collected when the teacher confirms your booking.
             </p>
           </Card>
 

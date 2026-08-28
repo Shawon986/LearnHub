@@ -45,7 +45,11 @@ export async function GET(req: Request, ctx: { params: Promise<{ videoId: string
   }
 
   // Resolve within the uploads root and prevent path traversal.
-  const root = path.resolve(process.cwd(), env.VIDEO_LOCAL_DIR);
+  const root = path.resolve(
+    /* turbopackIgnore: true */
+    process.cwd(),
+    env.VIDEO_LOCAL_DIR,
+  );
   const filePath = path.resolve(root, video.filePath);
   if (!filePath.startsWith(root)) {
     return NextResponse.json({ error: "Invalid file path." }, { status: 400 });

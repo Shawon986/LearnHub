@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { TeacherPasswordForm } from "./teacher-password-form";
 import { CopyCodeButton } from "./copy-code-button";
+import { NotificationPrefs } from "@/components/shared/notification-prefs";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -52,6 +53,8 @@ export default async function TeacherSettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <NotificationPrefs />
 
       <TeacherPasswordForm />
     </div>

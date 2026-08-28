@@ -20,6 +20,29 @@ export async function sendDueBookingReminders(): Promise<number> {
     take: 20,
   });
 
+  // Live-class reminders use the same opportunistic pattern.
+  const dueClasses = await db.liveClass.findMany({
+    where: {
+      status: "SCHEDULED",
+      remindedAt: null,
+      startsAt: { gt: now, lte: window },
+    },
+    include: { participants: { select: { userId: true } }, teacher: { select: { name: true } } },
+    take: 20,
+  });
+  for (const live of dueClasses) {
+    for (const p of live.participants) {
+      await createNotification({
+        userId: p.userId,
+        type: "LIVE_CLASS_REMINDER",
+        title: "Live class reminder ⏰",
+        body: `"${live.title}" starts in under 24 hours — don't miss it!`,
+        data: { liveClassId: live.id },
+      });
+    }
+    await db.liveClass.update({ where: { id: live.id }, data: { remindedAt: now } });
+  }
+
   for (const booking of due) {
     await createNotification({
       userId: booking.studentId,

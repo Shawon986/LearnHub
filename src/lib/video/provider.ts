@@ -61,7 +61,13 @@ export class LocalVideoProvider implements VideoProvider {
   async upload(input: { file: File; kind: UploadKind }): Promise<UploadResult> {
     this.assertAllowed(input.file, input.kind);
 
-    const root = path.resolve(process.cwd(), env.VIDEO_LOCAL_DIR, input.kind);
+    // Static subfolder keeps Turbopack from tracing the whole project.
+    const root = path.resolve(
+      /* turbopackIgnore: true */
+      process.cwd(),
+      env.VIDEO_LOCAL_DIR,
+      input.kind,
+    );
     await mkdir(root, { recursive: true });
 
     const ext = extensionOf(input.file.name);

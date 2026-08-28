@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { logAudit } from "@/lib/audit";
-import { createNotification } from "@/lib/notifications";
+import { createNotification, emailIfEnabled } from "@/lib/notifications";
 import { formatBDT } from "@/lib/format";
 import { splitFor } from "@/lib/payments/commission";
 import type { VerifiedWebhookEvent } from "@/lib/payments/types";
@@ -202,6 +202,14 @@ export async function handlePaymentSuccess(
     title: "Payment successful ✅",
     body: `${formatBDT(payment.amount)} paid for "${courseTitle}".`,
   });
+  // Transactional receipt (opt-in email).
+  emailIfEnabled(
+    payment.studentId,
+    "PAYMENT_SUCCESS",
+    `Payment receipt — ${formatBDT(payment.amount)}`,
+    `Hi,\n\nYour payment of ${formatBDT(payment.amount)} for "${courseTitle}" was successful.\nTransaction: ${event.trxId ?? event.providerPaymentId ?? "—"}\n\nThanks for learning with LearnHub!`,
+  ).catch(() => {});
+
   await createNotification({
     userId: teacherId,
     type: "PAYMENT_SUCCESS",

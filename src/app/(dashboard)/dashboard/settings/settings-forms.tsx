@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { updateProfile, changePassword } from "@/lib/actions/student";
+import { NotificationPrefs } from "@/components/shared/notification-prefs";
 
 interface SettingsFormsProps {
   initial: {
@@ -37,6 +38,7 @@ export function SettingsForms({ initial }: SettingsFormsProps) {
         tabs={[
           { value: "profile", label: "Profile" },
           { value: "password", label: "Password" },
+          { value: "notifications", label: "Notifications" },
         ]}
       />
 
@@ -50,6 +52,7 @@ export function SettingsForms({ initial }: SettingsFormsProps) {
         />
       )}
       {tab === "password" && <PasswordForm />}
+      {tab === "notifications" && <NotificationPrefs />}
 
       <Card>
         <CardHeader>

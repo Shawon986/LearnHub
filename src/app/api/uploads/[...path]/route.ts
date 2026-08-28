@@ -17,7 +17,11 @@ export async function GET(req: Request, ctx: { params: Promise<{ path: string[] 
   const rel = segments.join("/");
   if (!rel || rel.includes("..")) return NextResponse.json({ error: "Invalid path." }, { status: 400 });
 
-  const root = path.resolve(process.cwd(), env.VIDEO_LOCAL_DIR);
+  const root = path.resolve(
+    /* turbopackIgnore: true */
+    process.cwd(),
+    env.VIDEO_LOCAL_DIR,
+  );
   const filePath = path.resolve(root, rel);
   if (!filePath.startsWith(root)) return NextResponse.json({ error: "Invalid path." }, { status: 400 });
 

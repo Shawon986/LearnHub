@@ -14,7 +14,8 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 | 6 | Payments & wallet | ✅ Complete | build ✅ lint ✅ lifecycle/idempotency/mismatch/refund tested ✅ |
 | 7 | Live classes | ✅ Complete | build ✅ lint ✅ SSE stream + bus tested ✅ |
 | 8 | Recorded classes | ✅ Complete | build ✅ lint ✅ streaming/auth/security tested ✅ |
-| 9–15 | … | ⬜ Pending | — |
+| 9 | Messaging & notifications | ✅ Complete | build ✅ lint ✅ bus/SSE/cron tested ✅ |
+| 10–15 | … | ⬜ Pending | — |
 
 ## Phase 1 — delivered
 
@@ -113,10 +114,21 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 - [x] Fixed: unguarded SSE enqueue crash on client disconnect (uncaughtException → guarded)
 - [x] Docs: `docs/video-storage.md` · Verified: lint clean, build green (60 routes), all streaming/auth tests pass, zero uncaught errors
 
-## Known next steps (Phase 9 kickoff)
+## Phase 9 — delivered
 
-1. Messaging: /messages with conversation list + thread, realtime via SSE (same bus pattern as classrooms), typing indicators, read receipts, file/image attachments, search
-2. Email notifications: transactional emails on key events (payment receipts, booking confirmations, withdrawals) via the existing EmailProvider
-3. Scheduled jobs: move opportunistic reminders (bookings, live classes) to a cron endpoint (Vercel Cron / in-process scheduler), email queue
-4. Notification preferences UI (per-type in-app/email toggles)
-5. `docs/` deep-dives as their subsystems land: database.md, authentication.md, live-classes.md, recorded-classes.md, security.md, deployment.md, environment-variables.md
+- [x] **Messaging**: personal-channel bus + SSE (`/api/messages/stream`), two-pane `/messages` inbox (conversation list with unread counts + online presence, thread with realtime bubbles, typing indicators, read receipts, image attachments via validated uploads, search, Enter-to-send), Message button on teacher profiles
+- [x] **Realtime semantics**: presence online/offline broadcast to conversation partners (connection-counted), typing throttling, duplicate-safe list reordering
+- [x] **Email notifications**: opt-in per-type transactional emails (payment receipts, booking accept/decline) via the existing EmailProvider, respecting NotificationPreference
+- [x] **Notification preferences UI**: per-type in-app/email toggles in student + teacher settings
+- [x] **Scheduled jobs**: `/api/cron/reminders` (CRON_SECRET-gated, Vercel Cron-ready) sweeping booking + live-class reminders with remindedAt dedupe
+- [x] Fixed: client component importing a non-"use server" module dragged next/headers into the browser bundle — preference actions split into `src/lib/actions/prefs.ts`
+- [x] Verified: bus event ordering (presence→message→typing→presence), SSE connects, threads render seeded messages, cron + prefs APIs work, zero server errors
+
+## Known next steps (Phase 10 kickoff)
+
+1. Certificates: automatic issuance at 100% course completion, `/verify/[certificateId]` public verification page with QR code
+2. Gamification: XP awards on completions (lesson/quiz/course/streak), level ups, leaderboard, streak tracking daily
+3. Coupons: checkout coupon input, validation (expiry/usage/per-user/course), admin + teacher coupon CRUD, discount application
+4. Referrals: reward credit when a referred student's first purchase completes (settings-driven)
+5. Disputes: open/respond/resolve flow with admin refund integration, status tracking, messages + evidence
+6. `docs/` deep-dives as their subsystems land: database.md, authentication.md, live-classes.md, recorded-classes.md, security.md, deployment.md, environment-variables.md
