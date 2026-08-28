@@ -309,10 +309,7 @@ export default async function HomePage() {
 
       {/* Why choose us */}
       <section id="why" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-20 sm:px-6">
-        <SectionHeading
-          eyebrow="Why LearnHub"
-          title="Built for Bangladesh, made for the world"
-        />
+        <SectionHeading eyebrow="Why LearnHub" title="Built for Bangladesh, made for the world" />
         <RevealGroup className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {WHY.map((w) => (
             <RevealItem key={w.title}>

@@ -20,7 +20,7 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 | 12 | Analytics · SEO · Reports | ✅ Complete | build ✅ lint ✅ charts/sitemap/audit tested ✅ |
 | 13 | Advanced animation & 3D | ✅ Complete | build ✅ lint ✅ lazy 3D chunk verified ✅ |
 | 14 | Security · Testing · Hardening | ✅ Complete | 54 tests ✅ lint ✅ build ✅ |
-| 15 | Production deployment prep | ⬜ Pending | — |
+| 15 | Production deployment prep | ✅ Complete | migrations ✅ CI ✅ verification plan ✅ final sweep ✅ |
 
 ## Phase 1 — delivered
 
@@ -178,7 +178,45 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 - [x] **Docs complete**: database, authentication, live-classes, recorded-classes, security, deployment, environment-variables (+ earlier: payments, video-storage, ai)
 - [x] Verified: 54/54 tests, lint clean, build green (74 routes)
 
-## Known next steps (Phase 15 kickoff)
+## Phase 15 — delivered
+
+- [x] **Prisma migrations**: initial baseline migration (`prisma/migrations/20260828204730_init`), `db:migrate` / `db:deploy` scripts, Postgres migration path documented
+- [x] **CI pipeline** (`.github/workflows/ci.yml`): install → prisma generate → lint → next typegen → typecheck → tests → production build
+- [x] **Production verification plan** (`docs/production-verification.md`): per-gateway sandbox checklists (bKash/Nagad/Rocket/Stripe incl. webhook replay + refund tests), video provider, LiveKit, Resend, cron, observability, go/no-go gates
+- [x] **Final quality sweep** — see checklist below.
+
+---
+
+## Final quality checklist (master spec §71)
+
+| Item | Status | Notes |
+|---|---|---|
+| Authentication / student & teacher registration / admin auth | ✅ | Verified end-to-end (Phase 1) |
+| Role authorization | ✅ | Automated tests + smoke tests |
+| Course creation / enrollment | ✅ | Builder + free/paid checkout flows |
+| Teacher & course search | ✅ | `/search` with filters, verified |
+| Booking / calendar | ✅ | Availability engine tested |
+| Live class / classroom chat / whiteboard / attendance | ✅ | SSE realtime verified |
+| Screen sharing / live video | ⚠️ Provider-gated | WebRTC adapter wired; needs LiveKit credentials (verification plan §3) |
+| Live recording capture | ⚠️ Provider-gated | Recording lifecycle wired; capture requires a video provider |
+| Admin recorded-class upload / processing | ✅ | Upload → READY → publish flow tested |
+| Protected video playback / progress | ✅ | Signed tokens + Range streaming + access tests |
+| Payments / webhooks / commission / wallet / withdrawals | ✅ | Engine tested incl. idempotency; real-gateway sandbox runs in verification plan §1 |
+| Reviews / notifications / certificates / referrals / coupons / disputes | ✅ | All implemented + tested where logic-critical |
+| AI modules / analytics / SEO | ✅ | Implemented; sitemap/robots/JSON-LD live |
+| Mobile / tablet / desktop UI | ✅ | Responsive layouts throughout (drawers, grids); not device-lab-tested |
+| Dark mode | ✅ | System/light/dark with separate tokens |
+| Accessibility | ✅ | Skip links, ARIA labels, reduced-motion everywhere, validated chart palettes; full WCAG audit recommended pre-launch |
+| Performance | ✅ | Lazy 3D, code splitting, SSE, pagination, DPR caps, indexes |
+| Security | ✅ | Documented + tested; hardening options noted in security.md |
+| Tests / console errors / broken routes / secrets / duplicates | ✅ | 54 tests · zero server errors · 74 routes smoke-tested · secrets scan clean · design system reused |
+
+## Post-launch backlog (explicitly out of scope of the 15 phases)
+
+- CSRF token layer · Redis rate limits · CSP nonce plumbing
+- Email digests, push notifications
+- Real-gateway sandbox certification runs (see production-verification.md)
+- Device-lab responsive testing, full WCAG audit, load testing
 
 1. PostgreSQL migration + Prisma migrate workflow, CI pipeline (lint + typecheck + tests on push)
 2. Real-provider verification plan: payment gateway sandbox tests, video provider smoke test, LiveKit room check
