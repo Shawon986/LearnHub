@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   Star,
   Tags,
+  Trophy,
   Users,
   Video,
   Wallet,
@@ -46,7 +47,9 @@ export const STUDENT_NAV: NavItem[] = [
   { href: "/dashboard/wishlist", label: "Wishlist", icon: Heart },
   { href: "/messages", label: "Messages", icon: MessageSquare },
   { href: "/dashboard/certificates", label: "Certificates", icon: Award },
+  { href: "/dashboard/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/dashboard/payments", label: "Payments", icon: Wallet },
+  { href: "/dashboard/disputes", label: "Disputes", icon: ShieldCheck },
   { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];

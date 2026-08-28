@@ -4,6 +4,9 @@ import { logAudit } from "@/lib/audit";
 import { createNotification, emailIfEnabled } from "@/lib/notifications";
 import { formatBDT } from "@/lib/format";
 import { splitFor } from "@/lib/payments/commission";
+import { applyCouponAtCompletion } from "@/lib/coupons";
+import { getReferralReward } from "@/lib/settings";
+import { SETTING_KEYS } from "@/lib/constants";
 import type { VerifiedWebhookEvent } from "@/lib/payments/types";
 
 // ============================================================
@@ -192,6 +195,16 @@ export async function handlePaymentSuccess(
     });
   });
 
+  // Coupon redemption (idempotent, recorded only on completion).
+  const meta = (payment.metadata ?? {}) as { couponId?: string; couponCode?: string; discountAmount?: number };
+  if (meta.couponId) {
+    await applyCouponAtCompletion(paymentId, meta.couponId, payment.studentId, meta.discountAmount ?? 0);
+  }
+
+  // Referral reward: the student's FIRST completed purchase triggers the
+  // referrer's reward (settings-driven, min purchase enforced).
+  await maybeAwardReferral(payment);
+
   // Notifications (outside the transaction).
   const courseTitle = payment.courseId
     ? (await db.course.findUnique({ where: { id: payment.courseId }, select: { title: true } }))?.title
@@ -248,6 +261,46 @@ export async function handlePaymentFailure(
     type: "PAYMENT_FAILED",
     title: "Payment failed",
     body: "Your payment didn't go through. You can try again from checkout.",
+  });
+}
+
+async function maybeAwardReferral(payment: { id: string; studentId: string; amount: number }) {
+  const referral = await db.referral.findFirst({
+    where: { refereeId: payment.studentId, status: "PENDING" },
+  });
+  if (!referral) return;
+
+  const [reward, minPurchase] = await Promise.all([
+    getReferralReward(),
+    db.platformSetting.findUnique({ where: { key: SETTING_KEYS.REFERRAL_MIN_PURCHASE } }),
+  ]);
+  const min = typeof (minPurchase?.value as unknown) === "number" ? (minPurchase!.value as number) : 500;
+  if (payment.amount < min) return;
+
+  await db.$transaction(async (tx) => {
+    await tx.referral.update({
+      where: { id: referral.id },
+      data: { status: "REWARDED", rewardAmount: reward, rewardedAt: new Date() },
+    });
+    await tx.studentProfile.update({
+      where: { userId: referral.referrerId },
+      data: { referralBalance: { increment: reward } },
+    });
+    await tx.transaction.create({
+      data: {
+        userId: referral.referrerId,
+        type: "REFERRAL_REWARD",
+        amount: reward,
+        description: `Referral reward — your friend's first purchase`,
+      },
+    });
+  });
+
+  await createNotification({
+    userId: referral.referrerId,
+    type: "SYSTEM",
+    title: `Referral reward: +৳${reward.toLocaleString()} 🎁`,
+    body: "A friend you referred made their first purchase.",
   });
 }
 

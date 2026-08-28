@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Award, BadgeCheck } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -60,6 +61,22 @@ export default async function CertificatesPage() {
                       {c.certificateNumber}
                     </Badge>
                     <span className="text-[11px] text-faint-fg">Issued {formatDate(c.issuedAt)}</span>
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <Link
+                      href={`/verify/${c.certificateNumber}`}
+                      target="_blank"
+                      className="rounded-lg bg-brand-soft px-3 py-1.5 text-[12px] font-bold text-brand-fg transition-colors hover:bg-brand-soft/70"
+                    >
+                      View & verify ↗
+                    </Link>
+                    <Link
+                      href={`/verify/${c.certificateNumber}`}
+                      target="_blank"
+                      className="rounded-lg border border-line px-3 py-1.5 text-[12px] font-bold text-muted-fg transition-colors hover:text-foreground"
+                    >
+                      Public link ↗
+                    </Link>
                   </div>
                 </div>
               </div>

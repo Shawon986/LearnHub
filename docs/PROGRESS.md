@@ -15,7 +15,8 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 | 7 | Live classes | ✅ Complete | build ✅ lint ✅ SSE stream + bus tested ✅ |
 | 8 | Recorded classes | ✅ Complete | build ✅ lint ✅ streaming/auth/security tested ✅ |
 | 9 | Messaging & notifications | ✅ Complete | build ✅ lint ✅ bus/SSE/cron tested ✅ |
-| 10–15 | … | ⬜ Pending | — |
+| 10 | Certificates · Gamification · Coupons · Referrals · Disputes | ✅ Complete | build ✅ lint ✅ engine tests pass ✅ |
+| 11–15 | … | ⬜ Pending | — |
 
 ## Phase 1 — delivered
 
@@ -124,11 +125,20 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 - [x] Fixed: client component importing a non-"use server" module dragged next/headers into the browser bundle — preference actions split into `src/lib/actions/prefs.ts`
 - [x] Verified: bus event ordering (presence→message→typing→presence), SSE connects, threads render seeded messages, cron + prefs APIs work, zero server errors
 
-## Known next steps (Phase 10 kickoff)
+## Phase 10 — delivered
 
-1. Certificates: automatic issuance at 100% course completion, `/verify/[certificateId]` public verification page with QR code
-2. Gamification: XP awards on completions (lesson/quiz/course/streak), level ups, leaderboard, streak tracking daily
-3. Coupons: checkout coupon input, validation (expiry/usage/per-user/course), admin + teacher coupon CRUD, discount application
-4. Referrals: reward credit when a referred student's first purchase completes (settings-driven)
-5. Disputes: open/respond/resolve flow with admin refund integration, status tracking, messages + evidence
+- [x] **Certificates**: automatic issuance at 100% course completion, `/verify/[certificateNumber]` public page with QR code (qrcode), student certificates page with verify + public links (verified: valid + bogus certificates)
+- [x] **Gamification**: XP awards (lesson +10, quiz +20, course +100), levels (500 XP/level) with level-up notifications, daily streak tracking with STREAK_7/STREAK_30 badges, leaderboard page (`/dashboard/leaderboard`, top 15 with medals + your rank)
+- [x] **Coupons**: full validation (existence, status, expiry, max uses, per-user limit, course match, min purchase — verified: 10% of ৳2,800 = ৳280 off), checkout coupon input updating the PENDING order, redemption + usedCount recorded **only at payment completion** (idempotent, auto-DEPLETED), admin + teacher CRUD
+- [x] **Referrals**: first-purchase reward in the payment engine (settings-driven amount + min purchase — verified live: referrer balance 0→100, referral REWARDED, transaction recorded)
+- [x] **Disputes**: student opening (payments/bookings without active disputes), message threads, admin queue with status filters + detail page with evidence panel, resolution (REFUND → engine refund / RELEASE / CLOSE) with notifications
+- [x] Verified: lint clean, build green (68 routes), certificate/coupon/referral engine tests pass, all pages render, zero server errors
+
+## Known next steps (Phase 11 kickoff)
+
+1. AI provider abstraction (`src/lib/ai/`): interface + deterministic DEV provider + OpenAI/Anthropic/AI Gateway adapters with documented credentials
+2. AI study assistant: chat UI on the learning page (context: lesson/course), conversation persistence (AIConversation/AIMessage tables exist)
+3. AI teacher matching: "I need a Python teacher for beginners" → ranked teacher recommendations from real profile data
+4. AI course recommendations: based on the student's enrollments/progress/interests (falls back to popular when cold)
+5. AI teacher assistant: generate course descriptions, lesson outlines, quiz questions and learning objectives from a topic
 6. `docs/` deep-dives as their subsystems land: database.md, authentication.md, live-classes.md, recorded-classes.md, security.md, deployment.md, environment-variables.md

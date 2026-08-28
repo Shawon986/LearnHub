@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatBDT, formatDateTime } from "@/lib/format";
 import { CheckoutClient } from "./checkout-client";
+import { CouponField } from "./coupon-field";
 import { availablePaymentMethods } from "@/lib/payments";
 
 export const metadata: Metadata = { title: "Checkout" };
@@ -83,6 +84,13 @@ export default async function CheckoutPage({
             <dd className="font-display text-lg font-extrabold text-foreground">{formatBDT(payment.amount)}</dd>
           </div>
         </dl>
+
+        <div className="border-t border-line pt-4">
+          <CouponField
+            paymentId={payment.id}
+            applied={Boolean((payment.metadata as { couponId?: string } | null)?.couponId)}
+          />
+        </div>
       </Card>
 
       <CheckoutClient

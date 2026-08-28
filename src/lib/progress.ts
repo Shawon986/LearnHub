@@ -1,5 +1,7 @@
 import { db } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
+import { issueCertificate } from "@/lib/certificates";
+import { awardXp, updateStreak, XP_AWARDS } from "@/lib/gamification";
 
 /**
  * Mark a lesson complete for a user and roll the course progress up:
@@ -15,11 +17,20 @@ export async function markLessonComplete(userId: string, lessonId: string) {
   if (!lesson) throw new Error("Lesson not found.");
 
   const now = new Date();
+  const wasCompleted = await db.lessonProgress.findUnique({
+    where: { studentId_lessonId: { studentId: userId, lessonId } },
+  });
   await db.lessonProgress.upsert({
     where: { studentId_lessonId: { studentId: userId, lessonId } },
     update: { completed: true, completedAt: now },
     create: { studentId: userId, lessonId, completed: true, completedAt: now },
   });
+
+  // First-time completion awards.
+  if (!wasCompleted?.completed) {
+    await awardXp(userId, XP_AWARDS.LESSON_COMPLETE);
+    await updateStreak(userId);
+  }
 
   const courseId = lesson.module.courseId;
 
@@ -65,6 +76,8 @@ export async function markLessonComplete(userId: string, lessonId: string) {
       title: "Course completed! 🎉",
       body: `You finished "${enrollment.course.title}" — 100% complete.`,
     });
+    await awardXp(userId, XP_AWARDS.COURSE_COMPLETE);
+    await issueCertificate(enrollment.id);
     // First-completion achievement.
     const firstAchievement = await db.achievement.findFirst({
       where: { userId, badge: { code: "FIRST_COURSE_COMPLETED" } },

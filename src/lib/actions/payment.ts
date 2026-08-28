@@ -165,6 +165,42 @@ export async function completeDevPayment(
   }
 }
 
+/** Apply a validated coupon to a PENDING order (amount + metadata). */
+export async function applyCouponToPayment(
+  paymentId: string,
+  code: string,
+): Promise<ActionResult & { discountAmount?: number; finalAmount?: number }> {
+  try {
+    const user = await requireRole("STUDENT", "TEACHER", "ADMIN", "SUPER_ADMIN");
+    const { validateCoupon } = await import("@/lib/coupons");
+    const payment = await db.payment.findFirst({
+      where: { id: paymentId, studentId: user.id },
+    });
+    if (!payment) return actionError("Payment not found.");
+    if (payment.status !== "PENDING") return actionError("This payment can no longer be changed.");
+
+    const result = await validateCoupon(code, payment.amount, payment.courseId, user.id);
+    if (!result.ok) return actionError(result.error ?? "Invalid coupon.");
+
+    await db.payment.update({
+      where: { id: paymentId },
+      data: {
+        amount: result.finalAmount!,
+        metadata: {
+          ...((payment.metadata as object) ?? {}),
+          couponId: result.couponId,
+          couponCode: code.trim().toUpperCase(),
+          discountAmount: result.discountAmount,
+        },
+      },
+    });
+    revalidatePath(`/checkout/${paymentId}`);
+    return { ok: true, discountAmount: result.discountAmount, finalAmount: result.finalAmount };
+  } catch (e) {
+    return err(e);
+  }
+}
+
 /** Cancel an open PENDING order. */
 export async function cancelPayment(paymentId: string): Promise<ActionResult> {
   try {

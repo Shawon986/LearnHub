@@ -7,6 +7,7 @@ import { logAudit } from "@/lib/audit";
 import { createNotification } from "@/lib/notifications";
 import { safeJsonParse } from "@/lib/utils";
 import { markLessonComplete } from "@/lib/progress";
+import { awardXp, XP_AWARDS } from "@/lib/gamification";
 import {
   assignmentSubmissionSchema,
   gradeSubmissionSchema,
@@ -152,6 +153,7 @@ export async function submitQuiz(
 
     // Passing a lesson-quiz completes the lesson.
     if (passed && quiz.lesson) {
+      await awardXp(user.id, XP_AWARDS.QUIZ_PASSED);
       await markLessonComplete(user.id, quiz.lesson.id);
     }
 
