@@ -110,11 +110,16 @@ export function isAdminRole(role: string): boolean {
 /** Renders inside Next.js pages/layouts: redirect instead of throwing. */
 export function redirectIfUnauthorized(session: SessionPayload | null, requiredRole: string) {
   if (!session) return "/login";
-  const admin = isAdminRole(requiredRole) || isAdminRole(session.role);
-  if (requiredRole === "STUDENT" && session.role === "STUDENT") return null;
-  if (requiredRole === "TEACHER" && (session.role === "TEACHER" || admin)) return null;
-  if (admin && isAdminRole(requiredRole)) return null;
-  if (admin) return "/admin";
+  if (requiredRole === "STUDENT") {
+    if (session.role === "STUDENT") return null;
+    return isAdminRole(session.role) ? "/admin" : "/teacher";
+  }
+  if (requiredRole === "TEACHER") {
+    if (session.role === "TEACHER" || isAdminRole(session.role)) return null;
+    return "/dashboard";
+  }
+  // Admin areas.
+  if (isAdminRole(session.role)) return null;
   return session.role === "TEACHER" ? "/teacher" : "/dashboard";
 }
 

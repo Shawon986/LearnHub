@@ -19,7 +19,8 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 | 11 | AI features | ✅ Complete | build ✅ lint ✅ provider/matching tested ✅ |
 | 12 | Analytics · SEO · Reports | ✅ Complete | build ✅ lint ✅ charts/sitemap/audit tested ✅ |
 | 13 | Advanced animation & 3D | ✅ Complete | build ✅ lint ✅ lazy 3D chunk verified ✅ |
-| 14–15 | … | ⬜ Pending | — |
+| 14 | Security · Testing · Hardening | ✅ Complete | 54 tests ✅ lint ✅ build ✅ |
+| 15 | Production deployment prep | ⬜ Pending | — |
 
 ## Phase 1 — delivered
 
@@ -164,10 +165,22 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 - [x] **Motion polish**: page transitions via `template.tsx` (fade+slide, instant under reduced motion), **magnetic CTA buttons** (spring-back, pointer-fine only), **3D tilt course cards**, **subject marquee** strip on the landing page
 - [x] Verified: lint clean, build green (74 routes), landing renders with marquee, three.js code split into lazy chunks, zero server errors
 
-## Known next steps (Phase 14 kickoff)
+## Phase 14 — delivered
 
-1. Automated test suite: Vitest unit tests (commission split, coupon validation, availability engine, progress rollup, gamification) + API integration tests (auth lifecycle, role permissions, payment idempotency, video-access security)
-2. Security hardening pass: security headers audit, upload validation review, rate-limit coverage check, secrets scan
-3. Accessibility audit: keyboard navigation pass, ARIA checks on interactive components, contrast pass, screen-reader landmarks
-4. Performance pass: bundle analysis, image/asset audit, DB query index review
-5. `docs/` deep-dives: database.md, authentication.md, live-classes.md, recorded-classes.md, security.md, deployment.md, environment-variables.md
+- [x] **Automated test suite** (Vitest, dedicated SQLite test DB via globalSetup): **54 tests, 9 files, all green**
+  - Payment engine: completion (enrollment+commission+wallet), **webhook idempotency** (replay = no double-credit), **amount-mismatch rejection**, referral reward, atomic refunds
+  - **Video access security**: unenrolled blocked, enrolled/teacher/admin allowed, standalone public, unpublished/processing blocked
+  - Availability: slot coverage, blocked dates, conflicts, past-time rejection
+  - Progress rollup: 50% at 1/2, 100% → enrollment COMPLETED + certificate, XP-once semantics
+  - Coupons: discount math + 6 rejection rules · Gamification: XP/levels/streaks · Earnings math · Role routing
+- [x] **Security**: secrets scan clean, headers/rate-limit/upload audit documented; fixed a real bug found by tests — `redirectIfUnauthorized` had a logic hole in admin-required routing
+- [x] **Accessibility**: skip-to-content links on every layout (`#main-content` anchors)
+- [x] **Docs complete**: database, authentication, live-classes, recorded-classes, security, deployment, environment-variables (+ earlier: payments, video-storage, ai)
+- [x] Verified: 54/54 tests, lint clean, build green (74 routes)
+
+## Known next steps (Phase 15 kickoff)
+
+1. PostgreSQL migration + Prisma migrate workflow, CI pipeline (lint + typecheck + tests on push)
+2. Real-provider verification plan: payment gateway sandbox tests, video provider smoke test, LiveKit room check
+3. Monitoring: error tracking + uptime + analytics review, backup strategy for the database
+4. Final quality-checklist sweep (the master spec's 45-item list) against the running app

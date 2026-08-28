@@ -41,6 +41,7 @@ npm run dev                 # http://localhost:3000
 | `npm run build` | Production build (typecheck + lint gate) |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` (run after `next build` once to generate route types) |
+| `npm run test` | Vitest suite (dedicated test database) |
 | `npm run db:push` / `db:seed` / `db:studio` | Prisma workflow |
 
 ## Project layout
