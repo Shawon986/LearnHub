@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Clapperboard } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -6,7 +7,6 @@ import { db } from "@/lib/db";
 import { safeJsonParse } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
 import { RecordedClassCard, type RecordedClassCardData } from "@/components/shared/recorded-class-card";
-import { Badge } from "@/components/ui/badge";
 
 export const metadata: Metadata = { title: "Recorded Classes" };
 
@@ -33,14 +33,11 @@ export default async function RecordingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-xl font-extrabold text-foreground">Recorded Classes</h1>
-          <p className="mt-1 text-sm text-muted-fg">
-            Full recordings of popular live sessions, on demand.
-          </p>
-        </div>
-        <Badge variant="gold">Playback arrives in Phase 8</Badge>
+      <div>
+        <h1 className="font-display text-xl font-extrabold text-foreground">Recorded Classes</h1>
+        <p className="mt-1 text-sm text-muted-fg">
+          Full recordings of popular live sessions, on demand — resume right where you left off.
+        </p>
       </div>
 
       {cards.length === 0 ? (
@@ -51,9 +48,14 @@ export default async function RecordingsPage() {
         />
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {cards.map((r) => (
-            <RecordedClassCard key={r.id} recorded={r} />
-          ))}
+          {cards.map((r) => {
+            const row = recordings.find((x) => x.id === r.id)!;
+            return (
+              <Link key={r.id} href={`/recorded-classes/${row.slug}`} className="block h-full">
+                <RecordedClassCard recorded={r} />
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

@@ -37,7 +37,11 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
       };
 
       // Immediate heartbeat so headers flush even with no snapshot events.
-      controller.enqueue(encoder.encode(": connected\n\n"));
+      try {
+        controller.enqueue(encoder.encode(": connected\n\n"));
+      } catch {
+        /* client already gone */
+      }
 
       for (const poll of classroomBus.getPolls(id)) send({ type: "poll.created", poll });
       for (const stroke of classroomBus.getStrokes(id)) send({ type: "whiteboard.stroke", stroke });

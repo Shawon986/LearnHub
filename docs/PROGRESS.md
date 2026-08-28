@@ -13,7 +13,8 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 | 5 | Booking & tutoring | ✅ Complete | build ✅ lint ✅ availability engine + reminders tested ✅ |
 | 6 | Payments & wallet | ✅ Complete | build ✅ lint ✅ lifecycle/idempotency/mismatch/refund tested ✅ |
 | 7 | Live classes | ✅ Complete | build ✅ lint ✅ SSE stream + bus tested ✅ |
-| 8–15 | … | ⬜ Pending | — |
+| 8 | Recorded classes | ✅ Complete | build ✅ lint ✅ streaming/auth/security tested ✅ |
+| 9–15 | … | ⬜ Pending | — |
 
 ## Phase 1 — delivered
 
@@ -101,10 +102,21 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 - [x] **Paid live classes**: registration creates a payment order → checkout → engine creates the participant on completion (Payment.liveClassId)
 - [x] Verified: bus pub/sub all event types (chat/poll/hand/reaction/stroke), SSE stream connects for student + host (403 for outsiders), classroom renders both roles with correct controls, zero server errors
 
-## Known next steps (Phase 8 kickoff)
+## Phase 8 — delivered
 
-1. Admin recorded-class upload flow: /admin/recorded-classes (All/Upload/Drafts/Processing/Published/Archived), course→module→lesson picker, thumbnail + resources + metadata, upload progress, retry on failure
-2. Video storage abstraction: local file storage with HMAC-signed streaming URLs (protected playback — never expose raw URLs), Cloudflare Stream / Mux / S3 adapters
-3. Premium custom video player: playback speed, quality, captions, PiP, keyboard shortcuts, resume, bookmarks, in-player notes, progress tracking
-4. Public recorded-class library (/recorded-classes) + watch page with authorization checks
-5. `docs/` deep-dives as their subsystems land: database.md, authentication.md, live-classes.md, recorded-classes.md, video-storage.md, security.md, deployment.md, environment-variables.md
+- [x] **Video storage abstraction** (`src/lib/video/provider.ts`): local disk storage (MIME/extension/500MB validation), Cloudflare Stream + Mux adapters documented; upload route `/api/admin/videos` (XHR progress in UI)
+- [x] **Protected playback**: HMAC-signed 2h tokens minted server-side only for authorized viewers; `/api/videos/[id]/stream` re-verifies token + access at byte level with full HTTP Range support (verified: 200 full, 206 `bytes 100-199/200000`, forged 401, missing 401)
+- [x] **Access rules**: published-only; course-linked recordings require enrollment (teacher/admin exempt); resources follow the same rule via `/api/uploads/[...path]` (verified: unenrolled student blocked with enroll prompt)
+- [x] **Admin workflow** (`/admin/recorded-classes`): status tabs, upload wizard (video/thumbnail/resources, course→module→lesson picker, metadata), publish/unpublish/archive/delete-retry
+- [x] **Custom video player**: play/pause/seek/volume, speed (0.5–2×), PiP, fullscreen, keyboard shortcuts (space/k/←/→/f/m/b/n), resume overlay, bookmarks with timeline dots + panel, in-player notes panel, throttled progress persistence, completion detection
+- [x] **Public library** (`/recorded-classes`): search, continue-watching with progress, cards linking to watch pages; dashboard recordings wired
+- [x] Fixed: unguarded SSE enqueue crash on client disconnect (uncaughtException → guarded)
+- [x] Docs: `docs/video-storage.md` · Verified: lint clean, build green (60 routes), all streaming/auth tests pass, zero uncaught errors
+
+## Known next steps (Phase 9 kickoff)
+
+1. Messaging: /messages with conversation list + thread, realtime via SSE (same bus pattern as classrooms), typing indicators, read receipts, file/image attachments, search
+2. Email notifications: transactional emails on key events (payment receipts, booking confirmations, withdrawals) via the existing EmailProvider
+3. Scheduled jobs: move opportunistic reminders (bookings, live classes) to a cron endpoint (Vercel Cron / in-process scheduler), email queue
+4. Notification preferences UI (per-type in-app/email toggles)
+5. `docs/` deep-dives as their subsystems land: database.md, authentication.md, live-classes.md, recorded-classes.md, security.md, deployment.md, environment-variables.md
