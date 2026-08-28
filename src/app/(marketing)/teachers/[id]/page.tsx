@@ -123,6 +123,23 @@ export default async function TeacherProfilePage({ params }: PageProps) {
     saved = Boolean(wishItem);
   }
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    name: teacher.name,
+    description: profile?.headline ?? undefined,
+    mainEntity: {
+      "@type": "Person",
+      name: teacher.name,
+      jobTitle: profile?.headline ?? undefined,
+      knowsAbout: teacher.teacherSkills.map((s) => s.name),
+      ...(profile?.location ? { address: { "@type": "PostalAddress", addressLocality: profile.location } } : {}),
+    },
+    aggregateRating: reviewAgg._count > 0
+      ? { "@type": "AggregateRating", ratingValue: Math.round((reviewAgg._avg.rating ?? 0) * 10) / 10, reviewCount: reviewAgg._count }
+      : undefined,
+  };
+
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const slotsByDay = new Map<number, string[]>();
   for (const s of availabilitySlots) {
@@ -151,6 +168,7 @@ export default async function TeacherProfilePage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {/* Header card */}
       <Card className="overflow-hidden">
         <div className="bg-gradient-to-r from-brand via-violet-700 to-accent p-6 sm:p-8">

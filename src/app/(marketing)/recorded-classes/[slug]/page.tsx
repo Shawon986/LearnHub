@@ -67,8 +67,24 @@ export default async function WatchPage({ params }: PageProps) {
     playbackUrl = await getVideoProvider().playbackUrl(rc.video, user.id);
   }
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    name: rc.title,
+    description: rc.description ?? undefined,
+    duration: rc.durationSeconds > 0 ? `PT${Math.floor(rc.durationSeconds / 60)}M${rc.durationSeconds % 60}S` : undefined,
+    uploadDate: rc.publishedAt?.toISOString().slice(0, 10) ?? undefined,
+    publisher: { "@type": "Organization", name: "LearnHub" },
+    interactionStatistic: {
+      "@type": "InteractionCounter",
+      interactionType: "https://schema.org/WatchAction",
+      userInteractionCount: rc.viewCount,
+    },
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <nav className="mb-4 text-[12px] font-semibold text-muted-fg" aria-label="Breadcrumb">
         <Link href="/recorded-classes" className="hover:text-foreground">
           Recorded classes

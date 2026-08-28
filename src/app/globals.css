@@ -181,6 +181,28 @@
   }
 }
 
+/* ---- Data-viz roles (validated palette: see docs/analytics) ---- */
+:root {
+  --viz-series-1: #2a78d6;
+  --viz-series-2: #eb6834;
+  --viz-series-3: #1baf7a;
+  --viz-series-4: #eda100;
+  --viz-series-5: #e87ba4;
+  --viz-series-6: #008300;
+  --viz-grid: #e4e4f0;
+  --viz-label: #5d6478;
+}
+.dark {
+  --viz-series-1: #3987e5;
+  --viz-series-2: #d95926;
+  --viz-series-3: #199e70;
+  --viz-series-4: #c98500;
+  --viz-series-5: #d55181;
+  --viz-series-6: #008300;
+  --viz-grid: #26263c;
+  --viz-label: #9aa1b8;
+}
+
 /* Respect reduced motion globally for pure-CSS animation */
 @media (prefers-reduced-motion: reduce) {
   html {

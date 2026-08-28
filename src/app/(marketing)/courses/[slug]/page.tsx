@@ -70,6 +70,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
 
   if (!course || course.status !== "PUBLISHED") notFound();
 
+  const baseUrl = process.env.APP_URL ?? "http://localhost:3000";
   const currentUser = await getCurrentUser();
   const [enrollment, myReview, savedWish] = currentUser
     ? await Promise.all([
@@ -90,8 +91,39 @@ export default async function CourseDetailPage({ params }: PageProps) {
   const totalLessons = course.modules.reduce((sum, m) => sum + m.lessons.length, 0);
   const totalSeconds = course.totalDurationMinutes * 60;
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    name: course.title,
+    description: course.subtitle ?? course.description ?? undefined,
+    provider: {
+      "@type": "Organization",
+      name: "LearnHub",
+      sameAs: baseUrl,
+    },
+    ...(course.teacher.teacherProfile?.verified
+      ? {
+          hasCourseInstance: {
+            "@type": "CourseInstance",
+            instructor: { "@type": "Person", name: course.teacher.name },
+          },
+        }
+      : {}),
+    aggregateRating: course.reviewCount > 0
+      ? { "@type": "AggregateRating", ratingValue: course.avgRating, reviewCount: course.reviewCount }
+      : undefined,
+    offers:
+      course.price > 0
+        ? { "@type": "Offer", price: course.price, priceCurrency: "BDT", availability: "https://schema.org/InStock" }
+        : { "@type": "Offer", price: 0, priceCurrency: "BDT" },
+  };
+
   return (
     <div className="bg-brand-surface min-h-screen pb-20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Hero */}
       <div className="relative overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:py-14">

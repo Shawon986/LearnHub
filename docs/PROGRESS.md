@@ -17,7 +17,8 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 | 9 | Messaging & notifications | ✅ Complete | build ✅ lint ✅ bus/SSE/cron tested ✅ |
 | 10 | Certificates · Gamification · Coupons · Referrals · Disputes | ✅ Complete | build ✅ lint ✅ engine tests pass ✅ |
 | 11 | AI features | ✅ Complete | build ✅ lint ✅ provider/matching tested ✅ |
-| 12–15 | … | ⬜ Pending | — |
+| 12 | Analytics · SEO · Reports | ✅ Complete | build ✅ lint ✅ charts/sitemap/audit tested ✅ |
+| 13–15 | … | ⬜ Pending | — |
 
 ## Phase 1 — delivered
 
@@ -145,10 +146,19 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 - [x] **/ai showcase page** with matching + recommendations demos; landing AI section links to it
 - [x] Docs: `docs/ai.md` · Verified: lint clean, build green (69 routes), all pages render, zero server errors
 
-## Known next steps (Phase 12 kickoff)
+## Phase 12 — delivered
 
-1. Analytics dashboards: admin (revenue over time, enrollments, bookings, refunds, conversion, AOV — line/bar/donut charts with date ranges), teacher (course performance, engagement, earnings)
-2. SEO: sitemap.xml + robots.txt, JSON-LD structured data (Course/Product schema), per-page OG images
-3. Audit log UI (/admin/audit-logs with filters) + reports export (CSV of payments/withdrawals)
-4. Full withdrawal processing UI for admins (approve/reject/pay with wallet release)
-5. `docs/` deep-dives as their subsystems land: database.md, authentication.md, live-classes.md, recorded-classes.md, security.md, deployment.md, environment-variables.md
+- [x] **Admin analytics** (`/admin/analytics`): 8 KPIs (revenue, orders, enrollments, new users, commission, AOV, conversion, refund rate), revenue area chart with crosshair, enrollment bars, top courses + top teachers ranked bars, payment-method donut with legend + accessibility table, 7/30/90/365 date-range filter
+- [x] **Teacher analytics** (`/teacher/analytics`): earnings area chart, course performance table (students/completions/revenue)
+- [x] **Chart system** built to the dataviz method: validated categorical palette (CVD + normal-vision checks passed in light & dark), thin marks, recessive grid, hover tooltips, direct labels, legends never color-alone
+- [x] **SEO**: sitemap.xml (26 URLs — courses/teachers/recordings/static), robots.txt, JSON-LD structured data (Course, ProfilePage, VideoObject)
+- [x] **Audit log UI** (`/admin/audit-logs`): filterable action/actor/entity/IP table
+- [x] **Withdrawal processing** (`/admin/withdrawals`): approve → mark paid (pending released, totalWithdrawn incremented) / reject (funds return to available balance) with notifications + audit
+- [x] Verified: lint clean, build green (74 routes), charts render, sitemap/robots/JSON-LD live, zero server errors
+
+## Known next steps (Phase 13 kickoff)
+
+1. 3D hero scene (Three.js / React Three Fiber): floating education ecosystem, lazy-loaded, reduced on mobile, paused offscreen, respects prefers-reduced-motion
+2. Motion polish: shared-layout page transitions, magnetic buttons, tilt cards, animated number transitions, marquee testimonials
+3. Micro-interactions sweep: button/card/tab/animation audit across the whole platform
+4. `docs/` deep-dives: database.md, authentication.md, live-classes.md, recorded-classes.md, security.md, deployment.md, environment-variables.md
