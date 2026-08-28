@@ -9,7 +9,8 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 | 1 | Architecture · Database · Auth · Design system | ✅ Complete | build ✅ lint ✅ smoke tests ✅ |
 | 2 | Profiles & dashboards | ✅ Complete | build ✅ lint ✅ 31 pages smoke-tested ✅ |
 | 3 | Courses/LMS | ✅ Complete | build ✅ lint ✅ progress rollup tested ✅ |
-| 4–15 | … | ⬜ Pending | — |
+| 4 | Discovery | ✅ Complete | build ✅ lint ✅ search/profile/reviews tested ✅ |
+| 5–15 | … | ⬜ Pending | — |
 
 ## Phase 1 — delivered
 
@@ -54,10 +55,20 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 - [x] Seed: 3 quizzes (8 questions), 2 assignments wired into courses
 - [x] Verified: lint clean, build green (51 routes), course/list/detail/learn/builder/admin pages 200, zero server errors
 
-## Known next steps (Phase 4 kickoff)
+## Phase 4 — delivered
 
-1. Public teacher profile page (`/teachers/[id]`) with bio, skills, reviews, availability + booking CTA (booking itself Phase 5)
-2. Advanced search page (`/search`): courses + teachers + live classes, filters (price, rating, difficulty, language, type), sort, pagination
-3. Review writing: rate + review courses (verified-purchase), teachers, with moderation/report flags
-4. Wishlist add/remove everywhere (course pages, teacher cards) + price-drop notification groundwork
-5. `docs/` deep-dives as their subsystems land: database.md, authentication.md, payments.md, live-classes.md, recorded-classes.md, video-storage.md, security.md, deployment.md, environment-variables.md
+- [x] **Public teacher profiles** (`/teachers/[id]`): header with verification badge, stats strip (rating, rate, courses, live classes), about, skills, education, experience, rating distribution, reviews, courses grid, weekly availability schedule, save (wishlist), booking/messaging CTAs honestly staged
+- [x] **Teacher directory** (`/teachers`): search by name/skill/headline, card grid linking to profiles
+- [x] **Advanced search** (`/search`): tabs (courses/teachers/live), server-side filters (category, price range, min rating, difficulty, language, 5 sort orders), pagination, result counts, autocomplete with recent (localStorage) + popular searches
+- [x] **Reviews**: write/update course reviews (enrollment required → verified-purchase badge), teacher reviews (booking/enrollment required), delete own, **report flow** (3 reports → FLAGGED + admin notification), aggregate recalculation
+- [x] **Admin moderation** (`/admin/reviews`): status filters, flagged queue, remove/restore with audit
+- [x] **Wishlist everywhere**: toggle buttons on course pages, teacher profiles; seeded items render in the student wishlist page
+- [x] Seed: wishlist items, student's own course review (edit mode), flagged review for moderation demo
+- [x] Verified: lint clean, build green (54 routes), search filters/teacher profile/review forms/moderation all render, zero server errors
+
+## Known next steps (Phase 5 kickoff)
+
+1. Booking flow: date/time picker from teacher availability, booking request + payment intent (collection in Phase 6), teacher accept/decline (already built), student cancel (built)
+2. Booking detail pages + reminders; no-show/completion handling
+3. Review prompt after completed sessions (eligibility already wired)
+4. `docs/` deep-dives as their subsystems land: database.md, authentication.md, payments.md, live-classes.md, recorded-classes.md, video-storage.md, security.md, deployment.md, environment-variables.md

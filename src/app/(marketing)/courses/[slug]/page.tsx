@@ -19,6 +19,8 @@ import { Avatar } from "@/components/ui/avatar";
 import { Rating } from "@/components/ui/rating";
 import { Card } from "@/components/ui/card";
 import { EnrollButton } from "./enroll-button";
+import { WishlistButton } from "@/components/shared/wishlist-button";
+import { ReviewForm } from "@/components/shared/review-form";
 import { formatBDT, formatNumber, formatDurationSeconds } from "@/lib/format";
 import { gradientFor } from "@/lib/utils";
 
@@ -69,11 +71,19 @@ export default async function CourseDetailPage({ params }: PageProps) {
   if (!course || course.status !== "PUBLISHED") notFound();
 
   const currentUser = await getCurrentUser();
-  const enrollment = currentUser
-    ? await db.enrollment.findUnique({
-        where: { studentId_courseId: { studentId: currentUser.id, courseId: course.id } },
-      })
-    : null;
+  const [enrollment, myReview, savedWish] = currentUser
+    ? await Promise.all([
+        db.enrollment.findUnique({
+          where: { studentId_courseId: { studentId: currentUser.id, courseId: course.id } },
+        }),
+        db.review.findFirst({
+          where: { reviewerId: currentUser.id, courseId: course.id, targetType: "COURSE" },
+        }),
+        db.wishlistItem.findFirst({
+          where: { userId: currentUser.id, type: "COURSE", courseId: course.id },
+        }),
+      ])
+    : [null, null, null];
 
   const requirements = safeJsonParse<string[]>(course.requirements, []);
   const outcomes = safeJsonParse<string[]>(course.outcomes, []);
@@ -166,12 +176,20 @@ export default async function CourseDetailPage({ params }: PageProps) {
                     )}
                   </div>
 
-                  <EnrollButton
-                    courseId={course.id}
-                    price={course.price}
-                    enrolled={Boolean(enrollment)}
-                    hasSession={Boolean(currentUser)}
-                  />
+                  <div className="flex items-center gap-2">
+                    <EnrollButton
+                      courseId={course.id}
+                      price={course.price}
+                      enrolled={Boolean(enrollment)}
+                      hasSession={Boolean(currentUser)}
+                    />
+                    <WishlistButton
+                      type="COURSE"
+                      targetId={course.id}
+                      initialSaved={Boolean(savedWish)}
+                      className="border border-line bg-card hover:bg-card-2"
+                    />
+                  </div>
 
                   <ul className="space-y-2.5 border-t border-line pt-4 text-[13px] text-muted-fg">
                     <li className="flex items-center gap-2">
@@ -320,6 +338,11 @@ export default async function CourseDetailPage({ params }: PageProps) {
                         <p className="text-[13px] font-bold text-foreground">{r.reviewer.name}</p>
                         <Rating value={r.rating} size={12} />
                       </div>
+                      {r.verifiedPurchase && (
+                        <Badge variant="success" size="sm" className="ml-auto">
+                          Verified
+                        </Badge>
+                      )}
                     </div>
                     {r.content && (
                       <p className="mt-2.5 text-[13px] leading-relaxed text-muted-fg">{r.content}</p>
@@ -328,6 +351,27 @@ export default async function CourseDetailPage({ params }: PageProps) {
                 ))}
               </div>
             )}
+
+            <div className="mt-6">
+              <ReviewForm
+                targetType="COURSE"
+                targetId={course.id}
+                targetName={course.title}
+                existing={
+                  myReview && myReview.content
+                    ? { id: myReview.id, rating: myReview.rating, content: myReview.content }
+                    : null
+                }
+                canReview={Boolean(enrollment)}
+                ineligibleReason={
+                  currentUser?.id === course.teacherId
+                    ? "You cannot review your own course."
+                    : currentUser
+                      ? "Enroll in this course to leave a review."
+                      : undefined
+                }
+              />
+            </div>
           </section>
         </div>
 

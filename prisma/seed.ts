@@ -1301,6 +1301,41 @@ async function main() {
     msgIdx++;
   }
 
+  // ---------------- Wishlist (Phase 4) ----------------
+  const webCourse = courses.web.id;
+  await db.wishlistItem.create({
+    data: { userId: students.shawon.id, type: "COURSE", courseId: webCourse },
+  });
+  await db.wishlistItem.create({
+    data: { userId: students.shawon.id, type: "TEACHER", teacherId: teachers.nusrat.id },
+  });
+
+  // Student's own course review + a flagged review for the admin demo.
+  await db.review.create({
+    data: {
+      reviewerId: students.shawon.id,
+      rating: 5,
+      content:
+        "This bootcamp took me from zero to deploying my own full-stack app. The React module and the live Q&A sessions were fantastic.",
+      status: "PUBLISHED",
+      verifiedPurchase: true,
+      targetType: "COURSE",
+      courseId: webCourse,
+    },
+  });
+  await db.review.create({
+    data: {
+      reviewerId: students.arif.id,
+      rating: 2,
+      content: "Content was okay but the pace was too fast for me.",
+      status: "FLAGGED",
+      verifiedPurchase: true,
+      targetType: "COURSE",
+      courseId: courses.ml.id,
+      reportCount: 3,
+    },
+  });
+
   // ---------------- Announcements ----------------
   await db.announcement.create({
     data: {

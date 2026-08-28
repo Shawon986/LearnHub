@@ -12,7 +12,7 @@ import { UserMenu } from "@/components/layout/user-menu";
 
 const NAV_LINKS = [
   { label: "Courses", href: "/courses" },
-  { label: "Teachers", href: "/#teachers" },
+  { label: "Teachers", href: "/teachers" },
   { label: "Live Classes", href: "/#live" },
   { label: "Recorded Classes", href: "/#recorded" },
   { label: "Become a Teacher", href: "/register" },
@@ -61,9 +61,9 @@ export function SiteHeader({ user }: { user: HeaderUser | null }) {
         </nav>
 
         <div className="flex items-center gap-1.5">
-          {/* Search (Phase 4: full search page) */}
+          {/* Search */}
           <Link
-            href="/#categories"
+            href="/search"
             aria-label="Search courses and teachers"
             className="mr-1 hidden h-9 items-center gap-2 rounded-full border border-line bg-card px-3.5 text-[13px] text-faint-fg transition-colors hover:border-line-strong sm:inline-flex"
           >

@@ -259,8 +259,8 @@ export default async function HomePage() {
         />
         <RevealGroup className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {teacherCards.map((t) => (
-            <RevealItem key={t.id}>
-              <TeacherCard teacher={t} />
+            <RevealItem key={t.id} className="h-full">
+              <TeacherCard teacher={t} href={`/teachers/${t.id}`} />
             </RevealItem>
           ))}
         </RevealGroup>

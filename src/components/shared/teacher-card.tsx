@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BadgeCheck, MessageSquare } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
@@ -19,9 +20,9 @@ export interface TeacherCardData {
   location: string | null;
 }
 
-export function TeacherCard({ teacher }: { teacher: TeacherCardData }) {
-  return (
-    <Card hoverable className="flex flex-col items-center gap-3 p-6 text-center">
+export function TeacherCard({ teacher, href }: { teacher: TeacherCardData; href?: string }) {
+  const inner = (
+    <Card hoverable={Boolean(href)} className="flex h-full flex-col items-center gap-3 p-6 text-center">
       <div className="relative">
         <Avatar name={teacher.name} src={teacher.avatarUrl} size="lg" />
         {teacher.verified && (
@@ -66,9 +67,18 @@ export function TeacherCard({ teacher }: { teacher: TeacherCardData }) {
         </div>
         <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-accent">
           <MessageSquare className="h-3.5 w-3.5" />
-          Book session
+          View profile
         </span>
       </div>
     </Card>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="block h-full" aria-label={teacher.name}>
+        {inner}
+      </Link>
+    );
+  }
+  return inner;
 }
