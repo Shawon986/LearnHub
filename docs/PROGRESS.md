@@ -11,7 +11,8 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 | 3 | Courses/LMS | ✅ Complete | build ✅ lint ✅ progress rollup tested ✅ |
 | 4 | Discovery | ✅ Complete | build ✅ lint ✅ search/profile/reviews tested ✅ |
 | 5 | Booking & tutoring | ✅ Complete | build ✅ lint ✅ availability engine + reminders tested ✅ |
-| 6–15 | … | ⬜ Pending | — |
+| 6 | Payments & wallet | ✅ Complete | build ✅ lint ✅ lifecycle/idempotency/mismatch/refund tested ✅ |
+| 7–15 | … | ⬜ Pending | — |
 
 ## Phase 1 — delivered
 
@@ -78,10 +79,23 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 - [x] Seed: reminder-due session, past-accepted session for outcome buttons
 - [x] Verified: lint clean, build green, availability API conflict-exclusion, reminders, outcome section all confirmed
 
-## Known next steps (Phase 6 kickoff)
+## Phase 6 — delivered
 
-1. Payment provider abstraction: PaymentProvider interface + bKash/Nagad/Rocket/Stripe implementations + DEV sandbox provider (documented credential requirements)
-2. Checkout UI: order summary → method selection → redirect → return URL; webhook endpoints with signature verification + idempotency (duplicate webhooks = no-ops)
-3. Commission engine: global/teacher/course rates from settings, wallet credit (pending → available), withdrawal flow already built
-4. Wire payments into enrollment (paid courses) and bookings (collect at accept); refunds
-5. `docs/` deep-dives as their subsystems land: database.md, authentication.md, payments.md, live-classes.md, recorded-classes.md, video-storage.md, security.md, deployment.md, environment-variables.md
+- [x] **Provider abstraction**: `PaymentProvider` interface + DEV sandbox, bKash (tokenized grant/create/execute), Nagad (signed PGW), Rocket (PGW), Stripe (REST checkout + timing-safe HMAC webhook verification) — real API shapes, clear not-configured errors, `PAYMENT_PROVIDERS` controls availability
+- [x] **Checkout**: order summary → method selection → gateway redirect → return-URL re-verification → animated success page with transaction details; sandbox gateway page (`/checkout/[id]/dev-pay`) with success/fail simulation
+- [x] **Webhooks**: `/api/webhooks/[provider]` with per-provider verification; unknown references + invalid signatures rejected
+- [x] **Engine invariants** (verified by automated lifecycle test): frontend can never complete a payment · idempotent completion (replay = no-op) · amount-mismatch rejection · commission split (15% → ৳525/৳2,975 on ৳3,500) · atomic refunds reversing payment + commission + wallet + enrollment
+- [x] **Commission resolution**: course → teacher → global overrides via settings keys
+- [x] **Wiring**: paid course "Enroll" → checkout; booking acceptance creates the payment order + checkout link notification; student payments page shows "Complete payment →" for pending orders
+- [x] **Admin payments**: filterable ledger with lifetime revenue + refund flow
+- [x] Docs: `docs/payments.md` (architecture, credentials, invariants, webhooks)
+- [x] Verified: lint clean, build green (56 routes), lifecycle/idempotency/mismatch/refund tests pass, checkout + sandbox + admin pages render, zero server errors
+
+## Known next steps (Phase 7 kickoff)
+
+1. Live classroom: teacher "start class" → LIVE state, student "join" (registered/paid only), participant presence
+2. Classroom UI: main video area, participant/chat side panel, bottom control bar, mobile layout; WebRTC via a provider abstraction (credential requirements documented) with a local dev fallback
+3. Realtime layer: chat messages, raised hands, reactions, polls with results, attendance tracking (joinedAt/leftAt → PRESENT/LATE/ABSENT)
+4. Recording toggle → LiveClassRecording row (actual capture with provider in production; statuses wired)
+5. Reminders for live classes (like booking reminders) + "starting now" notifications
+6. `docs/` deep-dives as their subsystems land: database.md, authentication.md, live-classes.md, recorded-classes.md, video-storage.md, security.md, deployment.md, environment-variables.md

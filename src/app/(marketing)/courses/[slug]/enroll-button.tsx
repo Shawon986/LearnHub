@@ -6,6 +6,7 @@ import { ArrowRight, Lock, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { enrollFree } from "@/lib/actions/enroll";
+import { initiateCoursePurchase } from "@/lib/actions/payment";
 
 export function EnrollButton({
   courseId,
@@ -30,23 +31,33 @@ export function EnrollButton({
     );
   }
 
-  if (price > 0) {
-    return (
-      <div className="space-y-2">
-        <Button className="w-full" size="lg" disabled leftIcon={<Lock className="h-4 w-4" />}>
-          Enroll now
-        </Button>
-        <p className="text-center text-[11px] font-semibold text-faint-fg">
-          Payments (bKash · Nagad · Rocket · Stripe) arrive in Phase 6
-        </p>
-      </div>
-    );
-  }
-
   if (!hasSession) {
     return (
       <Button href={`/login?next=/courses/${courseId}`} className="w-full" size="lg">
         Sign in to enroll
+      </Button>
+    );
+  }
+
+  if (price > 0) {
+    return (
+      <Button
+        className="w-full"
+        size="lg"
+        loading={pending}
+        leftIcon={<Lock className="h-4 w-4" />}
+        onClick={() => {
+          startTransition(async () => {
+            const result = await initiateCoursePurchase(courseId);
+            if (!result.ok) {
+              toast({ title: result.error, variant: "error" });
+            } else {
+              router.push(result.redirectUrl);
+            }
+          });
+        }}
+      >
+        Enroll now — secure checkout
       </Button>
     );
   }

@@ -365,11 +365,43 @@ export async function respondBooking(input: { bookingId: string; action: "ACCEPT
 
     const status = data.action === "ACCEPT" ? "ACCEPTED" : "DECLINED";
     await db.booking.update({ where: { id: booking.id }, data: { status } });
+
+    // On accept: create the payment order so the student can complete
+    // checkout (Phase 6). Payment is required to confirm the session.
+    let checkoutPath: string | null = null;
+    if (data.action === "ACCEPT" && booking.price > 0) {
+      const existing = await db.payment.findFirst({
+        where: { bookingId: booking.id, purpose: "BOOKING", status: { in: ["PENDING", "COMPLETED"] } },
+      });
+      if (!existing) {
+        const payment = await db.payment.create({
+          data: {
+            studentId: booking.studentId,
+            amount: booking.price,
+            currency: "BDT",
+            method: "DEV",
+            provider: "DEV",
+            status: "PENDING",
+            purpose: "BOOKING",
+            bookingId: booking.id,
+            metadata: { description: `1-on-1 session with ${user.name}` },
+          },
+        });
+        checkoutPath = `/checkout/${payment.id}`;
+      }
+    }
+
     await createNotification({
       userId: booking.studentId,
       type: data.action === "ACCEPT" ? "BOOKING_ACCEPTED" : "BOOKING_CANCELLED",
-      title: data.action === "ACCEPT" ? "Booking confirmed ✅" : "Booking declined",
-      body: `${user.name} ${data.action === "ACCEPT" ? "accepted" : "declined"} your session on ${booking.startsAt.toDateString()}.`,
+      title: data.action === "ACCEPT" ? "Booking accepted! 🎉" : "Booking declined",
+      body:
+        data.action === "ACCEPT"
+          ? `${user.name} accepted your session on ${booking.startsAt.toDateString()}.${
+              checkoutPath ? " Complete payment to confirm your seat." : ""
+            }`
+          : `${user.name} declined your session on ${booking.startsAt.toDateString()}.`,
+      ...(checkoutPath ? { data: { checkoutPath } } : {}),
     });
     await logAudit({
       actorId: user.id,

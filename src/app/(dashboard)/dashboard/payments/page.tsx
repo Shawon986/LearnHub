@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowDownLeft, ArrowUpRight, Receipt } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -77,6 +78,14 @@ export default async function PaymentsPage() {
                   <span className="w-24 text-right font-display text-[14px] font-extrabold text-foreground">
                     {formatBDT(p.amount)}
                   </span>
+                  {p.status === "PENDING" && (
+                    <Link
+                      href={`/checkout/${p.id}`}
+                      className="shrink-0 rounded-xl bg-brand-soft px-3 py-2 text-[11px] font-bold text-brand-fg transition-colors hover:bg-brand-soft/70"
+                    >
+                      Complete payment →
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
