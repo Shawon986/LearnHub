@@ -1,26 +1,196 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ============================================================
+   Design tokens — LearnHub
+   Light and dark are designed separately (dark is not an
+   inversion of light). Semantic tokens feed Tailwind utilities:
+   bg-background, text-foreground, bg-card, border-line,
+   bg-brand, text-muted-fg, shadow-lift, animate-float …
+   ============================================================ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f6f6fb;
+  --foreground: #101223;
+  --card: #ffffff;
+  --card-2: #f1f1f8;
+  --line: #e4e4f0;
+  --line-strong: #d3d3e4;
+  --muted-fg: #5d6478;
+  --faint-fg: #8b91a7;
+  --brand: #6d28d9;
+  --brand-hover: #5b21b6;
+  --brand-soft: #ede9fe;
+  --brand-fg: #5b21b6;
+  --accent: #0d9488;
+  --accent-soft: #ccfbf1;
+  --gold: #d97706;
+  --gold-soft: #fef3c7;
+  --danger: #e11d48;
+  --danger-soft: #ffe4e6;
+  --success: #059669;
+  --success-soft: #d1fae5;
+  --soft-shadow: 0 1px 2px rgb(16 18 35 / 0.04), 0 6px 20px rgb(16 18 35 / 0.06);
+  --lift-shadow: 0 2px 4px rgb(16 18 35 / 0.05), 0 16px 40px rgb(16 18 35 / 0.12);
+  --glow-shadow: 0 0 0 1px rgb(109 40 217 / 0.12), 0 10px 40px rgb(109 40 217 / 0.25);
+}
+
+.dark {
+  --background: #0b0b14;
+  --foreground: #eef0fb;
+  --card: #14141f;
+  --card-2: #1b1b2a;
+  --line: #26263c;
+  --line-strong: #33334e;
+  --muted-fg: #9aa1b8;
+  --faint-fg: #6f7690;
+  --brand: #8b5cf6;
+  --brand-hover: #a78bfa;
+  --brand-soft: #241a45;
+  --brand-fg: #c4b5fd;
+  --accent: #2dd4bf;
+  --accent-soft: #0f332e;
+  --gold: #fbbf24;
+  --gold-soft: #3a2d10;
+  --danger: #fb7185;
+  --danger-soft: #3a1420;
+  --success: #34d399;
+  --success-soft: #0d3326;
+  --soft-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 20px rgb(0 0 0 / 0.35);
+  --lift-shadow: 0 2px 4px rgb(0 0 0 / 0.45), 0 16px 40px rgb(0 0 0 / 0.5);
+  --glow-shadow: 0 0 0 1px rgb(139 92 246 / 0.25), 0 10px 44px rgb(139 92 246 / 0.3);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-card: var(--card);
+  --color-card-2: var(--card-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-muted-fg: var(--muted-fg);
+  --color-faint-fg: var(--faint-fg);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-fg: var(--brand-fg);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-jakarta), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --shadow-soft: var(--soft-shadow);
+  --shadow-lift: var(--lift-shadow);
+  --shadow-glow: var(--glow-shadow);
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-float-slow: float 11s ease-in-out infinite;
+  --animate-gradient-x: gradient-x 8s ease infinite;
+  --animate-pulse-soft: pulse-soft 3s ease-in-out infinite;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-rotate-slow: rotate-slow 16s linear infinite;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-14px); }
+  }
+  @keyframes gradient-x {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 1; }
+  }
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes rotate-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    border-color: var(--line);
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: rgb(109 40 217 / 0.25);
+  }
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer utilities {
+  /* Frosted glass surface */
+  .glass {
+    background: color-mix(in srgb, var(--card) 72%, transparent);
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    border: 1px solid var(--line);
+  }
+  /* Animated brand gradient text */
+  .text-gradient {
+    background: linear-gradient(100deg, var(--brand) 10%, var(--accent) 50%, var(--brand) 90%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  /* Soft gradient surface for hero/cards */
+  .bg-brand-surface {
+    background:
+      radial-gradient(60% 80% at 20% 0%, rgb(109 40 217 / 0.14), transparent 60%),
+      radial-gradient(50% 70% at 85% 15%, rgb(13 148 136 / 0.12), transparent 60%),
+      var(--background);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .mask-fade-x {
+    -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  }
+}
+
+/* Respect reduced motion globally for pure-CSS animation */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

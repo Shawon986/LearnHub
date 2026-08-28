@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎓 LearnHub — Premium Education Marketplace (Bangladesh)
 
-## Getting Started
+A production-grade education marketplace: **live classes, recorded classes, 1-on-1 tutoring, courses, payments (bKash/Nagad/Rocket/Stripe), AI learning features** — built with a premium design system.
 
-First, run the development server:
+**Status:** Phase 1 complete (architecture, database, auth, design system, dashboards, landing page). See [`docs/PROGRESS.md`](docs/PROGRESS.md) and [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md).
+
+## Tech stack
+
+Next.js 16 (App Router) · React 19 · TypeScript (strict) · Prisma 6 (SQLite dev → PostgreSQL prod) · Tailwind CSS v4 design tokens · Motion · Zod 4 · jose JWT auth · lucide-react
+
+## Quickstart
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+
+# 1. Environment (dev defaults work out of the box)
+cp .env.example .env        # fill AUTH_SECRET (openssl rand -hex 32)
+
+# 2. Database
+npm run db:push             # create SQLite schema (prisma/dev.db)
+npm run db:seed             # demo data (idempotent)
+
+# 3. Run
+npm run dev                 # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Demo accounts (password: `Password123!`)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Role | Email |
+|---|---|
+| Super admin | `admin@example.com` |
+| Teacher (verified) | `ayesha@example.com` |
+| Student | `student@example.com` |
+| Teacher (verification pending — admin queue demo) | `mahmudul@example.com` |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Scripts
 
-## Learn More
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Dev server (Turbopack) |
+| `npm run build` | Production build (typecheck + lint gate) |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | `tsc --noEmit` (run after `next build` once to generate route types) |
+| `npm run db:push` / `db:seed` / `db:studio` | Prisma workflow |
 
-To learn more about Next.js, take a look at the following resources:
+## Project layout
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+prisma/           schema (63 models) + seed
+src/app/          (marketing) (auth) (dashboard) (teacher) (admin) route groups, api/*
+src/components/   ui/ (design system) · layout/ (shells) · landing/ · shared/ (cards)
+src/lib/          auth · payments · video · ai · realtime abstractions, db, api, validation…
+src/proxy.ts      edge auth gate + security headers
+docs/             IMPLEMENTATION_PLAN.md · PROGRESS.md
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Configuration
 
-## Deploy on Vercel
+All credentials live in env vars — see [`.env.example`](.env.example) for the complete list (payment gateways, video providers, AI providers, email). Never commit `.env`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Roadmap
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+15 phases — payments, live classrooms, recorded-class library with protected playback, messaging, certificates, gamification, AI features, analytics, 3D/animations, hardening, deployment. Tracked in [`docs/PROGRESS.md`](docs/PROGRESS.md).
