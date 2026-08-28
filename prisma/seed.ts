@@ -663,7 +663,7 @@ async function main() {
           "Get a shareable certificate on completion",
         ],
         tags: cs.title.split(" ").slice(0, 4),
-        status: isDraft ? "DRAFT" : "PUBLISHED",
+        status: isDraft ? "REVIEW" : "PUBLISHED",
         isFeatured: cs.featured,
         featuredAt: cs.featured ? daysFromNow(-5) : null,
         approvedById: isDraft ? null : admin.id,
@@ -1247,6 +1247,47 @@ async function main() {
       createdAt: hoursFromNow(-4),
     },
   });
+
+  // ---------------- Booking payment orders (Phase 6 flow) ----------------
+  // Accepted upcoming bookings need a PENDING payment order, exactly like
+  // respondBooking creates them — students pay from the bookings page.
+  const acceptedBookings = await db.booking.findMany({
+    where: { status: "ACCEPTED", price: { gt: 0 } },
+    include: { teacher: { select: { name: true } } },
+  });
+  for (const b of acceptedBookings) {
+    if (b.endsAt <= new Date()) continue; // past sessions use the outcome flow
+    const existing = await db.payment.findFirst({
+      where: { bookingId: b.id, purpose: "BOOKING" },
+    });
+    if (!existing) {
+      const payment = await db.payment.create({
+        data: {
+          studentId: b.studentId,
+          amount: b.price,
+          currency: "BDT",
+          method: "DEV",
+          provider: "DEV",
+          status: "PENDING",
+          purpose: "BOOKING",
+          bookingId: b.id,
+          metadata: { description: `1-on-1 session with ${b.teacher.name}` },
+        },
+      });
+      // Actionable notification: the student can pay straight from the bell.
+      await db.notification.create({
+        data: {
+          userId: b.studentId,
+          type: "BOOKING_ACCEPTED",
+          title: "Payment ready for your session 💳",
+          body: `${b.teacher.name} accepted your session on ${b.startsAt.toDateString()} — complete payment to confirm your seat.`,
+          data: { checkoutPath: `/checkout/${payment.id}` },
+          read: false,
+          createdAt: new Date(),
+        },
+      });
+    }
+  }
 
   // ---------------- Certificate + achievement ----------------
   const cert = await db.certificate.create({

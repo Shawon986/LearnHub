@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BookOpen, CheckCircle2, Clock, PlayCircle } from "lucide-react";
+import { Award, BookOpen, CheckCircle2, Clock, PlayCircle } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/card";
@@ -18,16 +18,18 @@ export default async function MyCoursesPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login?next=/dashboard/courses");
 
-  const [enrollments, progress] = await Promise.all([
+  const [enrollments, progress, certificates] = await Promise.all([
     db.enrollment.findMany({
       where: { studentId: user.id },
       include: { course: { include: { teacher: true, category: true } } },
       orderBy: { purchasedAt: "desc" },
     }),
     db.courseProgress.findMany({ where: { studentId: user.id } }),
+    db.certificate.findMany({ where: { studentId: user.id }, select: { enrollmentId: true, certificateNumber: true } }),
   ]);
 
   const progressByCourse = new Map(progress.map((p) => [p.courseId, p]));
+  const certByEnrollment = new Map(certificates.map((c) => [c.enrollmentId, c.certificateNumber]));
 
   return (
     <div className="space-y-6">
@@ -98,13 +100,24 @@ export default async function MyCoursesPage() {
                       {e.pricePaid === 0 ? "Free" : formatBDT(e.pricePaid)}
                     </span>
                   </div>
-                  <Link
-                    href={`/dashboard/courses/${e.courseId}/learn`}
-                    className="inline-flex items-center gap-1 text-[12px] font-bold text-brand-fg transition-colors hover:underline"
-                  >
-                    <PlayCircle className="h-3.5 w-3.5" />
-                    {completed ? "Review course" : pct > 0 ? "Continue learning" : "Start learning"}
-                  </Link>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Link
+                      href={`/dashboard/courses/${e.courseId}/learn`}
+                      className="inline-flex items-center gap-1 text-[12px] font-bold text-brand-fg transition-colors hover:underline"
+                    >
+                      <PlayCircle className="h-3.5 w-3.5" />
+                      {completed ? "Review course" : pct > 0 ? "Continue learning" : "Start learning"}
+                    </Link>
+                    {completed && certByEnrollment.get(e.id) && (
+                      <Link
+                        href={`/verify/${certByEnrollment.get(e.id)}`}
+                        target="_blank"
+                        className="inline-flex items-center gap-1 text-[12px] font-bold text-gold transition-colors hover:underline"
+                      >
+                        <Award className="h-3.5 w-3.5" /> View certificate
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </Card>
             );

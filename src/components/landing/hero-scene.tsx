@@ -2,13 +2,16 @@
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import type { Mesh, Group } from "three";
+import type { Group, Mesh } from "three";
 
 // 3D education ecosystem for the landing hero.
+// Organized composition: a central learning stack (laptop + video screen)
+// flanked symmetrically by teacher/student, with course cards orbiting a
+// ground ring and books fanned on a pedestal. Low-poly primitives only.
+//
 // Performance safeguards: lazy-loaded (dynamic import), desktop-only
-// (parent hides below lg), pauses when offscreen, skipped entirely
-// under prefers-reduced-motion. Low-poly primitives only — no model
-// assets, no post-processing.
+// (parent hides below lg), demand-frameloop paused offscreen, skipped
+// entirely under prefers-reduced-motion.
 
 function useReducedMotionFlag(): boolean {
   return useSyncExternalStore(
@@ -18,148 +21,257 @@ function useReducedMotionFlag(): boolean {
   );
 }
 
-/* ---------------- Scene pieces ---------------- */
+/* ---------------- Composition pieces ---------------- */
 
-function Book({ position, rotation, color, scale = 1 }: { position: [number, number, number]; rotation: [number, number, number]; color: string; scale?: number }) {
-  const ref = useRef<Group>(null);
+/** Central learning stack: laptop in front, glowing video screen behind. */
+function LearningStack() {
+  const group = useRef<Group>(null);
   useFrame((state) => {
-    if (!ref.current) return;
+    if (!group.current) return;
     const t = state.clock.elapsedTime;
-    ref.current.position.y = position[1] + Math.sin(t * 0.7 + position[0]) * 0.18;
-    ref.current.rotation.y += 0.0022;
+    group.current.position.y = Math.sin(t * 0.6) * 0.1;
+    group.current.rotation.y = Math.sin(t * 0.22) * 0.08;
   });
   return (
-    <group ref={ref} position={position} rotation={rotation} scale={scale}>
-      <mesh>
-        <boxGeometry args={[1.15, 0.16, 0.85]} />
-        <meshStandardMaterial color={color} roughness={0.6} />
-      </mesh>
-      <mesh position={[0, 0.09, 0]}>
-        <boxGeometry args={[1.05, 0.03, 0.75]} />
-        <meshStandardMaterial color="#ffffff" roughness={0.8} />
-      </mesh>
+    <group ref={group} position={[0, -0.15, 0]}>
+      {/* Laptop (rounded feel via metalness) */}
+      <group position={[0, -0.75, 0.35]}>
+        <mesh>
+          <boxGeometry args={[1.15, 0.06, 0.78]} />
+          <meshStandardMaterial color="#3a3a4f" roughness={0.35} metalness={0.5} />
+        </mesh>
+        <mesh position={[0, 0.38, -0.36]} rotation={[-0.32, 0, 0]}>
+          <boxGeometry args={[1.15, 0.72, 0.035]} />
+          <meshStandardMaterial color="#15152a" roughness={0.3} metalness={0.4} />
+        </mesh>
+        <mesh position={[0, 0.36, -0.33]} rotation={[-0.32, 0, 0]}>
+          <planeGeometry args={[1.02, 0.58]} />
+          <meshBasicMaterial color="#8b5cf6" />
+        </mesh>
+      </group>
+
+      {/* Video screen behind with emissive glow */}
+      <group position={[0, 0.45, -0.35]}>
+        <mesh>
+          <boxGeometry args={[1.35, 0.85, 0.05]} />
+          <meshStandardMaterial color="#1a1a2e" roughness={0.3} metalness={0.45} />
+        </mesh>
+        <mesh position={[0, 0, 0.035]}>
+          <planeGeometry args={[1.2, 0.7]} />
+          <meshBasicMaterial color="#0d9488" />
+        </mesh>
+        <mesh position={[0, 0, 0.065]} rotation={[0, 0, -Math.PI / 2]}>
+          <coneGeometry args={[0.09, 0.18, 3]} />
+          <meshBasicMaterial color="#ffffff" />
+        </mesh>
+        {/* Screen glow */}
+        <mesh position={[0, 0, -0.02]}>
+          <planeGeometry args={[1.5, 1.05]} />
+          <meshBasicMaterial color="#0d9488" transparent opacity={0.16} />
+        </mesh>
+      </group>
+
+      {/* Small stacked books at the laptop's side */}
+      <group position={[0.85, -0.72, 0.25]} rotation={[0, 0.4, 0]}>
+        <mesh>
+          <boxGeometry args={[0.5, 0.07, 0.36]} />
+          <meshStandardMaterial color="#8b5cf6" roughness={0.55} />
+        </mesh>
+        <mesh position={[0, 0.075, 0]} rotation={[0, 0.15, 0]}>
+          <boxGeometry args={[0.46, 0.07, 0.32]} />
+          <meshStandardMaterial color="#2dd4bf" roughness={0.55} />
+        </mesh>
+        <mesh position={[0, 0.15, 0]}>
+          <boxGeometry args={[0.42, 0.07, 0.28]} />
+          <meshStandardMaterial color="#f59e0b" roughness={0.55} />
+        </mesh>
+      </group>
     </group>
   );
 }
 
-function Laptop({ position }: { position: [number, number, number] }) {
-  const ref = useRef<Group>(null);
+/** Floating graduation cap + orbiting "knowledge orb". */
+function FloatingAccents() {
+  const caps = useRef<Group>(null);
+  const orb = useRef<Group>(null);
   useFrame((state) => {
-    if (!ref.current) return;
-    ref.current.position.y = position[1] + Math.sin(state.clock.elapsedTime * 0.6 + 1.2) * 0.15;
-    ref.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.25) * 0.3;
+    const t = state.clock.elapsedTime;
+    if (caps.current) {
+      caps.current.rotation.y = Math.sin(t * 0.5) * 0.25;
+      caps.current.position.y = Math.sin(t * 0.9) * 0.12;
+    }
+    if (orb.current) {
+      orb.current.rotation.y += 0.004;
+    }
   });
   return (
-    <group ref={ref} position={position} rotation={[0.1, 0, 0]}>
-      <mesh>
-        <boxGeometry args={[1.3, 0.07, 0.9]} />
-        <meshStandardMaterial color="#2d2d3d" roughness={0.5} metalness={0.3} />
-      </mesh>
-      <mesh position={[0, 0.42, -0.42]} rotation={[-0.25, 0, 0]}>
-        <boxGeometry args={[1.3, 0.8, 0.04]} />
-        <meshStandardMaterial color="#101223" roughness={0.4} />
-      </mesh>
-      <mesh position={[0, 0.4, -0.38]} rotation={[-0.25, 0, 0]}>
-        <planeGeometry args={[1.16, 0.66]} />
-        <meshBasicMaterial color="#6d28d9" />
-      </mesh>
-    </group>
+    <>
+      {/* Graduation caps floating top-left / bottom-right */}
+      <group ref={caps} position={[-1.7, 1.35, 0.1]}>
+        <mesh rotation={[0, 0.4, 0]}>
+          <boxGeometry args={[0.34, 0.04, 0.34]} />
+          <meshStandardMaterial color="#101223" roughness={0.4} />
+        </mesh>
+        <mesh position={[0, 0.09, 0]}>
+          <cylinderGeometry args={[0.1, 0.12, 0.12, 16]} />
+          <meshStandardMaterial color="#101223" roughness={0.4} />
+        </mesh>
+        <mesh position={[0.12, 0.1, 0]}>
+          <sphereGeometry args={[0.03, 8, 8]} />
+          <meshStandardMaterial color="#f59e0b" roughness={0.4} />
+        </mesh>
+      </group>
+      <group position={[1.75, -1.15, -0.3]} rotation={[0, -0.5, 0]} scale={0.8}>
+        <mesh>
+          <boxGeometry args={[0.34, 0.04, 0.34]} />
+          <meshStandardMaterial color="#101223" roughness={0.4} />
+        </mesh>
+        <mesh position={[0, 0.09, 0]}>
+          <cylinderGeometry args={[0.1, 0.12, 0.12, 16]} />
+          <meshStandardMaterial color="#101223" roughness={0.4} />
+        </mesh>
+        <mesh position={[0.12, 0.1, 0]}>
+          <sphereGeometry args={[0.03, 8, 8]} />
+          <meshStandardMaterial color="#2dd4bf" roughness={0.4} />
+        </mesh>
+      </group>
+
+      {/* Knowledge orb with ring, high above the stack */}
+      <group ref={orb} position={[0, 1.55, -0.55]}>
+        <mesh>
+          <sphereGeometry args={[0.16, 24, 24]} />
+          <meshStandardMaterial color="#8b5cf6" emissive="#6d28d9" emissiveIntensity={0.55} roughness={0.25} metalness={0.3} />
+        </mesh>
+        <mesh rotation={[Math.PI / 2.6, 0, 0]}>
+          <torusGeometry args={[0.26, 0.008, 8, 48]} />
+          <meshBasicMaterial color="#2dd4bf" transparent opacity={0.7} />
+        </mesh>
+      </group>
+    </>
   );
 }
 
-function VideoScreen({ position }: { position: [number, number, number] }) {
-  const ref = useRef<Mesh>(null);
+/** Teacher (left) and student (right), mirrored, facing the center. */
+function Person({
+  side,
+  color,
+  isTeacher,
+}: {
+  side: 1 | -1;
+  color: string;
+  isTeacher: boolean;
+}) {
+  const group = useRef<Group>(null);
   useFrame((state) => {
-    if (!ref.current) return;
-    ref.current.position.y = position[1] + Math.sin(state.clock.elapsedTime * 0.8 + 0.6) * 0.2;
+    if (!group.current) return;
+    const t = state.clock.elapsedTime;
+    group.current.position.y = -0.62 + Math.sin(t * 0.7 + (side === 1 ? 0 : 2)) * 0.08;
+    group.current.rotation.y = side * 0.5 + Math.sin(t * 0.4) * 0.06;
   });
   return (
-    <group position={position}>
+    <group ref={group} position={[side * 1.35, -0.62, 0.15]} rotation={[0, side * 0.5, 0]}>
       <mesh>
-        <boxGeometry args={[1.6, 1, 0.06]} />
-        <meshStandardMaterial color="#1a1a2e" roughness={0.4} />
-      </mesh>
-      <mesh ref={ref} position={[0, 0, 0.04]}>
-        <planeGeometry args={[1.44, 0.84]} />
-        <meshBasicMaterial color="#0d9488" />
-      </mesh>
-      {/* Play triangle */}
-      <mesh position={[0, 0, 0.08]}>
-        <coneGeometry args={[0.12, 0.22, 3]} />
-        <meshBasicMaterial color="#ffffff" />
-      </mesh>
-    </group>
-  );
-}
-
-function Person({ position, color }: { position: [number, number, number]; color: string }) {
-  const ref = useRef<Group>(null);
-  useFrame((state) => {
-    if (!ref.current) return;
-    ref.current.position.y = position[1] + Math.sin(state.clock.elapsedTime * 0.55 + position[0] * 2) * 0.12;
-  });
-  return (
-    <group ref={ref} position={position}>
-      <mesh>
-        <sphereGeometry args={[0.22, 16, 16]} />
+        <sphereGeometry args={[0.19, 20, 20]} />
         <meshStandardMaterial color={color} roughness={0.5} />
       </mesh>
-      <mesh position={[0, -0.3, 0]}>
-        <cylinderGeometry args={[0.16, 0.2, 0.3, 16]} />
+      <mesh position={[0, -0.26, 0]}>
+        <cylinderGeometry args={[0.13, 0.17, 0.26, 18]} />
         <meshStandardMaterial color="#ffffff" roughness={0.7} />
       </mesh>
+      {isTeacher && (
+        /* Graduation-cap style crown */
+        <mesh position={[0, 0.21, 0]}>
+          <cylinderGeometry args={[0.14, 0.14, 0.03, 18]} />
+          <meshStandardMaterial color="#101223" roughness={0.5} />
+        </mesh>
+      )}
     </group>
   );
 }
 
-function CourseCard({ position, rotation, color }: { position: [number, number, number]; rotation: [number, number, number]; color: string }) {
-  const ref = useRef<Group>(null);
-  useFrame((state) => {
-    if (!ref.current) return;
-    ref.current.position.y = position[1] + Math.sin(state.clock.elapsedTime * 0.65 + 2.2) * 0.15;
-    ref.current.rotation.y += 0.0015;
+/** Course cards orbiting the stack on a ring. */
+function OrbitingCards() {
+  const group = useRef<Group>(null);
+  useFrame(() => {
+    if (!group.current) return;
+    group.current.rotation.y += 0.0022;
+  });
+  const cards = [
+    { angle: 0, color: "#6d28d9", y: 0.25 },
+    { angle: (Math.PI * 2) / 3, color: "#0d9488", y: 0.5 },
+    { angle: (Math.PI * 4) / 3, color: "#f59e0b", y: 0.05 },
+  ];
+  return (
+    <group ref={group}>
+      {cards.map((c, i) => (
+        <group
+          key={i}
+          position={[Math.cos(c.angle) * 1.75, c.y, Math.sin(c.angle) * 0.6]}
+          rotation={[0, -c.angle, 0]}
+        >
+          <mesh>
+            <boxGeometry args={[0.6, 0.42, 0.04]} />
+            <meshStandardMaterial color="#ffffff" roughness={0.9} />
+          </mesh>
+          <mesh position={[0, 0.1, 0.025]}>
+            <boxGeometry args={[0.42, 0.12, 0.01]} />
+            <meshStandardMaterial color={c.color} roughness={0.6} />
+          </mesh>
+          <mesh position={[0, -0.12, 0.025]}>
+            <boxGeometry args={[0.34, 0.05, 0.01]} />
+            <meshStandardMaterial color="#d1d5db" roughness={0.8} />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+/** Ground ring that grounds the composition. */
+function GroundRing() {
+  const ring = useRef<Mesh>(null);
+  useFrame(() => {
+    if (!ring.current) return;
+    ring.current.rotation.z += 0.0015;
   });
   return (
-    <group ref={ref} position={position} rotation={rotation}>
-      <mesh>
-        <boxGeometry args={[0.7, 0.5, 0.05]} />
-        <meshStandardMaterial color="#ffffff" roughness={0.9} />
-      </mesh>
-      <mesh position={[0, 0.12, 0.03]}>
-        <boxGeometry args={[0.5, 0.14, 0.01]} />
-        <meshStandardMaterial color={color} roughness={0.6} />
-      </mesh>
-    </group>
+    <mesh ref={ring} rotation={[Math.PI / 2.15, 0, 0]} position={[0, -1.15, 0]}>
+      <torusGeometry args={[1.9, 0.015, 8, 64]} />
+      <meshBasicMaterial color="#8b5cf6" transparent opacity={0.35} />
+    </mesh>
   );
 }
 
-function FloatingParticles({ count = 14 }: { count?: number }) {
-  const ref = useRef<Group>(null);
+/** Confined ambient particles inside a shell around the stack. */
+function Particles({ count = 16 }: { count?: number }) {
+  const group = useRef<Group>(null);
   useFrame(() => {
-    if (!ref.current) return;
-    ref.current.rotation.y += 0.001;
+    if (!group.current) return;
+    group.current.rotation.y += 0.0012;
   });
-  // Deterministic pseudo-random layout (pure — no Math.random in render).
   const particles = Array.from({ length: count }, (_, i) => {
     const seeded = (salt: number) => {
       const x = Math.sin(i * 127.1 + salt * 311.7) * 43758.5453;
       return x - Math.floor(x);
     };
+    const theta = seeded(1) * Math.PI * 2;
+    const radius = 0.8 + seeded(2) * 1.4;
     return {
       pos: [
-        (seeded(1) - 0.5) * 5,
-        (seeded(2) - 0.5) * 3.4,
-        (seeded(3) - 0.5) * 2.5,
+        Math.cos(theta) * radius,
+        -0.8 + seeded(3) * 1.9,
+        Math.sin(theta) * radius * 0.55,
       ] as [number, number, number],
-      scale: 0.015 + seeded(4) * 0.035,
+      scale: 0.012 + seeded(4) * 0.03,
+      color: i % 3 === 0 ? "#8b5cf6" : i % 3 === 1 ? "#2dd4bf" : "#ffffff",
     };
   });
   return (
-    <group ref={ref}>
+    <group ref={group}>
       {particles.map((p, i) => (
         <mesh key={i} position={p.pos} scale={p.scale}>
           <sphereGeometry args={[1, 6, 6]} />
-          <meshBasicMaterial color={i % 3 === 0 ? "#8b5cf6" : i % 3 === 1 ? "#2dd4bf" : "#ffffff"} transparent opacity={0.55} />
+          <meshBasicMaterial color={p.color} transparent opacity={0.5} />
         </mesh>
       ))}
     </group>
@@ -173,8 +285,8 @@ function CameraRig() {
   const cam = useRef(camera);
   useFrame(() => {
     const c = cam.current;
-    c.position.x += (pointer.x * 0.35 - c.position.x) * 0.04;
-    c.position.y += (-pointer.y * 0.25 - c.position.y) * 0.04;
+    c.position.x += (pointer.x * 0.32 - c.position.x) * 0.04;
+    c.position.y += (-pointer.y * 0.22 - c.position.y) * 0.04;
     c.lookAt(0, 0, 0);
   });
   return null;
@@ -192,7 +304,6 @@ function RenderWhileVisible() {
     observer.observe(gl.domElement);
     return () => observer.disconnect();
   }, [gl]);
-  // Demand frameloop: render only while the canvas is on screen.
   useFrame(() => {
     if (visibleRef.current) invalidate();
   });
@@ -207,32 +318,26 @@ export default function HeroScene() {
 
   return (
     <Canvas
-      camera={{ position: [0, 0.2, 4.2], fov: 42 }}
+      camera={{ position: [0, 0.05, 4.1], fov: 40 }}
       dpr={[1, 1.5]}
       frameloop="demand"
       gl={{ antialias: true, alpha: true }}
       style={{ pointerEvents: "none" }}
       aria-hidden
     >
-      <ambientLight intensity={1.1} />
-      <directionalLight position={[4, 6, 4]} intensity={1.4} />
+      <ambientLight intensity={0.85} />
+      <hemisphereLight args={["#c7d2fe", "#0f172a", 0.7]} />
+      <directionalLight position={[4, 6, 4]} intensity={1.6} />
       <directionalLight position={[-4, 2, -2]} intensity={0.5} color="#8b5cf6" />
+      <directionalLight position={[0, -2, 3]} intensity={0.4} color="#2dd4bf" />
 
-      <Book position={[-1.9, 1.15, 0]} rotation={[0.2, 0.6, -0.15]} color="#8b5cf6" />
-      <Book position={[-1.35, -1.2, 0.4]} rotation={[-0.1, 1.1, 0.1]} color="#2dd4bf" scale={0.85} />
-      <Book position={[1.75, -0.5, -0.3]} rotation={[0.25, -0.7, 0.1]} color="#f59e0b" scale={0.9} />
-
-      <Laptop position={[-0.35, 0.35, 0.15]} />
-      <VideoScreen position={[1.45, 1.25, -0.1]} />
-
-      <Person position={[-1.5, 0.15, -0.5]} color="#0d9488" />
-      <Person position={[0.75, -1.15, 0.3]} color="#6d28d9" />
-
-      <CourseCard position={[1.05, 0.1, 0.6]} rotation={[0.1, -0.5, 0]} color="#6d28d9" />
-      <CourseCard position={[-0.8, 1.45, 0.3]} rotation={[0.15, 0.4, 0.05]} color="#0d9488" />
-      <CourseCard position={[1.9, -1.35, -0.4]} rotation={[-0.1, -1, 0]} color="#f59e0b" />
-
-      <FloatingParticles />
+      <GroundRing />
+      <LearningStack />
+      <FloatingAccents />
+      <Person side={-1} color="#0d9488" isTeacher />
+      <Person side={1} color="#6d28d9" isTeacher={false} />
+      <OrbitingCards />
+      <Particles />
       <CameraRig />
       <RenderWhileVisible />
     </Canvas>

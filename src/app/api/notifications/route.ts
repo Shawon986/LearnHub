@@ -23,6 +23,7 @@ export const GET = apiHandler(async (req) => {
       type: n.type,
       title: n.title,
       body: n.body,
+      data: (n.data ?? null) as { checkoutPath?: string; conversationId?: string; disputeId?: string } | null,
       read: n.read,
       createdAt: n.createdAt.toISOString(),
     })),

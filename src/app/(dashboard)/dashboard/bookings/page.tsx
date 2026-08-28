@@ -34,6 +34,18 @@ export default async function BookingsPage() {
     orderBy: { startsAt: "desc" },
   });
 
+  // Open payment orders for accepted bookings (payment confirms the seat).
+  const openPayments = await db.payment.findMany({
+    where: {
+      studentId: user.id,
+      purpose: "BOOKING",
+      status: "PENDING",
+      bookingId: { in: bookings.map((b) => b.id) },
+    },
+    select: { id: true, bookingId: true },
+  });
+  const paymentByBooking = new Map(openPayments.map((p) => [p.bookingId, p.id]));
+
   const upcoming = bookings.filter((b) => ["PENDING", "ACCEPTED"].includes(b.status));
   const past = bookings.filter((b) => !["PENDING", "ACCEPTED"].includes(b.status));
   const reviewable = past.filter((b) => b.status === "COMPLETED" && !b.reviewed);
@@ -76,6 +88,17 @@ export default async function BookingsPage() {
                   <span className="font-display text-[15px] font-extrabold text-foreground">
                     {formatBDT(b.price)}
                   </span>
+                  {b.status === "ACCEPTED" && paymentByBooking.get(b.id) && (
+                    <Link
+                      href={`/checkout/${paymentByBooking.get(b.id)}`}
+                      className="inline-flex h-9 items-center rounded-xl bg-brand px-4 text-[13px] font-bold text-white transition-colors hover:bg-brand-hover"
+                    >
+                      Complete payment →
+                    </Link>
+                  )}
+                  {b.status === "ACCEPTED" && !paymentByBooking.get(b.id) && b.price === 0 && (
+                    <Badge variant="success">Confirmed</Badge>
+                  )}
                   <ActionButton
                     variant="outline"
                     size="sm"

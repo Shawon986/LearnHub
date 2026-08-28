@@ -8,6 +8,7 @@ import {
   MessageSquare,
   Mic,
   MicOff,
+  MonitorUp,
   PenTool,
   Video,
   VideoOff,
@@ -29,6 +30,7 @@ import {
 import type { ClassroomEvent, ClassroomPoll, StrokeData } from "@/lib/live/bus";
 import { Whiteboard } from "./whiteboard";
 import { Panels } from "./panels";
+import { useWebrtc, type SignalEvent } from "./use-webrtc";
 
 export interface ClassroomProps {
   classId: string;
@@ -89,11 +91,13 @@ export function ClassroomShell(props: ClassroomProps) {
   );
   const [recording, setRecording] = useState(false);
   const [classEnded, setClassEnded] = useState(false);
+  const [signals, setSignals] = useState<SignalEvent[]>([]);
 
-  // Local UI state
-  const [micOn, setMicOn] = useState(false);
-  const [camOn, setCamOn] = useState(false);
+  // Local UI state — camera/mic start ON so media actually opens.
+  const [micOn, setMicOn] = useState(true);
+  const [camOn, setCamOn] = useState(true);
   const [panel, setPanel] = useState<"chat" | "people" | "polls" | "none">("chat");
+  const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
   const [whiteboardOpen, setWhiteboardOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [handRaised, setHandRaised] = useState(false);
@@ -202,6 +206,12 @@ export function ClassroomShell(props: ClassroomProps) {
           break;
         case "class.started":
           break;
+        case "signal":
+          setSignals((prev) => [
+            ...prev.slice(-30),
+            { from: event.from, fromName: event.fromName, to: event.to, payload: event.payload },
+          ]);
+          break;
       }
     };
 
@@ -259,6 +269,21 @@ export function ClassroomShell(props: ClassroomProps) {
           .filter((p) => p.id !== props.user.id)
           .map((p) => ({ id: p.id, name: p.name, avatarUrl: p.avatarUrl, role: "STUDENT" })),
       ];
+
+  // Dev WebRTC mesh: real camera/audio/screen-share between participants.
+  const webrtc = useWebrtc({
+    classId: props.classId,
+    myId: props.user.id,
+    active: isLive,
+    camOn,
+    micOn,
+    signals,
+  });
+
+  function streamFor(userId: string): MediaStream | null {
+    if (userId === props.user.id) return webrtc.localStream;
+    return webrtc.remoteStreams.get(userId) ?? null;
+  }
 
   return (
     <div className="flex h-screen flex-col bg-background">
@@ -323,39 +348,53 @@ export function ClassroomShell(props: ClassroomProps) {
               {people.map((p) => {
                 const muted = mutedUsers.has(p.id);
                 const hand = hands.has(p.id);
+                const stream = streamFor(p.id);
+                const own = p.id === props.user.id;
                 return (
                   <div
                     key={p.id}
                     className={cn(
-                      "relative flex min-h-28 items-center justify-center overflow-hidden rounded-2xl border border-line",
-                      p.role === "HOST" ? "bg-gradient-to-br from-brand/25 to-accent/20" : "bg-card-2",
+                      "relative flex min-h-28 items-center justify-center overflow-hidden rounded-2xl border border-line bg-card-2",
+                      p.role === "HOST" && "bg-gradient-to-br from-brand/25 to-accent/20",
                     )}
                   >
-                    <div className="flex flex-col items-center gap-2">
-                      <Avatar name={p.name} src={p.avatarUrl} size="lg" />
-                      <p className="flex items-center gap-1.5 text-[12px] font-bold text-foreground">
-                        {p.name.split(" ")[0]}
-                        {muted ? <MicOff className="h-3 w-3 text-danger" /> : <Mic className="h-3 w-3 text-success" />}
-                      </p>
-                      {hand && <Hand className="h-4 w-4 fill-gold text-gold" />}
+                    {stream && stream.getVideoTracks().length > 0 && (
+                      <video
+                        autoPlay
+                        playsInline
+                        muted={own}
+                        className="absolute inset-0 h-full w-full object-cover"
+                        ref={(el) => {
+                          if (el && el.srcObject !== stream) el.srcObject = stream;
+                        }}
+                      />
+                    )}
+                    {!stream && (
+                      <div className="flex flex-col items-center gap-2">
+                        <Avatar name={p.name} src={p.avatarUrl} size="lg" />
+                      </div>
+                    )}
+                    <div className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-lg bg-black/50 px-2 py-1 text-[11px] font-bold text-white">
+                      {p.name.split(" ")[0]}
+                      {own && " (you)"}
+                      {muted ? <MicOff className="h-3 w-3 text-danger" /> : <Mic className="h-3 w-3 text-success" />}
+                      {hand && <Hand className="h-3 w-3 fill-gold text-gold" />}
                     </div>
                     {p.role === "HOST" && (
                       <Badge variant="brand" size="sm" className="absolute left-2 top-2">
                         Host
                       </Badge>
                     )}
-                    {muted && (
-                      <Badge variant="danger" size="sm" className="absolute right-2 top-2">
-                        Muted
-                      </Badge>
-                    )}
                   </div>
                 );
               })}
-              {!props.room.url && (
+              {webrtc.mediaError && (
+                <p className="col-span-full self-end pb-2 text-center text-[11px] text-gold">{webrtc.mediaError}</p>
+              )}
+              {!webrtc.mediaError && !props.room.url && (
                 <p className="col-span-full self-end pb-2 text-center text-[11px] text-faint-fg">
-                  Audio/video connects via WebRTC when a live video provider is configured
-                  (LIVE_PROVIDER=livekit — see docs/live-classes.md).
+                  Camera & mic work peer-to-peer in this dev classroom. For large classes, configure
+                  LIVEKIT (docs/live-classes.md).
                 </p>
               )}
             </div>
@@ -392,6 +431,13 @@ export function ClassroomShell(props: ClassroomProps) {
         <ControlButton label={camOn ? "Turn off camera" : "Turn on camera"} active={camOn} onClick={() => setCamOn((v) => !v)}>
           {camOn ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
         </ControlButton>
+        <ControlButton
+          label={webrtc.screenSharing ? "Stop sharing screen" : "Share screen"}
+          active={webrtc.screenSharing}
+          onClick={() => void webrtc.toggleScreenShare()}
+        >
+          <MonitorUp className="h-5 w-5" />
+        </ControlButton>
         <ControlButton label="Whiteboard" active={whiteboardOpen} onClick={() => setWhiteboardOpen((v) => !v)}>
           <PenTool className="h-5 w-5" />
         </ControlButton>
@@ -412,9 +458,9 @@ export function ClassroomShell(props: ClassroomProps) {
         <div className="mx-2 h-6 w-px bg-line" aria-hidden />
         <button
           type="button"
-          onClick={() => setPanel("chat")}
+          onClick={() => setMobilePanelOpen((v) => !v)}
           className="rounded-full p-2.5 text-muted-fg transition-colors hover:bg-card-2 md:hidden"
-          aria-label="Open chat"
+          aria-label="Toggle chat and participants"
         >
           <MessageSquare className="h-5 w-5" />
         </button>
@@ -428,13 +474,10 @@ export function ClassroomShell(props: ClassroomProps) {
         </button>
       </footer>
 
-      {/* Mobile panel drawer */}
-      {panel !== "none" && (
+      {/* Mobile panel drawer (only when explicitly opened) */}
+      {mobilePanelOpen && (
         <div className="fixed inset-x-0 bottom-16 top-14 z-30 md:hidden">
           <div className="glass flex h-full flex-col">
-            <button type="button" className="sr-only" onClick={() => setPanel("none")}>
-              Close panel
-            </button>
             <Panels
               panel={panel}
               setPanel={(p) => setPanel(p === panel ? "none" : p)}

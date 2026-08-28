@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Bell, CheckCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,8 +17,16 @@ interface NotificationItem {
   type: string;
   title: string;
   body: string | null;
+  data: { checkoutPath?: string; conversationId?: string; disputeId?: string } | null;
   read: boolean;
   createdAt: string;
+}
+
+function linkFor(item: NotificationItem): string | null {
+  if (item.data?.checkoutPath) return item.data.checkoutPath;
+  if (item.data?.conversationId) return `/messages/${item.data.conversationId}`;
+  if (item.data?.disputeId) return "/dashboard/disputes";
+  return null;
 }
 
 /** Full notification center, shared by student/teacher/admin dashboards. */
@@ -121,6 +130,14 @@ export function NotificationCenter() {
                     </div>
                     {n.body && <p className="mt-0.5 text-[12px] leading-relaxed text-muted-fg">{n.body}</p>}
                     <p className="mt-1 text-[11px] text-faint-fg">{timeAgo(n.createdAt)}</p>
+                    {linkFor(n) && (
+                      <Link
+                        href={linkFor(n)!}
+                        className="mt-1.5 inline-block text-[12px] font-bold text-brand-fg hover:underline"
+                      >
+                        {n.data?.checkoutPath ? "Complete payment →" : "Open →"}
+                      </Link>
+                    )}
                   </div>
                   {!n.read && (
                     <Button variant="ghost" size="sm" onClick={() => markRead([n.id])}>

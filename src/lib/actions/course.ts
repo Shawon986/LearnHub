@@ -27,10 +27,10 @@ async function ownCourse(courseId: string, userId: string) {
   return course;
 }
 
-/** Editable while drafting or unpublished (or rejected back to draft). */
+/** Editable while drafting, under review, or unpublished. */
 function assertEditable(status: string) {
-  if (!["DRAFT", "UNPUBLISHED"].includes(status)) {
-    throw new Error("Only draft or unpublished courses can be edited.");
+  if (!["DRAFT", "REVIEW", "UNPUBLISHED"].includes(status)) {
+    throw new Error("Published courses can't be edited — ask an admin to unpublish first.");
   }
 }
 

@@ -19,7 +19,14 @@ export type ClassroomEvent =
   | { type: "class.ended"; at: string }
   | { type: "recording"; status: string }
   | { type: "whiteboard.stroke"; stroke: StrokeData }
-  | { type: "whiteboard.clear" };
+  | { type: "whiteboard.clear" }
+  | {
+      type: "signal";
+      from: string;
+      fromName: string;
+      to: string;
+      payload: WebRtcSignal;
+    };
 
 export interface StrokeData {
   id: string;
@@ -38,6 +45,13 @@ export interface ClassroomPoll {
   createdAt: string;
   open: boolean;
 }
+
+/** WebRTC mesh signaling payload (relayed over the classroom bus). */
+export type WebRtcSignal =
+  | { kind: "offer"; sdp: string }
+  | { kind: "answer"; sdp: string }
+  | { kind: "ice"; candidate: unknown }
+  | { kind: "hangup" };
 
 interface PollState extends ClassroomPoll {
   votes: Map<string, number>;

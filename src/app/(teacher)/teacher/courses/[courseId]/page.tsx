@@ -66,7 +66,7 @@ export default async function CourseBuilderPage({
   if (course.teacherId !== user.id && !isAdminRole(user.role)) redirect("/teacher/courses");
 
   const categories = await db.category.findMany({ orderBy: { sortOrder: "asc" } });
-  const editable = ["DRAFT", "UNPUBLISHED"].includes(course.status);
+  const editable = ["DRAFT", "REVIEW", "UNPUBLISHED"].includes(course.status);
 
   const modules: SerializedModule[] = course.modules.map((m) => ({
     id: m.id,
@@ -149,7 +149,7 @@ export default async function CourseBuilderPage({
         )}
         {course.status === "REVIEW" && (
           <Badge variant="gold" size="md">
-            Under review — the admin team will approve or request changes.
+            Under review — you can keep editing. The admin team approves your latest version.
           </Badge>
         )}
         {course.status === "PUBLISHED" && (

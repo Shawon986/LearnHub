@@ -502,6 +502,7 @@ export async function createCourse(input: {
     const existing = await db.course.findUnique({ where: { slug } });
     if (existing) slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
 
+    // No draft stage: new courses go straight to admin review.
     const course = await db.course.create({
       data: {
         teacherId: user.id,
@@ -513,12 +514,24 @@ export async function createCourse(input: {
         difficulty: data.difficulty,
         price: data.price,
         language: data.language,
-        status: "DRAFT",
+        status: "REVIEW",
         requirements: [],
         outcomes: [],
         tags: [],
       },
     });
+
+    const admins = await db.user.findMany({
+      where: { role: { in: ["ADMIN", "SUPER_ADMIN"] } },
+      select: { id: true },
+    });
+    await createNotificationMany(admins.map((a) => a.id), {
+      type: "SYSTEM",
+      title: "Course submitted for review",
+      body: `"${data.title}" by ${user.name} is waiting for approval.`,
+      data: { courseId: course.id },
+    });
+
     await logAudit({
       actorId: user.id,
       actorEmail: user.email,

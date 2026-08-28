@@ -17,7 +17,15 @@ export type MessageEvent =
     }
   | { type: "typing"; conversationId: string; userId: string; userName: string }
   | { type: "presence"; userId: string; online: boolean }
-  | { type: "conversation.new"; conversationId: string };
+  | { type: "conversation.new"; conversationId: string }
+  | {
+      type: "notification";
+      id: string;
+      title: string;
+      body: string | null;
+      data: Record<string, unknown>;
+      createdAt: string;
+    };
 
 type Listener = (event: MessageEvent) => void;
 

@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/session";
 import { logAudit } from "@/lib/audit";
 import { createNotification, createNotificationMany } from "@/lib/notifications";
-import { classroomBus, type StrokeData } from "@/lib/live/bus";
+import { classroomBus, type StrokeData, type WebRtcSignal } from "@/lib/live/bus";
 import { z } from "zod";
 import { actionError, type ActionResult } from "@/lib/actions/shared";
 
@@ -307,6 +307,61 @@ export async function closePoll(liveClassId: string, pollId: string): Promise<Ac
     if (!isHost) return actionError("Only the host can close polls.");
     const result = classroomBus.closePoll(liveClassId, pollId);
     if (!result) return actionError("Poll not found.");
+    return { ok: true };
+  } catch (e) {
+    return err(e);
+  }
+}
+
+/* ---------------- WebRTC signaling (dev mesh) ---------------- */
+
+const signalSchema = z.object({
+  kind: z.enum(["offer", "answer", "ice", "hangup"]),
+  sdp: z.string().optional(),
+  candidate: z.unknown().optional(),
+});
+
+/**
+ * Relay an SDP/ICE signal between two participants. Used by the dev
+ * WebRTC mesh (real camera/audio between browsers, no external SFU).
+ * In production the LiveKit provider handles media instead.
+ */
+export async function sendWebrtcSignal(
+  liveClassId: string,
+  targetUserId: string,
+  payload: { kind: string; sdp?: string; candidate?: unknown },
+): Promise<ActionResult> {
+  try {
+    const user = await requireRole("STUDENT", "TEACHER", "ADMIN", "SUPER_ADMIN");
+    await requireMember(liveClassId, user.id);
+    const data = signalSchema.parse(payload);
+
+    // Target must be a participant of this class too.
+    const target = await db.liveClassParticipant.findUnique({
+      where: { liveClassId_userId: { liveClassId, userId: targetUserId } },
+    });
+    const live = await db.liveClass.findUnique({ where: { id: liveClassId } });
+    if (!target && live?.teacherId !== targetUserId) {
+      return actionError("Signal target is not part of this class.");
+    }
+
+    let signal: WebRtcSignal;
+    if (data.kind === "offer" || data.kind === "answer") {
+      if (!data.sdp) return actionError("Missing SDP in signal.");
+      signal = { kind: data.kind, sdp: data.sdp };
+    } else if (data.kind === "ice") {
+      signal = { kind: "ice", candidate: data.candidate };
+    } else {
+      signal = { kind: "hangup" };
+    }
+
+    classroomBus.publish(liveClassId, {
+      type: "signal",
+      from: user.id,
+      fromName: user.name,
+      to: targetUserId,
+      payload: signal,
+    });
     return { ok: true };
   } catch (e) {
     return err(e);

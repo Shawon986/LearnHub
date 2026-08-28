@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { getEmailProvider } from "@/lib/email";
+import { messagingBus } from "@/lib/messaging/bus";
 import type { NotificationType } from "@/lib/constants";
 
 // Notification service — one place to create notifications for any
@@ -22,7 +23,7 @@ export async function createNotification(input: CreateNotificationInput) {
   // Skip entirely if the user explicitly disabled in-app delivery.
   if (prefs && !prefs.inApp) return null;
 
-  return db.notification.create({
+  const notification = await db.notification.create({
     data: {
       userId: input.userId,
       type: input.type,
@@ -31,6 +32,19 @@ export async function createNotification(input: CreateNotificationInput) {
       data: (input.data ?? {}) as object,
     },
   });
+
+  // Real-time delivery: the personal SSE channel carries it to any open
+  // browser tab (bell badge, dropdown, notification center).
+  messagingBus.publishTo(input.userId, {
+    type: "notification",
+    id: notification.id,
+    title: notification.title,
+    body: notification.body,
+    data: (input.data ?? {}) as Record<string, unknown>,
+    createdAt: notification.createdAt.toISOString(),
+  });
+
+  return notification;
 }
 
 /** Notify many users at once (announcements). */

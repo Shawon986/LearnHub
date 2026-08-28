@@ -40,7 +40,7 @@ export default async function CoursesPage() {
         <div>
           <h1 className="font-display text-xl font-extrabold text-foreground">Courses</h1>
           <p className="mt-1 text-sm text-muted-fg">
-            {courses.length} courses · {published} published. Full curriculum builder arrives in Phase 3.
+            {courses.length} courses · {published} published. Courses go to the admin team for approval, then appear in the course section.
           </p>
         </div>
         <CreateCourseModal categories={categories.map((c) => ({ id: c.id, name: c.name }))} />

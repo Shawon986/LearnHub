@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { Bell, BellRing, CheckCheck } from "lucide-react";
 import { Dropdown, DropdownSeparator } from "@/components/ui/dropdown";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,24 +13,70 @@ interface NotificationItem {
   type: string;
   title: string;
   body: string | null;
+  data: { checkoutPath?: string; conversationId?: string; disputeId?: string; liveClassId?: string; courseId?: string } | null;
   read: boolean;
   createdAt: string;
+}
+
+/** Actionable link inside a notification, when the event carries one. */
+function linkFor(item: NotificationItem): string | null {
+  if (item.data?.checkoutPath) return item.data.checkoutPath;
+  if (item.data?.conversationId) return `/messages/${item.data.conversationId}`;
+  if (item.data?.disputeId) return "/dashboard/disputes";
+  if (item.data?.liveClassId) return "/dashboard/live";
+  if (item.data?.courseId) return "/dashboard/courses";
+  return null;
 }
 
 export function NotificationBell({ initialUnread = 0 }: { initialUnread?: number }) {
   const [unread, setUnread] = useState(initialUnread);
   const [items, setItems] = useState<NotificationItem[] | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   const load = useCallback(async () => {
     try {
       const res = await fetch("/api/notifications?limit=10");
-      if (!res.ok) return;
-      const data = await res.json();
-      setItems(data.notifications);
-      setUnread(data.unread);
+      if (res.ok) {
+        const data = await res.json();
+        setItems(data.notifications);
+        setUnread(data.unread);
+      }
     } catch {
       // Non-critical — the bell just stays empty.
+    } finally {
+      setLoaded(true);
     }
+  }, []);
+
+  // Fetch on mount (so the dropdown is never empty) and on every open.
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      load();
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [load]);
+
+  // Real-time delivery: notifications arrive over the personal SSE
+  // channel (the same stream the messaging inbox uses).
+  useEffect(() => {
+    const es = new EventSource("/api/messages/stream");
+    es.onmessage = (m) => {
+      if (m.data.startsWith(":")) return;
+      let event: { type?: string } & Partial<NotificationItem>;
+      try {
+        event = JSON.parse(m.data);
+      } catch {
+        return;
+      }
+      if (event.type === "notification") {
+        setItems((prev) => [
+          { ...(event as NotificationItem) },
+          ...(prev ?? []).slice(0, 8),
+        ]);
+        setUnread((u) => u + 1);
+      }
+    };
+    return () => es.close();
   }, []);
 
   async function markAll() {
@@ -48,6 +95,7 @@ export function NotificationBell({ initialUnread = 0 }: { initialUnread?: number
       trigger={
         <button
           type="button"
+          onClick={() => load()}
           aria-label={`Notifications (${unread} unread)`}
           className="relative inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-fg transition-colors hover:bg-card-2 hover:text-foreground"
         >
@@ -74,13 +122,13 @@ export function NotificationBell({ initialUnread = 0 }: { initialUnread?: number
       </div>
 
       <div className="max-h-80 w-80 overflow-y-auto">
-        {items === null ? (
+        {!loaded && items === null ? (
           <div className="space-y-3 p-3.5">
             {[0, 1, 2].map((i) => (
               <Skeleton key={i} className="h-12 w-full rounded-lg" />
             ))}
           </div>
-        ) : items.length === 0 ? (
+        ) : items === null || items.length === 0 ? (
           <p className="px-4 py-10 text-center text-xs text-faint-fg">No notifications yet</p>
         ) : (
           <ul className="py-1">
@@ -97,6 +145,14 @@ export function NotificationBell({ initialUnread = 0 }: { initialUnread?: number
                   <p className="truncate text-[12px] font-bold text-foreground">{n.title}</p>
                   {n.body && <p className="line-clamp-2 text-[11px] leading-relaxed text-muted-fg">{n.body}</p>}
                   <p className="mt-0.5 text-[10px] text-faint-fg">{timeAgo(n.createdAt)}</p>
+                  {linkFor(n) && (
+                    <Link
+                      href={linkFor(n)!}
+                      className="mt-1 inline-block text-[11px] font-bold text-brand-fg hover:underline"
+                    >
+                      {n.data?.checkoutPath ? "Complete payment →" : "Open →"}
+                    </Link>
+                  )}
                 </div>
               </li>
             ))}
