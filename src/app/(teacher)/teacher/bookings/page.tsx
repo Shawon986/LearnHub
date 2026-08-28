@@ -9,6 +9,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ActionButton } from "@/components/action-button";
 import { respondBooking } from "@/lib/actions/teacher";
+import { markBookingCompleted } from "@/lib/actions/booking";
 import { formatBDT, formatDate, formatTime } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Bookings" };
@@ -32,8 +33,10 @@ export default async function BookingsPage() {
     orderBy: { startsAt: "desc" },
   });
 
+  const now = new Date();
   const pending = bookings.filter((b) => b.status === "PENDING");
-  const upcoming = bookings.filter((b) => b.status === "ACCEPTED");
+  const upcoming = bookings.filter((b) => b.status === "ACCEPTED" && b.endsAt > now);
+  const toComplete = bookings.filter((b) => b.status === "ACCEPTED" && b.endsAt <= now);
   const past = bookings.filter((b) => !["PENDING", "ACCEPTED"].includes(b.status));
 
   return (
@@ -108,6 +111,44 @@ export default async function BookingsPage() {
           </div>
         )}
       </section>
+
+      {toComplete.length > 0 && (
+        <section aria-labelledby="complete-b">
+          <h2 id="complete-b" className="mb-4 font-display text-base font-bold text-foreground">
+            Ended — mark outcome
+          </h2>
+          <div className="space-y-3">
+            {toComplete.map((b) => (
+              <Card key={b.id} className="flex flex-wrap items-center gap-4 border-gold/40 p-5">
+                <Avatar name={b.student.name} src={b.student.avatarUrl} size="sm" />
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-[14px] font-bold text-foreground">{b.student.name}</h3>
+                  <p className="text-[12px] text-muted-fg">
+                    {formatDate(b.startsAt)} · {formatTime(b.startsAt)} · {formatBDT(b.price)}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <ActionButton
+                    size="sm"
+                    action={markBookingCompleted.bind(null, b.id, "COMPLETED")}
+                    successMessage="Marked complete — the student can now review you."
+                  >
+                    Completed
+                  </ActionButton>
+                  <ActionButton
+                    size="sm"
+                    variant="outline"
+                    action={markBookingCompleted.bind(null, b.id, "NO_SHOW")}
+                    confirm="Mark this session as a no-show?"
+                  >
+                    No-show
+                  </ActionButton>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section aria-labelledby="past-b">
         <h2 id="past-b" className="mb-4 font-display text-base font-bold text-foreground">

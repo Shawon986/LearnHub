@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CalendarDays, Clock } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -35,6 +36,7 @@ export default async function BookingsPage() {
 
   const upcoming = bookings.filter((b) => ["PENDING", "ACCEPTED"].includes(b.status));
   const past = bookings.filter((b) => !["PENDING", "ACCEPTED"].includes(b.status));
+  const reviewable = past.filter((b) => b.status === "COMPLETED" && !b.reviewed);
 
   return (
     <div className="space-y-10">
@@ -113,6 +115,14 @@ export default async function BookingsPage() {
                     {formatDate(b.startsAt)} · {formatTime(b.startsAt)} · {formatBDT(b.price)}
                   </p>
                 </div>
+                {reviewable.some((r) => r.id === b.id) && (
+                  <Link
+                    href={`/teachers/${b.teacherId}`}
+                    className="shrink-0 rounded-xl bg-gold-soft px-3 py-2 text-[12px] font-bold text-gold transition-colors hover:bg-gold-soft/70"
+                  >
+                    Leave a review ⭐
+                  </Link>
+                )}
               </Card>
             ))}
           </div>

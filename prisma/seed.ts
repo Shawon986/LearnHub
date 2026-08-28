@@ -1189,6 +1189,32 @@ async function main() {
       status: "PENDING",
     },
   });
+  // Reminder-due session (starts within 24h).
+  await db.booking.create({
+    data: {
+      studentId: students.shawon.id,
+      teacherId: teachers.sadia.id,
+      startsAt: hoursFromNow(20),
+      endsAt: hoursFromNow(21),
+      durationMinutes: 60,
+      price: 900,
+      topic: "Cash flow statement walkthrough",
+      status: "ACCEPTED",
+    },
+  });
+  // Past accepted session awaiting the outcome buttons.
+  await db.booking.create({
+    data: {
+      studentId: students.shawon.id,
+      teacherId: teachers.tanvir.id,
+      startsAt: daysFromNow(-1, 10),
+      endsAt: daysFromNow(-1, 11),
+      durationMinutes: 60,
+      price: 1200,
+      topic: "Intro to neural networks",
+      status: "ACCEPTED",
+    },
+  });
   await db.review.create({
     data: {
       reviewerId: students.shawon.id,

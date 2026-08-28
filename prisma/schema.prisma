@@ -673,6 +673,7 @@ model Booking {
   meetingUrl      String?
   status          String    @default("PENDING") // PENDING|ACCEPTED|DECLINED|CANCELLED|COMPLETED|NO_SHOW
   reviewed        Boolean   @default(false)
+  remindedAt      DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

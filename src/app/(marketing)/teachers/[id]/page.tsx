@@ -8,7 +8,6 @@ import {
   Globe2,
   GraduationCap,
   MapPin,
-  MessageSquare,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -22,6 +21,7 @@ import { Card } from "@/components/ui/card";
 import { CourseCard, type CourseCardData } from "@/components/shared/course-card";
 import { WishlistButton } from "@/components/shared/wishlist-button";
 import { ReviewForm } from "@/components/shared/review-form";
+import { BookingButton } from "@/components/booking/booking-modal";
 import { formatBDT, formatDate } from "@/lib/format";
 
 interface PageProps {
@@ -405,15 +405,15 @@ export default async function TeacherProfilePage({ params }: PageProps) {
                 ? `${formatBDT(profile.hourlyRate)} per hour — choose a time from the teacher's availability.`
                 : "Contact for pricing."}
             </p>
-            <button
-              type="button"
-              disabled
-              className="mt-4 w-full rounded-xl bg-accent/20 px-4 py-3 text-[13px] font-bold text-accent"
-            >
-              Booking arrives in Phase 5
-            </button>
-            <p className="mt-3 flex items-center justify-center gap-1.5 text-[11px] font-semibold text-faint-fg">
-              <MessageSquare className="h-3 w-3" /> Messaging arrives in Phase 9
+            <div className="mt-4">
+              <BookingButton
+                teacherId={id}
+                teacherName={teacher.name}
+                hourlyRate={profile?.hourlyRate ?? 0}
+              />
+            </div>
+            <p className="mt-3 text-center text-[11px] leading-relaxed text-faint-fg">
+              Payment is collected when the teacher confirms (Phase 6) · Messaging arrives in Phase 9
             </p>
           </Card>
 

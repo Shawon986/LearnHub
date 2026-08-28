@@ -10,7 +10,8 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 | 2 | Profiles & dashboards | ✅ Complete | build ✅ lint ✅ 31 pages smoke-tested ✅ |
 | 3 | Courses/LMS | ✅ Complete | build ✅ lint ✅ progress rollup tested ✅ |
 | 4 | Discovery | ✅ Complete | build ✅ lint ✅ search/profile/reviews tested ✅ |
-| 5–15 | … | ⬜ Pending | — |
+| 5 | Booking & tutoring | ✅ Complete | build ✅ lint ✅ availability engine + reminders tested ✅ |
+| 6–15 | … | ⬜ Pending | — |
 
 ## Phase 1 — delivered
 
@@ -66,9 +67,21 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 - [x] Seed: wishlist items, student's own course review (edit mode), flagged review for moderation demo
 - [x] Verified: lint clean, build green (54 routes), search filters/teacher profile/review forms/moderation all render, zero server errors
 
-## Known next steps (Phase 5 kickoff)
+## Phase 5 — delivered
 
-1. Booking flow: date/time picker from teacher availability, booking request + payment intent (collection in Phase 6), teacher accept/decline (already built), student cancel (built)
-2. Booking detail pages + reminders; no-show/completion handling
-3. Review prompt after completed sessions (eligibility already wired)
-4. `docs/` deep-dives as their subsystems land: database.md, authentication.md, payments.md, live-classes.md, recorded-classes.md, video-storage.md, security.md, deployment.md, environment-variables.md
+- [x] **Availability engine** (`src/lib/availability.ts`): 14-day bookable-date listing, 30-min slot generation from weekly slots, blocked-date exceptions, conflict detection vs pending/accepted bookings AND live classes (verified live: slots around a 15:00 booking are excluded)
+- [x] **Booking API**: `GET /api/teachers/[id]/availability` (dates + per-date slots, conflict-aware)
+- [x] **Booking modal** on teacher profiles: 3-step flow (date grid → time chips → duration + topic + price preview) → creates PENDING booking with validation (future, in-slot, no conflicts, no student double-booking) + notifications + audit
+- [x] **Session lifecycle**: teacher accept/decline (Phase 2), student cancel (Phase 2), new: mark COMPLETED / NO_SHOW for ended sessions → student notified + review eligible
+- [x] **Reminders**: accepted sessions starting within 24h get one reminder to both parties (`remindedAt` dedupe) — opportunistic from dashboard layouts, scheduled job in Phase 9+ (verified: reminder fired, dedupe set)
+- [x] **Review prompt** on completed sessions (links to teacher profile review form)
+- [x] Seed: reminder-due session, past-accepted session for outcome buttons
+- [x] Verified: lint clean, build green, availability API conflict-exclusion, reminders, outcome section all confirmed
+
+## Known next steps (Phase 6 kickoff)
+
+1. Payment provider abstraction: PaymentProvider interface + bKash/Nagad/Rocket/Stripe implementations + DEV sandbox provider (documented credential requirements)
+2. Checkout UI: order summary → method selection → redirect → return URL; webhook endpoints with signature verification + idempotency (duplicate webhooks = no-ops)
+3. Commission engine: global/teacher/course rates from settings, wallet credit (pending → available), withdrawal flow already built
+4. Wire payments into enrollment (paid courses) and bookings (collect at accept); refunds
+5. `docs/` deep-dives as their subsystems land: database.md, authentication.md, payments.md, live-classes.md, recorded-classes.md, video-storage.md, security.md, deployment.md, environment-variables.md

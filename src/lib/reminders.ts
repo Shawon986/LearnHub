@@ -1,0 +1,44 @@
+import { db } from "@/lib/db";
+import { createNotification } from "@/lib/notifications";
+
+/**
+ * Opportunistic booking reminders: accepted sessions starting within the
+ * next 24h get one reminder to both parties (once — tracked by remindedAt).
+ * Called from dashboard pages; moves to a scheduled job in Phase 9+.
+ */
+export async function sendDueBookingReminders(): Promise<number> {
+  const now = new Date();
+  const window = new Date(now.getTime() + 24 * 60 * 60_000);
+
+  const due = await db.booking.findMany({
+    where: {
+      status: "ACCEPTED",
+      remindedAt: null,
+      startsAt: { gt: now, lte: window },
+    },
+    include: { student: { select: { name: true } }, teacher: { select: { name: true } } },
+    take: 20,
+  });
+
+  for (const booking of due) {
+    await createNotification({
+      userId: booking.studentId,
+      type: "LIVE_CLASS_REMINDER",
+      title: "Session reminder ⏰",
+      body: `Your 1-on-1 session with ${booking.teacher.name} starts in under 24 hours (${booking.startsAt.toDateString()}).`,
+      data: { bookingId: booking.id },
+    });
+    await createNotification({
+      userId: booking.teacherId,
+      type: "LIVE_CLASS_REMINDER",
+      title: "Session reminder ⏰",
+      body: `Your session with ${booking.student.name} starts in under 24 hours.`,
+      data: { bookingId: booking.id },
+    });
+    await db.booking.update({
+      where: { id: booking.id },
+      data: { remindedAt: now },
+    });
+  }
+  return due.length;
+}
