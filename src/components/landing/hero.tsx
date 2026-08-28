@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef } from "react";
+import { Suspense, useRef } from "react";
+import dynamic from "next/dynamic";
 import {
   motion,
   useMotionValue,
@@ -8,12 +9,17 @@ import {
   useSpring,
   useTransform,
 } from "motion/react";
+
+// Lazy-loaded 3D scene (desktop-only — the parent column hides below lg).
+const HeroScene = dynamic(() => import("./hero-scene"), {
+  ssr: false,
+  loading: () => null,
+});
 import {
   ArrowRight,
   BadgeCheck,
   BookOpen,
   GraduationCap,
-  PlayCircle,
   Radio,
   Star,
 } from "lucide-react";
@@ -21,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { CountUp } from "@/components/ui/count-up";
+import { MagneticButton } from "@/components/motion/magnetic-button";
 
 const HEADLINE = ["Learn", "from", "Bangladesh's", "best", "teachers"];
 
@@ -37,8 +44,6 @@ export function Hero({ stats }: HeroProps) {
   const my = useMotionValue(0);
   const sx = useSpring(mx, { stiffness: 55, damping: 18 });
   const sy = useSpring(my, { stiffness: 55, damping: 18 });
-  const layer1X = useTransform(sx, (v) => v * 14);
-  const layer1Y = useTransform(sy, (v) => v * 10);
   const layer2X = useTransform(sx, (v) => v * -10);
   const layer2Y = useTransform(sy, (v) => v * -7);
   const layer3X = useTransform(sx, (v) => v * 22);
@@ -134,12 +139,16 @@ export function Hero({ stats }: HeroProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.62 }}
           >
-            <Button href="/courses" size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
-              Explore courses
-            </Button>
-            <Button href="/register" size="lg" variant="secondary" leftIcon={<GraduationCap className="h-4 w-4" />}>
-              Become a teacher
-            </Button>
+            <MagneticButton>
+              <Button href="/courses" size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
+                Explore courses
+              </Button>
+            </MagneticButton>
+            <MagneticButton strength={0.16}>
+              <Button href="/register" size="lg" variant="secondary" leftIcon={<GraduationCap className="h-4 w-4" />}>
+                Become a teacher
+              </Button>
+            </MagneticButton>
           </motion.div>
 
           <motion.div
@@ -167,28 +176,12 @@ export function Hero({ stats }: HeroProps) {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.7, delay: 0.3 }}
         >
-          {/* Main player card */}
-          <motion.div style={{ x: layer1X, y: layer1Y }} className="absolute inset-x-0 top-10">
-            <div className="glass overflow-hidden rounded-2xl shadow-lift">
-              <div className="relative flex h-56 items-center justify-center bg-gradient-to-br from-brand via-violet-600 to-accent">
-                <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/25 backdrop-blur-md">
-                  <PlayCircle className="h-9 w-9 fill-white text-white" />
-                </span>
-                <div className="absolute inset-x-4 bottom-4">
-                  <div className="h-1.5 w-full rounded-full bg-white/25">
-                    <div className="h-full w-2/3 rounded-full bg-white" />
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center justify-between p-4">
-                <div>
-                  <p className="text-[13px] font-bold text-foreground">React Hooks Deep Dive</p>
-                  <p className="text-[11px] text-faint-fg">Ayesha Rahman · 90 min</p>
-                </div>
-                <Badge variant="accent">Live</Badge>
-              </div>
-            </div>
-          </motion.div>
+          {/* 3D education ecosystem (lazy-loaded, pauses offscreen) */}
+          <div className="absolute inset-0">
+            <Suspense fallback={null}>
+              <HeroScene />
+            </Suspense>
+          </div>
 
           {/* Floating: live chip */}
           <motion.div

@@ -15,6 +15,8 @@ import { TeacherCard, type TeacherCardData } from "@/components/shared/teacher-c
 import { LiveClassCard, type LiveClassCardData } from "@/components/shared/live-class-card";
 import { RecordedClassCard, type RecordedClassCardData } from "@/components/shared/recorded-class-card";
 import { RevealGroup, RevealItem } from "@/components/ui/reveal";
+import { TiltCard } from "@/components/motion/tilt-card";
+import { Marquee } from "@/components/motion/marquee";
 
 const WHY = [
   {
@@ -188,6 +190,31 @@ export default async function HomePage() {
         }}
       />
 
+      {/* Subject marquee */}
+      <section className="border-b border-line bg-card/50 py-5" aria-label="Popular subjects">
+        <Marquee>
+          {[
+            "Web Development",
+            "Python",
+            "Machine Learning",
+            "UI/UX Design",
+            "Data Structures",
+            "Spoken English",
+            "IELTS",
+            "Accounting",
+            "React & Next.js",
+            "Figma",
+          ].map((subject) => (
+            <span
+              key={subject}
+              className="rounded-full border border-line bg-card px-5 py-2 text-[13px] font-bold text-muted-fg"
+            >
+              {subject}
+            </span>
+          ))}
+        </Marquee>
+      </section>
+
       {/* Popular categories */}
       <section id="categories" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-20 sm:px-6">
         <SectionHeading
@@ -209,7 +236,9 @@ export default async function HomePage() {
           <RevealGroup className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
             {courseCards.map((c) => (
               <RevealItem key={c.id} className="h-full">
-                <CourseCard course={c} href={`/courses/${c.slug}`} />
+                <TiltCard>
+                  <CourseCard course={c} href={`/courses/${c.slug}`} />
+                </TiltCard>
               </RevealItem>
             ))}
           </RevealGroup>

@@ -18,7 +18,8 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 | 10 | Certificates · Gamification · Coupons · Referrals · Disputes | ✅ Complete | build ✅ lint ✅ engine tests pass ✅ |
 | 11 | AI features | ✅ Complete | build ✅ lint ✅ provider/matching tested ✅ |
 | 12 | Analytics · SEO · Reports | ✅ Complete | build ✅ lint ✅ charts/sitemap/audit tested ✅ |
-| 13–15 | … | ⬜ Pending | — |
+| 13 | Advanced animation & 3D | ✅ Complete | build ✅ lint ✅ lazy 3D chunk verified ✅ |
+| 14–15 | … | ⬜ Pending | — |
 
 ## Phase 1 — delivered
 
@@ -156,9 +157,17 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 - [x] **Withdrawal processing** (`/admin/withdrawals`): approve → mark paid (pending released, totalWithdrawn incremented) / reject (funds return to available balance) with notifications + audit
 - [x] Verified: lint clean, build green (74 routes), charts render, sitemap/robots/JSON-LD live, zero server errors
 
-## Known next steps (Phase 13 kickoff)
+## Phase 13 — delivered
 
-1. 3D hero scene (Three.js / React Three Fiber): floating education ecosystem, lazy-loaded, reduced on mobile, paused offscreen, respects prefers-reduced-motion
-2. Motion polish: shared-layout page transitions, magnetic buttons, tilt cards, animated number transitions, marquee testimonials
-3. Micro-interactions sweep: button/card/tab/animation audit across the whole platform
-4. `docs/` deep-dives: database.md, authentication.md, live-classes.md, recorded-classes.md, security.md, deployment.md, environment-variables.md
+- [x] **3D hero scene** (React Three Fiber): floating books, laptop, video screen, teacher/student avatars, course cards, particles + mouse-parallax camera rig — low-poly primitives, no model assets
+- [x] **Performance safeguards**: lazy-loaded (separate build chunks verified), desktop-only, **demand frameloop paused offscreen** via IntersectionObserver, skipped entirely under prefers-reduced-motion, DPR capped at 1.5
+- [x] **Motion polish**: page transitions via `template.tsx` (fade+slide, instant under reduced motion), **magnetic CTA buttons** (spring-back, pointer-fine only), **3D tilt course cards**, **subject marquee** strip on the landing page
+- [x] Verified: lint clean, build green (74 routes), landing renders with marquee, three.js code split into lazy chunks, zero server errors
+
+## Known next steps (Phase 14 kickoff)
+
+1. Automated test suite: Vitest unit tests (commission split, coupon validation, availability engine, progress rollup, gamification) + API integration tests (auth lifecycle, role permissions, payment idempotency, video-access security)
+2. Security hardening pass: security headers audit, upload validation review, rate-limit coverage check, secrets scan
+3. Accessibility audit: keyboard navigation pass, ARIA checks on interactive components, contrast pass, screen-reader landmarks
+4. Performance pass: bundle analysis, image/asset audit, DB query index review
+5. `docs/` deep-dives: database.md, authentication.md, live-classes.md, recorded-classes.md, security.md, deployment.md, environment-variables.md
