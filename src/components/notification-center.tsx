@@ -22,17 +22,20 @@ interface NotificationItem {
   createdAt: string;
 }
 
-function linkFor(item: NotificationItem): string | null {
+const ADMIN_ROLES = new Set(["ADMIN", "MODERATOR", "SUPPORT", "SUPER_ADMIN"]);
+
+function linkFor(item: NotificationItem, role?: string): string | null {
+  const isAdmin = Boolean(role && ADMIN_ROLES.has(role));
   if (item.data?.checkoutPath) return item.data.checkoutPath;
   if (item.data?.conversationId) return `/messages/${item.data.conversationId}`;
-  if (item.data?.disputeId) return "/dashboard/disputes";
-  if (item.data?.liveClassId) return "/dashboard/live";
-  if (item.data?.courseId) return "/dashboard/courses";
+  if (item.data?.disputeId) return isAdmin ? "/admin/disputes" : "/dashboard/disputes";
+  if (item.data?.liveClassId) return isAdmin ? "/admin" : "/dashboard/live";
+  if (item.data?.courseId) return isAdmin ? "/admin/courses" : "/dashboard/courses";
   return null;
 }
 
 /** Full notification center, shared by student/teacher/admin dashboards. */
-export function NotificationCenter() {
+export function NotificationCenter({ role }: { role?: string }) {
   const [items, setItems] = useState<NotificationItem[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -76,7 +79,7 @@ export function NotificationCenter() {
       setItems((prev) => (prev ?? []).map((i) => (i.id === n.id ? { ...i, read: true } : i)));
       markRead([n.id]).catch(() => {});
     }
-    const link = linkFor(n);
+    const link = linkFor(n, role);
     if (link) {
       router.push(link);
     } else {
@@ -159,7 +162,7 @@ export function NotificationCenter() {
                         </p>
                       )}
                       <p className="mt-1 text-[11px] text-faint-fg">{timeAgo(n.createdAt)}</p>
-                      {linkFor(n) && (
+                      {linkFor(n, role) && (
                         <span className="mt-1.5 inline-block text-[12px] font-bold text-brand-fg">
                           {n.data?.checkoutPath ? "Complete payment →" : "Open →"}
                         </span>

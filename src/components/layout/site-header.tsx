@@ -92,6 +92,7 @@ export function SiteHeader({
             <>
               <NotificationBell
                 initialUnread={unreadNotifications}
+                role={user.role}
                 viewAllHref={
                   user.role === "TEACHER"
                     ? "/teacher/notifications"

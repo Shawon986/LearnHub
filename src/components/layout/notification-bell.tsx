@@ -19,13 +19,16 @@ interface NotificationItem {
   createdAt: string;
 }
 
-/** Actionable link inside a notification, when the event carries one. */
-function linkFor(item: NotificationItem): string | null {
+const ADMIN_ROLES = new Set(["ADMIN", "MODERATOR", "SUPPORT", "SUPER_ADMIN"]);
+
+/** Actionable link inside a notification, resolved per role (admins land on /admin/*). */
+function linkFor(item: NotificationItem, role?: string): string | null {
+  const isAdmin = Boolean(role && ADMIN_ROLES.has(role));
   if (item.data?.checkoutPath) return item.data.checkoutPath;
   if (item.data?.conversationId) return `/messages/${item.data.conversationId}`;
-  if (item.data?.disputeId) return "/dashboard/disputes";
-  if (item.data?.liveClassId) return "/dashboard/live";
-  if (item.data?.courseId) return "/dashboard/courses";
+  if (item.data?.disputeId) return isAdmin ? "/admin/disputes" : "/dashboard/disputes";
+  if (item.data?.liveClassId) return isAdmin ? "/admin" : "/dashboard/live";
+  if (item.data?.courseId) return isAdmin ? "/admin/courses" : "/dashboard/courses";
   return null;
 }
 
@@ -37,10 +40,13 @@ function publishUnread(next: number) {
 export function NotificationBell({
   initialUnread = 0,
   viewAllHref = "/dashboard/notifications",
+  role,
 }: {
   initialUnread?: number;
   /** Where the "View all" footer link goes (role-aware, set by callers). */
   viewAllHref?: string;
+  /** The user's role — notification links resolve to the right section. */
+  role?: string;
 }) {
   const [unread, setUnread] = useState(initialUnread);
   const [items, setItems] = useState<NotificationItem[] | null>(null);
@@ -71,6 +77,17 @@ export function NotificationBell({
     });
     return () => cancelAnimationFrame(raf);
   }, [load]);
+
+  // Follow unread changes made elsewhere (e.g. the sidebar Notifications
+  // item clearing everything) so both counters stay in sync.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ unread: number }>).detail;
+      if (typeof detail?.unread === "number") setUnread(detail.unread);
+    };
+    window.addEventListener("learnhub-unread", handler);
+    return () => window.removeEventListener("learnhub-unread", handler);
+  }, []);
 
   // Real-time delivery: notifications arrive over the personal SSE
   // channel (the same stream the messaging inbox uses).
@@ -133,7 +150,7 @@ export function NotificationBell({
         body: JSON.stringify({ ids: [n.id] }),
       }).catch(() => {});
     }
-    const link = linkFor(n);
+    const link = linkFor(n, role);
     if (link) {
       router.push(link);
     } else {
@@ -216,7 +233,7 @@ export function NotificationBell({
                       </p>
                     )}
                     <p className="mt-0.5 text-[10px] text-faint-fg">{timeAgo(n.createdAt)}</p>
-                    {linkFor(n) && (
+                    {linkFor(n, role) && (
                       <span className="mt-1 inline-block text-[11px] font-bold text-brand-fg">
                         {n.data?.checkoutPath ? "Complete payment →" : "Open →"}
                       </span>

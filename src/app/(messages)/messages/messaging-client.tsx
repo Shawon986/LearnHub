@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ImagePlus, MessageSquare, Search, Send, X } from "lucide-react";
+import { ImagePlus, MessageSquare, Search, Send, ShieldCheck, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -10,8 +10,15 @@ import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { timeAgo, formatTime, formatDate } from "@/lib/format";
-import { markConversationRead, sendMessage, sendTyping } from "@/lib/actions/messages";
+import {
+  markConversationRead,
+  sendMessage,
+  sendTyping,
+  startConversation,
+  startConversationWithAdmin,
+} from "@/lib/actions/messages";
 import { uploadChatImage } from "@/lib/actions/uploads";
+import type { MessageDirectoryData } from "@/lib/messaging/directory";
 
 export interface ConversationData {
   id: string;
@@ -83,10 +90,13 @@ export function MessagingClient({
   initialConversations,
   initialThread,
   currentUserId,
+  directory = null,
 }: {
   initialConversations: ConversationData[];
   initialThread: ThreadData;
   currentUserId: string;
+  /** Contact directory: admins see teachers, everyone else gets support. */
+  directory?: MessageDirectoryData | null;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -223,6 +233,24 @@ export function MessagingClient({
     });
   }
 
+  /** One-click conversation with platform support. */
+  function messageAdmin() {
+    startTransition(async () => {
+      const result = await startConversationWithAdmin();
+      if (!result.ok) toast({ title: result.error, variant: "error" });
+      else router.push(`/messages/${result.conversationId}`);
+    });
+  }
+
+  /** Admin inbox: start a conversation with a teacher directly. */
+  function messageTeacher(teacherId: string) {
+    startTransition(async () => {
+      const result = await startConversation(teacherId);
+      if (!result.ok) toast({ title: result.error, variant: "error" });
+      else router.push(`/messages/${result.conversationId}`);
+    });
+  }
+
   function sendText() {
     const content = draft.trim();
     if (!content || !activeId) return;
@@ -333,6 +361,50 @@ export function MessagingClient({
           </div>
         </div>
 
+        {directory && (
+          <div className="border-b border-line p-3">
+            {directory.adminId ? (
+              <button
+                type="button"
+                onClick={messageAdmin}
+                className="flex w-full items-center gap-2.5 rounded-xl border border-dashed border-line bg-brand-soft/30 px-3 py-2.5 text-[12px] font-bold text-brand-fg transition-colors hover:border-brand hover:bg-brand-soft/50"
+              >
+                <ShieldCheck className="h-4 w-4 shrink-0" />
+                Message admin / support
+              </button>
+            ) : directory.teachers.length > 0 ? (
+              <div>
+                <p className="mb-1.5 px-1 text-[10px] font-extrabold uppercase tracking-wide text-faint-fg">
+                  Message a teacher
+                </p>
+                <ul className="max-h-44 space-y-0.5 overflow-y-auto no-scrollbar">
+                  {directory.teachers.map((teacher) => (
+                    <li key={teacher.id}>
+                      <button
+                        type="button"
+                        onClick={() => messageTeacher(teacher.id)}
+                        className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-card-2"
+                      >
+                        <Avatar name={teacher.name} src={teacher.avatarUrl} size="xs" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[12px] font-bold text-foreground">
+                            {teacher.name}
+                          </span>
+                          {teacher.headline && (
+                            <span className="block truncate text-[10px] text-faint-fg">
+                              {teacher.headline}
+                            </span>
+                          )}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        )}
+
         <div className="min-h-0 flex-1 overflow-y-auto">
           {conversations.length === 0 ? (
             <div className="p-6">
@@ -340,7 +412,11 @@ export function MessagingClient({
                 compact
                 icon={<MessageSquare />}
                 title="No conversations"
-                description="Message a teacher from their profile to start one."
+                description={
+                  directory?.adminId
+                    ? "Message admin to reach support — or start from a teacher's profile."
+                    : "Message a teacher from the list above."
+                }
               />
             </div>
           ) : filtered.length === 0 ? (

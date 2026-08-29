@@ -9,5 +9,5 @@ export default async function AdminNotificationsPage() {
   const user = await getCurrentUser();
   if (!user || !isAdminRole(user.role)) redirect("/login?next=/admin/notifications/view");
 
-  return <NotificationCenter />;
+  return <NotificationCenter role={user.role} />;
 }

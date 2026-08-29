@@ -4,5 +4,5 @@ import { NotificationCenter } from "@/components/notification-center";
 export const metadata: Metadata = { title: "Notifications" };
 
 export default function TeacherNotificationsPage() {
-  return <NotificationCenter />;
+  return <NotificationCenter role="TEACHER" />;
 }

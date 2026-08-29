@@ -110,7 +110,21 @@ export function DashboardShell({
             <Link
               key={item.href}
               href={item.href}
-              onClick={() => setMobileOpen(false)}
+              onClick={() => {
+                setMobileOpen(false);
+                // Clicking the Notifications menu item clears both counters.
+                if (count > 0) {
+                  setNotifUnread(0);
+                  window.dispatchEvent(
+                    new CustomEvent("learnhub-unread", { detail: { unread: 0 } }),
+                  );
+                  fetch("/api/notifications", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ all: true }),
+                  }).catch(() => {});
+                }
+              }}
               title={collapsed ? t(item.label) : undefined}
               aria-current={active ? "page" : undefined}
               className={cn(
@@ -222,7 +236,7 @@ export function DashboardShell({
 
           <div className="flex items-center gap-1.5">
             <LanguageToggle className="hidden sm:flex" />
-            <NotificationBell initialUnread={notifUnread} viewAllHref={viewAllHref} />
+            <NotificationBell initialUnread={notifUnread} viewAllHref={viewAllHref} role={role} />
             <UserMenu user={user} />
           </div>
         </header>

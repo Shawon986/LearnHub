@@ -51,6 +51,20 @@ export async function startConversation(
   }
 }
 
+/** One-click contact with platform support (first active super admin). */
+export async function startConversationWithAdmin(): Promise<ConversationResult> {
+  try {
+    const admin = await db.user.findFirst({
+      where: { role: "SUPER_ADMIN", status: "ACTIVE" },
+      select: { id: true },
+    });
+    if (!admin) return { ok: false, error: "Support is currently unavailable." };
+    return startConversation(admin.id);
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." };
+  }
+}
+
 const messageSchema = z.object({
   content: z.string().trim().min(1).max(2000),
   attachmentUrl: z.string().max(300).optional().nullable(),
