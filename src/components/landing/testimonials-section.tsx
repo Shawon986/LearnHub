@@ -13,9 +13,10 @@ export interface TestimonialData {
 
 export function TestimonialsSection({ testimonials }: { testimonials: TestimonialData[] }) {
   return (
-    <RevealGroup className="grid gap-5 md:grid-cols-3">
+    /* Mobile: swipeable snap carousel · md+: classic 3-column grid. */
+    <RevealGroup className="no-scrollbar flex snap-x snap-mandatory gap-5 overflow-x-auto pb-2 md:grid md:grid-cols-3 md:overflow-visible md:pb-0">
       {testimonials.map((t) => (
-        <RevealItem key={t.id}>
+        <RevealItem key={t.id} className="w-[85%] shrink-0 snap-center sm:w-[60%] md:w-auto md:shrink">
           <figure className="relative flex h-full flex-col rounded-2xl border border-line bg-card p-6 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-lift">
             <Quote className="h-6 w-6 text-brand-soft" aria-hidden />
             <blockquote className="mt-3 flex-1 text-[13px] leading-relaxed text-muted-fg">

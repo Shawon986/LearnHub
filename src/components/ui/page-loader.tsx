@@ -50,7 +50,7 @@ const SYNAPSES = 8;
 export function PageLoader({ label = "Loading your learning space…" }: { label?: string }) {
   return (
     <div
-      className="relative flex min-h-[70vh] w-full flex-col items-center justify-center gap-10 overflow-hidden"
+      className="relative flex min-h-[55dvh] w-full flex-col items-center justify-center gap-6 overflow-hidden px-4 py-8 sm:gap-10"
       role="status"
       aria-live="polite"
       aria-label={label}
@@ -65,8 +65,10 @@ export function PageLoader({ label = "Loading your learning space…" }: { label
         aria-hidden
       />
 
-      {/* Stage: brain + orbits + synapses (perspective gives the rings depth). */}
-      <div className="relative h-72 w-72 [perspective:900px] sm:h-80 sm:w-80">
+      {/* Stage: brain + orbits + synapses (perspective gives the rings depth).
+          Sized against BOTH viewport axes so it never overflows on small
+          or landscape phones. */}
+      <div className="relative h-[min(76vw,42dvh,340px)] w-[min(76vw,42dvh,340px)] [perspective:900px]">
         {/* Soft pulsing glow behind the brain. */}
         <span
           className="pl-pulse absolute inset-0 m-auto h-40 w-40 rounded-full bg-brand/25 blur-3xl"
