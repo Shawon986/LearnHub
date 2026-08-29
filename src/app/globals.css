@@ -85,6 +85,7 @@
   --color-success-soft: var(--success-soft);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-display: var(--font-jakarta), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-bangla: var(--font-bangla), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --shadow-soft: var(--soft-shadow);
   --shadow-lift: var(--lift-shadow);
   --shadow-glow: var(--glow-shadow);
@@ -111,6 +112,18 @@
   @keyframes shimmer {
     from { background-position: 200% 0; }
     to { background-position: -200% 0; }
+  }
+  /* Types the wordmark, holds, deletes and repeats forever. */
+  @keyframes logo-typing {
+    0% { width: 0; animation-timing-function: steps(8, end); }
+    35% { width: 8ch; }
+    55% { width: 8ch; animation-timing-function: steps(8, end); }
+    90% { width: 0; }
+    100% { width: 0; }
+  }
+  @keyframes logo-caret {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
   }
   @keyframes marquee {
     from { transform: translateX(0); }

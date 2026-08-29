@@ -13,7 +13,7 @@ const ROUTE_ROLES: { prefix: string; roles: string[] }[] = [
   { prefix: "/teacher", roles: ["TEACHER", "ADMIN", "MODERATOR", "SUPPORT", "SUPER_ADMIN"] },
   { prefix: "/admin", roles: ["ADMIN", "MODERATOR", "SUPPORT", "SUPER_ADMIN"] },
   { prefix: "/checkout", roles: ["STUDENT", "TEACHER"] },
-  { prefix: "/messages", roles: ["STUDENT", "TEACHER"] },
+  { prefix: "/messages", roles: ["STUDENT", "TEACHER", "ADMIN", "MODERATOR", "SUPPORT", "SUPER_ADMIN"] },
 ];
 
 const ADMIN_ROLES = new Set(["ADMIN", "MODERATOR", "SUPPORT", "SUPER_ADMIN"]);

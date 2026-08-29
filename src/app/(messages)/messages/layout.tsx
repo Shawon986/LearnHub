@@ -13,7 +13,13 @@ export default async function MessagesLayout({ children }: { children: React.Rea
       <header className="glass flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line px-4">
         <Logo size="sm" />
         <Link
-          href={user.role === "TEACHER" ? "/teacher" : "/dashboard"}
+          href={
+            user.role === "TEACHER"
+              ? "/teacher"
+              : ["ADMIN", "MODERATOR", "SUPPORT", "SUPER_ADMIN"].includes(user.role)
+                ? "/admin"
+                : "/dashboard"
+          }
           className="inline-flex items-center gap-1.5 text-[12px] font-bold text-muted-fg transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-3.5 w-3.5" /> Back to dashboard

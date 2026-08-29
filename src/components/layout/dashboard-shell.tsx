@@ -8,9 +8,11 @@ import { ChevronsLeft, ChevronsRight, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/layout/logo";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/components/i18n/language-provider";
 import { navFor } from "@/lib/nav";
 
 interface DashboardShellProps {
@@ -20,6 +22,7 @@ interface DashboardShellProps {
   accent?: "student" | "teacher" | "admin";
   title?: string;
   unreadNotifications?: number;
+  unreadMessages?: number;
   children: ReactNode;
 }
 
@@ -41,13 +44,33 @@ export function DashboardShell({
   accent = "student",
   title,
   unreadNotifications = 0,
+  unreadMessages = 0,
   children,
 }: DashboardShellProps) {
   const nav = navFor(role);
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [notifUnread, setNotifUnread] = useState(unreadNotifications);
   const reduceMotion = useReducedMotion();
+  const { t } = useLanguage();
+
+  // Follow the bell's unread state so the sidebar badge clears instantly.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ unread: number }>).detail;
+      if (typeof detail?.unread === "number") setNotifUnread(detail.unread);
+    };
+    window.addEventListener("learnhub-unread", handler);
+    return () => window.removeEventListener("learnhub-unread", handler);
+  }, []);
+
+  const viewAllHref =
+    role === "TEACHER"
+      ? "/teacher/notifications"
+      : ["ADMIN", "MODERATOR", "SUPPORT", "SUPER_ADMIN"].includes(role)
+        ? "/admin/notifications/view"
+        : "/dashboard/notifications";
 
   // Restore persisted sidebar state. Deferred one frame so the
   // first paint stays consistent with the server HTML.
@@ -77,12 +100,18 @@ export function DashboardShell({
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-3 no-scrollbar" aria-label="Dashboard">
         {nav.map((item) => {
           const active = isActive(item.href);
+          const count =
+            item.href === "/messages"
+              ? unreadMessages
+              : item.href.endsWith("/notifications") && item.href !== "/admin/notifications"
+                ? notifUnread
+                : 0;
           return (
             <Link
               key={item.href}
               href={item.href}
               onClick={() => setMobileOpen(false)}
-              title={collapsed ? item.label : undefined}
+              title={collapsed ? t(item.label) : undefined}
               aria-current={active ? "page" : undefined}
               className={cn(
                 "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-colors",
@@ -97,11 +126,22 @@ export function DashboardShell({
                 />
               )}
               <item.icon className="h-[18px] w-[18px] shrink-0" aria-hidden />
-              {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
+              {!collapsed && <span className="flex-1 truncate">{t(item.label)}</span>}
+              {!collapsed && count > 0 && (
+                <Badge variant="brand" size="sm" className="ml-auto tabular-nums">
+                  {count > 99 ? "99+" : count}
+                </Badge>
+              )}
               {!collapsed && item.badge && (
                 <Badge variant="outline" className="ml-auto">
-                  {item.badge}
+                  {t(item.badge)}
                 </Badge>
+              )}
+              {collapsed && count > 0 && (
+                <span
+                  className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-brand ring-2 ring-card"
+                  aria-hidden
+                />
               )}
             </Link>
           );
@@ -123,7 +163,7 @@ export function DashboardShell({
           ) : (
             <>
               <ChevronsLeft className="h-4 w-4" />
-              Collapse
+              {t("Collapse")}
             </>
           )}
         </button>
@@ -176,12 +216,13 @@ export function DashboardShell({
               <Menu className="h-5 w-5" />
             </button>
             <h1 className="truncate font-display text-[15px] font-bold text-foreground">
-              {title ?? nav.find((n) => isActive(n.href))?.label ?? "Dashboard"}
+              {title ?? t(nav.find((n) => isActive(n.href))?.label ?? "Dashboard")}
             </h1>
           </div>
 
           <div className="flex items-center gap-1.5">
-            <NotificationBell initialUnread={unreadNotifications} />
+            <LanguageToggle className="hidden sm:flex" />
+            <NotificationBell initialUnread={notifUnread} viewAllHref={viewAllHref} />
             <UserMenu user={user} />
           </div>
         </header>

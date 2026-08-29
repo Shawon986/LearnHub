@@ -6,6 +6,7 @@ import { ImagePlus, MessageSquare, Search, Send, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { timeAgo, formatTime, formatDate } from "@/lib/format";
@@ -104,6 +105,7 @@ export function MessagingClient({
   );
   const [pendingAttachment, setPendingAttachment] = useState<{ file: File; url: string } | null>(null);
   const [attachmentUploading, setAttachmentUploading] = useState(false);
+  const [previewImage, setPreviewImage] = useState<{ src: string; alt: string } | null>(null);
   // Two separate timers: one throttles outgoing typing events, the other
   // clears the incoming indicator — sharing a ref made them clobber each other.
   const typingThrottleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -310,6 +312,7 @@ export function MessagingClient({
   const threadRole = active?.otherRole || initialThread.otherRole;
 
   return (
+    <>
     <div className="mx-auto flex h-full max-w-6xl overflow-hidden border-x border-line bg-card">
       {/* Conversation list */}
       <aside
@@ -469,8 +472,24 @@ export function MessagingClient({
                           )}
                         >
                           {m.type === "IMAGE" && m.attachmentUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={`/api/uploads/${m.attachmentUrl}`} alt="Attachment" className="max-h-56 rounded-xl" />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setPreviewImage({
+                                  src: `/api/uploads/${m.attachmentUrl}`,
+                                  alt: `Image from ${own ? "you" : threadName}`,
+                                })
+                              }
+                              className="block"
+                              aria-label="Open image preview"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={`/api/uploads/${m.attachmentUrl}`}
+                                alt="Attachment"
+                                className="max-h-56 rounded-xl transition-transform hover:scale-[1.02]"
+                              />
+                            </button>
                           ) : (
                             m.content
                           )}
@@ -568,6 +587,26 @@ export function MessagingClient({
         )}
       </section>
     </div>
+
+      {/* Image preview lightbox — sender and receiver both get this. */}
+      <Modal
+        open={previewImage !== null}
+        onClose={() => setPreviewImage(null)}
+        title="Image preview"
+        size="md"
+      >
+        {previewImage && (
+          <div className="flex justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={previewImage.src}
+              alt={previewImage.alt}
+              className="max-h-[70vh] w-auto rounded-xl object-contain"
+            />
+          </div>
+        )}
+      </Modal>
+    </>
   );
 }
 

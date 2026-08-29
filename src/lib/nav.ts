@@ -88,6 +88,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin/certificates", label: "Certificates", icon: Award },
   { href: "/admin/disputes", label: "Disputes", icon: ShieldCheck },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/messages", label: "Messages", icon: MessageSquare },
   { href: "/admin/notifications", label: "Announcements", icon: Bell },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];

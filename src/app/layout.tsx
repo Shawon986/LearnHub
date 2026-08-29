@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Hind_Siliguri, Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { cookies } from "next/headers";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
 import { LanguageProvider } from "@/components/i18n/language-provider";
 import type { Locale } from "@/lib/i18n/dict";
+import { cn } from "@/lib/utils";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -16,6 +17,13 @@ const inter = Inter({
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const bangla = Hind_Siliguri({
+  variable: "--font-bangla",
+  subsets: ["bengali"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -67,8 +75,17 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const locale: Locale = store.get("locale")?.value === "bn" ? "bn" : "en";
 
   return (
-    <html lang={locale} suppressHydrationWarning className={`${inter.variable} ${jakarta.variable}`}>
-      <body className="min-h-full bg-background text-foreground antialiased">
+    <html
+      lang={locale}
+      suppressHydrationWarning
+      className={cn(inter.variable, jakarta.variable, bangla.variable)}
+    >
+      <body
+        className={cn(
+          "min-h-full bg-background text-foreground antialiased",
+          locale === "bn" && "font-bangla",
+        )}
+      >
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-xl focus:bg-brand focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-white"

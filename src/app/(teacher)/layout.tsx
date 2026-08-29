@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser, isAdminRole } from "@/lib/auth/session";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { unreadNotificationCount } from "@/lib/notifications";
+import { unreadMessageCount } from "@/lib/messaging/unread";
 import { homeFor } from "@/lib/nav";
 
 export default async function TeacherLayout({ children }: { children: React.ReactNode }) {
@@ -9,7 +10,10 @@ export default async function TeacherLayout({ children }: { children: React.Reac
   if (!user) redirect("/login?next=/teacher");
   if (user.role !== "TEACHER" && !isAdminRole(user.role)) redirect(homeFor(user.role));
 
-  const unread = await unreadNotificationCount(user.id);
+  const [unread, unreadMessages] = await Promise.all([
+    unreadNotificationCount(user.id),
+    unreadMessageCount(user.id),
+  ]);
 
   return (
     <DashboardShell
@@ -17,6 +21,7 @@ export default async function TeacherLayout({ children }: { children: React.Reac
       role={user.role}
       accent="teacher"
       unreadNotifications={unread}
+      unreadMessages={unreadMessages}
     >
       {children}
     </DashboardShell>

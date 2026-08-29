@@ -54,39 +54,52 @@ export function SiteHeader({
         scrolled ? "glass shadow-soft" : "border-b border-transparent bg-transparent",
       )}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Logo size="md" />
+      <div className="relative mx-auto grid h-16 max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-3 px-4 sm:px-6">
+        <Logo size="md" typewriter className="shrink-0" />
 
-        {/* Desktop nav */}
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Main">
+        {/* Desktop nav — centered in the middle zone, never overlaps the sides */}
+        <nav className="hidden items-center justify-center gap-1 lg:flex" aria-label="Main">
           {NAV_LINKS.map((link) => (
             <Link
               key={t(link.label)}
               href={link.href}
-              className="rounded-full px-3.5 py-2 text-[13px] font-semibold text-muted-fg transition-colors hover:bg-card-2 hover:text-foreground"
+              className="whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-semibold text-muted-fg transition-colors hover:bg-card-2 hover:text-foreground"
             >
               {t(link.label)}
             </Link>
           ))}
         </nav>
 
-        <div className="flex items-center gap-1.5">
-          {/* Search */}
-          <Link
-            href="/search"
-            aria-label="Search courses and teachers"
-            className="mr-1 hidden h-9 items-center gap-2 rounded-full border border-line bg-card px-3.5 text-[13px] text-faint-fg transition-colors hover:border-line-strong sm:inline-flex"
-          >
-            <Search className="h-3.5 w-3.5" />
-            <span className="hidden md:inline">{t("Search courses, teachers…")}</span>
-          </Link>
+        <div className="flex items-center justify-end gap-1.5">
+          {/* Search bar — a real input; icon-only at lg, full width at xl+ */}
+          <form action="/search" className="hidden lg:block" role="search">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-faint-fg" />
+              <input
+                type="search"
+                name="q"
+                placeholder={t("Search courses, teachers…")}
+                aria-label={t("Search courses, teachers…")}
+                className="h-9 w-11 rounded-full border border-line bg-card pl-9 pr-3 text-[13px] text-foreground placeholder:text-faint-fg transition-all duration-300 focus:w-56 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/25 xl:w-56"
+              />
+            </div>
+          </form>
 
           <LanguageToggle className="mr-0.5" />
           <ThemeToggle />
 
           {user ? (
             <>
-              <NotificationBell initialUnread={unreadNotifications} />
+              <NotificationBell
+                initialUnread={unreadNotifications}
+                viewAllHref={
+                  user.role === "TEACHER"
+                    ? "/teacher/notifications"
+                    : ["ADMIN", "MODERATOR", "SUPPORT", "SUPER_ADMIN"].includes(user.role)
+                      ? "/admin/notifications/view"
+                      : "/dashboard/notifications"
+                }
+              />
               <UserMenu user={user} />
             </>
           ) : (
@@ -132,6 +145,17 @@ export function SiteHeader({
               exit={reduceMotion ? undefined : { y: -12, opacity: 0 }}
               transition={{ type: "spring", stiffness: 420, damping: 36 }}
             >
+              {/* Search on mobile lives here */}
+              <form action="/search" className="relative mb-1" onSubmit={() => setMobileOpen(false)} role="search">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-faint-fg" />
+                <input
+                  type="search"
+                  name="q"
+                  placeholder={t("Search courses, teachers…")}
+                  aria-label={t("Search courses, teachers…")}
+                  className="h-10 w-full rounded-xl border border-line bg-card pl-9 pr-3 text-[13px] text-foreground placeholder:text-faint-fg focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/25"
+                />
+              </form>
               {NAV_LINKS.map((link) => (
                 <Link
                   key={t(link.label)}

@@ -21,8 +21,6 @@ import { Card } from "@/components/ui/card";
 import { CourseCard, type CourseCardData } from "@/components/shared/course-card";
 import { WishlistButton } from "@/components/shared/wishlist-button";
 import { ReviewForm } from "@/components/shared/review-form";
-import { BookingButton } from "@/components/booking/booking-modal";
-import { MessageButton } from "@/components/shared/message-button";
 import { formatBDT, formatDate } from "@/lib/format";
 
 interface PageProps {
@@ -416,27 +414,6 @@ export default async function TeacherProfilePage({ params }: PageProps) {
 
         {/* Right column */}
         <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
-          {/* Booking card */}
-          <Card className="p-6">
-            <h2 className="font-display text-[15px] font-bold text-foreground">Book a 1-on-1 session</h2>
-            <p className="mt-1 text-[12px] leading-relaxed text-muted-fg">
-              {profile && profile.hourlyRate > 0
-                ? `${formatBDT(profile.hourlyRate)} per hour — choose a time from the teacher's availability.`
-                : "Contact for pricing."}
-            </p>
-            <div className="mt-4 space-y-2">
-              <BookingButton
-                teacherId={id}
-                teacherName={teacher.name}
-                hourlyRate={profile?.hourlyRate ?? 0}
-              />
-              <MessageButton teacherId={id} teacherName={teacher.name} />
-            </div>
-            <p className="mt-3 text-center text-[11px] leading-relaxed text-faint-fg">
-              Payment is collected when the teacher confirms your booking.
-            </p>
-          </Card>
-
           {/* Languages */}
           {profile && safeJsonParse<string[]>(profile.languages, []).length > 0 && (
             <Card className="p-6">

@@ -1,6 +1,9 @@
+"use client";
+
 import { BookOpenCheck, Compass, GraduationCap, MessagesSquare, Sparkles } from "lucide-react";
 import { RevealGroup, RevealItem } from "@/components/ui/reveal";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/components/i18n/language-provider";
 
 const FEATURES = [
   {
@@ -26,6 +29,7 @@ const FEATURES = [
 ];
 
 export function AiSection() {
+  const { t } = useLanguage();
   return (
     <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand via-violet-700 to-accent p-8 sm:p-12">
       <div
@@ -40,20 +44,21 @@ export function AiSection() {
         <div className="mb-10 flex flex-col items-center gap-3 text-center">
           <Badge variant="neutral" size="md" className="border-white/20 bg-white/15 text-white">
             <Sparkles className="h-3.5 w-3.5" />
-            Powered by AI
+            {t("Powered by AI")}
           </Badge>
           <a
             href="/ai"
             className="rounded-full border border-white/25 bg-white/10 px-4 py-2 text-[12px] font-bold text-white transition-colors hover:bg-white/20"
           >
-            Try it live →
+            {t("Try it live")} →
           </a>
           <h2 className="max-w-xl font-display text-2xl font-extrabold text-white sm:text-3xl">
-            Smarter learning, built into every step
+            {t("Smarter learning, built into every step")}
           </h2>
           <p className="max-w-lg text-sm leading-relaxed text-white/80">
-            LearnHub&apos;s AI engine personalizes discovery, answers your questions and helps
-            teachers create better content — modular and provider-agnostic under the hood.
+            {t(
+              "LearnHub's AI engine personalizes discovery, answers your questions and helps teachers create better content — modular and provider-agnostic under the hood.",
+            )}
           </p>
         </div>
 
@@ -65,8 +70,8 @@ export function AiSection() {
                   <f.icon />
                 </span>
                 <div>
-                  <h3 className="text-[14px] font-bold text-white">{f.title}</h3>
-                  <p className="mt-1 text-[13px] leading-relaxed text-white/75">{f.description}</p>
+                  <h3 className="text-[14px] font-bold text-white">{t(f.title)}</h3>
+                  <p className="mt-1 text-[13px] leading-relaxed text-white/75">{t(f.description)}</p>
                 </div>
               </div>
             </RevealItem>

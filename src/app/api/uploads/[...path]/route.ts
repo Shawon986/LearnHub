@@ -49,9 +49,11 @@ export async function GET(req: Request, ctx: { params: Promise<{ path: string[] 
   const contentType =
     rel.endsWith(".pdf")
       ? "application/pdf"
-      : rel.startsWith("thumbnail/")
-        ? "image/webp"
-        : "application/octet-stream";
+      : /\.(png|jpe?g|webp|gif|avif)$/i.test(rel)
+        ? `image/${rel.endsWith(".jpg") ? "jpeg" : rel.slice(rel.lastIndexOf(".") + 1)}`
+        : rel.startsWith("thumbnail/")
+          ? "image/webp"
+          : "application/octet-stream";
 
   return new NextResponse(createReadStream(filePath) as unknown as ReadableStream, {
     status: 200,

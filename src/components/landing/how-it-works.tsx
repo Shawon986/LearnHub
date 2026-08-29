@@ -1,5 +1,8 @@
+"use client";
+
 import { CalendarDays, GraduationCap, Search, Video } from "lucide-react";
 import { RevealGroup, RevealItem } from "@/components/ui/reveal";
+import { useLanguage } from "@/components/i18n/language-provider";
 
 const STEPS = [
   {
@@ -29,6 +32,7 @@ const STEPS = [
 ];
 
 export function HowItWorks() {
+  const { t } = useLanguage();
   return (
     <div className="relative">
       {/* Connecting line (desktop) */}
@@ -46,8 +50,8 @@ export function HowItWorks() {
                 </span>
               </div>
               <div>
-                <h3 className="font-display text-[15px] font-bold text-foreground">{step.title}</h3>
-                <p className="mt-1.5 text-[13px] leading-relaxed text-muted-fg">{step.description}</p>
+                <h3 className="font-display text-[15px] font-bold text-foreground">{t(step.title)}</h3>
+                <p className="mt-1.5 text-[13px] leading-relaxed text-muted-fg">{t(step.description)}</p>
               </div>
             </div>
           </RevealItem>

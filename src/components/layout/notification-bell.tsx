@@ -29,7 +29,19 @@ function linkFor(item: NotificationItem): string | null {
   return null;
 }
 
-export function NotificationBell({ initialUnread = 0 }: { initialUnread?: number }) {
+function publishUnread(next: number) {
+  // Other components (sidebar badges) follow the bell's unread state.
+  window.dispatchEvent(new CustomEvent("learnhub-unread", { detail: { unread: next } }));
+}
+
+export function NotificationBell({
+  initialUnread = 0,
+  viewAllHref = "/dashboard/notifications",
+}: {
+  initialUnread?: number;
+  /** Where the "View all" footer link goes (role-aware, set by callers). */
+  viewAllHref?: string;
+}) {
   const [unread, setUnread] = useState(initialUnread);
   const [items, setItems] = useState<NotificationItem[] | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -39,7 +51,7 @@ export function NotificationBell({ initialUnread = 0 }: { initialUnread?: number
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch("/api/notifications?limit=10");
+      const res = await fetch("/api/notifications?limit=50");
       if (res.ok) {
         const data = await res.json();
         setItems(data.notifications);
@@ -75,9 +87,13 @@ export function NotificationBell({ initialUnread = 0 }: { initialUnread?: number
       if (event.type === "notification") {
         setItems((prev) => [
           { ...(event as NotificationItem) },
-          ...(prev ?? []).slice(0, 8),
+          ...(prev ?? []).slice(0, 49),
         ]);
-        setUnread((u) => u + 1);
+        setUnread((u) => {
+          const next = u + 1;
+          publishUnread(next);
+          return next;
+        });
       }
     };
     return () => es.close();
@@ -85,6 +101,7 @@ export function NotificationBell({ initialUnread = 0 }: { initialUnread?: number
 
   async function markAll() {
     setUnread(0);
+    publishUnread(0);
     setItems((prev) => (prev ?? []).map((n) => ({ ...n, read: true })));
     await fetch("/api/notifications", {
       method: "POST",
@@ -94,10 +111,21 @@ export function NotificationBell({ initialUnread = 0 }: { initialUnread?: number
     await load();
   }
 
-  /** Clicking a notification: mark it read (badge decrements) and open it. */
+  /** Opening the bell clears the unread counter (everything becomes read). */
+  function onOpen() {
+    load().then(() => {
+      markAll().catch(() => {});
+    });
+  }
+
+  /** Clicking a notification opens it (and clears its unread state). */
   function onRowClick(n: NotificationItem) {
     if (!n.read) {
-      setUnread((u) => Math.max(0, u - 1));
+      setUnread((u) => {
+        const next = Math.max(0, u - 1);
+        publishUnread(next);
+        return next;
+      });
       setItems((prev) => (prev ?? []).map((i) => (i.id === n.id ? { ...i, read: true } : i)));
       fetch("/api/notifications", {
         method: "POST",
@@ -120,7 +148,7 @@ export function NotificationBell({ initialUnread = 0 }: { initialUnread?: number
       trigger={
         <button
           type="button"
-          onClick={() => load()}
+          onClick={onOpen}
           aria-label={t("Notifications") + ` (${unread} unread)`}
           className="relative inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-fg transition-colors hover:bg-card-2 hover:text-foreground"
         >
@@ -146,7 +174,7 @@ export function NotificationBell({ initialUnread = 0 }: { initialUnread?: number
         )}
       </div>
 
-      <div className="max-h-80 w-80 overflow-y-auto">
+      <div className="max-h-[26rem] w-80 overflow-y-auto">
         {!loaded && items === null ? (
           <div className="space-y-3 p-3.5">
             {[0, 1, 2].map((i) => (
@@ -201,9 +229,16 @@ export function NotificationBell({ initialUnread = 0 }: { initialUnread?: number
         )}
       </div>
       <DropdownSeparator />
-      <p className="px-3.5 py-2 text-center text-[11px] font-semibold text-faint-fg">
-        New events appear here in real time
-      </p>
+      <div className="flex items-center justify-between px-3.5 py-2">
+        <p className="text-[11px] font-semibold text-faint-fg">{t("New events appear here in real time")}</p>
+        <button
+          type="button"
+          onClick={() => router.push(viewAllHref)}
+          className="text-[11px] font-bold text-brand-fg hover:underline"
+        >
+          {t("View all")} →
+        </button>
+      </div>
     </Dropdown>
   );
 }

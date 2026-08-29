@@ -1,4 +1,3 @@
-import { MonitorPlay, ShieldCheck, Users, Zap } from "lucide-react";
 import { db } from "@/lib/db";
 import { safeJsonParse } from "@/lib/utils";
 import { Hero } from "@/components/landing/hero";
@@ -9,7 +8,8 @@ import { HowItWorks } from "@/components/landing/how-it-works";
 import { PricingSection } from "@/components/landing/pricing-section";
 import { TestimonialsSection, type TestimonialData } from "@/components/landing/testimonials-section";
 import { CtaSection } from "@/components/landing/cta-section";
-import { SectionHeading } from "@/components/shared/section-heading";
+import { WhyLearnHub } from "@/components/shared/why-learnhub";
+import { TranslatedSectionHeading } from "@/components/shared/translated-section-heading";
 import { CourseCard, type CourseCardData } from "@/components/shared/course-card";
 import { TeacherCard, type TeacherCardData } from "@/components/shared/teacher-card";
 import { LiveClassCard, type LiveClassCardData } from "@/components/shared/live-class-card";
@@ -17,29 +17,6 @@ import { RecordedClassCard, type RecordedClassCardData } from "@/components/shar
 import { RevealGroup, RevealItem } from "@/components/ui/reveal";
 import { TiltCard } from "@/components/motion/tilt-card";
 import { Marquee } from "@/components/motion/marquee";
-
-const WHY = [
-  {
-    icon: ShieldCheck,
-    title: "Verified teachers",
-    description: "Every teacher passes identity and credential verification before teaching.",
-  },
-  {
-    icon: Zap,
-    title: "Instant enrollment",
-    description: "Pay with bKash, Nagad or Rocket and start learning in under a minute.",
-  },
-  {
-    icon: MonitorPlay,
-    title: "Live + on-demand",
-    description: "Interactive live classrooms with chat and whiteboard, plus recorded classes 24/7.",
-  },
-  {
-    icon: Users,
-    title: "Real community",
-    description: "Messages, reviews, streaks and leaderboards keep you motivated every day.",
-  },
-];
 
 export default async function HomePage() {
   const [
@@ -217,7 +194,7 @@ export default async function HomePage() {
 
       {/* Popular categories */}
       <section id="categories" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-20 sm:px-6">
-        <SectionHeading
+        <TranslatedSectionHeading
           eyebrow="Categories"
           title="What do you want to learn today?"
           description="From programming to design, business to languages — find your path."
@@ -228,7 +205,7 @@ export default async function HomePage() {
       {/* Featured courses */}
       <section id="courses" className="scroll-mt-24 border-y border-line bg-card/50">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
-          <SectionHeading
+          <TranslatedSectionHeading
             eyebrow="Featured courses"
             title="Most popular courses on LearnHub"
             description="Structured curriculums, real projects and certificates — taught by verified experts."
@@ -247,10 +224,10 @@ export default async function HomePage() {
 
       {/* Live classes */}
       <section id="live" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-20 sm:px-6">
-        <SectionHeading
+        <TranslatedSectionHeading
           eyebrow="Live classes"
           title="Learn together, in real time"
-          description="Interactive classrooms with chat, whiteboard, polls and screen sharing."
+          description="Scheduled sessions over Zoom or Meet — register free and join with one click."
         />
         <RevealGroup className="grid gap-5 md:grid-cols-3">
           {liveCards.map((l) => (
@@ -264,7 +241,7 @@ export default async function HomePage() {
       {/* Recorded classes */}
       <section id="recorded" className="scroll-mt-24 border-y border-line bg-card/50">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
-          <SectionHeading
+          <TranslatedSectionHeading
             eyebrow="Recorded classes"
             title="Missed a class? Watch the recording"
             description="Full recordings of popular live sessions — resume where you left off, take notes, download resources."
@@ -281,7 +258,7 @@ export default async function HomePage() {
 
       {/* Teachers */}
       <section id="teachers" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-20 sm:px-6">
-        <SectionHeading
+        <TranslatedSectionHeading
           eyebrow="Teachers"
           title="Learn from verified experts"
           description="Every teacher is vetted. Book 1-on-1 sessions or enroll in their courses."
@@ -298,7 +275,7 @@ export default async function HomePage() {
       {/* How it works */}
       <section id="how-it-works" className="scroll-mt-24 border-t border-line bg-card/50">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
-          <SectionHeading
+          <TranslatedSectionHeading
             eyebrow="How it works"
             title="Four steps to your next skill"
             description="Simple for students, powerful for teachers."
@@ -309,20 +286,8 @@ export default async function HomePage() {
 
       {/* Why choose us */}
       <section id="why" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-20 sm:px-6">
-        <SectionHeading eyebrow="Why LearnHub" title="Built for Bangladesh, made for the world" />
-        <RevealGroup className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {WHY.map((w) => (
-            <RevealItem key={w.title}>
-              <div className="flex h-full flex-col gap-3 rounded-2xl border border-line bg-card p-6 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:shadow-lift">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-soft text-brand-fg [&>svg]:h-5 [&>svg]:w-5">
-                  <w.icon />
-                </span>
-                <h3 className="font-display text-[15px] font-bold text-foreground">{w.title}</h3>
-                <p className="text-[13px] leading-relaxed text-muted-fg">{w.description}</p>
-              </div>
-            </RevealItem>
-          ))}
-        </RevealGroup>
+        <TranslatedSectionHeading eyebrow="Why LearnHub" title="Built for Bangladesh, made for the world" />
+<WhyLearnHub />
       </section>
 
       {/* AI */}
@@ -332,7 +297,7 @@ export default async function HomePage() {
 
       {/* Testimonials */}
       <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6">
-        <SectionHeading
+        <TranslatedSectionHeading
           eyebrow="Success stories"
           title="Learners love LearnHub"
           description="Real reviews from verified students."
@@ -343,7 +308,7 @@ export default async function HomePage() {
       {/* Pricing / commission */}
       <section id="pricing" className="scroll-mt-24 border-t border-line bg-card/50">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
-          <SectionHeading
+          <TranslatedSectionHeading
             eyebrow="Pricing"
             title="Fair for everyone"
             description="Students pay for value. Teachers keep 85% of every sale — no hidden fees."
@@ -354,7 +319,7 @@ export default async function HomePage() {
 
       {/* FAQ */}
       <section id="faq" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-20 sm:px-6">
-        <SectionHeading eyebrow="FAQ" title="Questions? Answered." />
+        <TranslatedSectionHeading eyebrow="FAQ" title="Questions? Answered." />
         <FaqSection />
       </section>
 

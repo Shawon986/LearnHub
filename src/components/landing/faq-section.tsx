@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/components/i18n/language-provider";
 
 const FAQS = [
   {
@@ -35,6 +36,7 @@ const FAQS = [
 export function FaqSection() {
   const [open, setOpen] = useState<number | null>(0);
   const reduceMotion = useReducedMotion();
+  const { t } = useLanguage();
 
   return (
     <div className="mx-auto max-w-3xl space-y-3">
@@ -54,7 +56,7 @@ export function FaqSection() {
               aria-expanded={isOpen}
               className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
             >
-              <span className="text-[14px] font-bold text-foreground">{faq.q}</span>
+              <span className="text-[14px] font-bold text-foreground">{t(faq.q)}</span>
               <ChevronDown
                 className={cn(
                   "h-4 w-4 shrink-0 text-faint-fg transition-transform duration-200",
@@ -70,7 +72,7 @@ export function FaqSection() {
                   exit={reduceMotion ? undefined : { height: 0, opacity: 0 }}
                   transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  <p className="px-5 pb-5 text-[13px] leading-relaxed text-muted-fg">{faq.a}</p>
+                  <p className="px-5 pb-5 text-[13px] leading-relaxed text-muted-fg">{t(faq.a)}</p>
                 </motion.div>
               )}
             </AnimatePresence>
