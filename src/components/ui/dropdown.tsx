@@ -23,11 +23,14 @@ export function Dropdown({
   children,
   align = "end",
   className,
+  panelClassName,
 }: {
   trigger: ReactNode;
   children: ReactNode;
   align?: "start" | "end";
   className?: string;
+  /** Extra classes for the floating panel (e.g. mobile positioning). */
+  panelClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -59,6 +62,7 @@ export function Dropdown({
               className={cn(
                 "absolute z-40 mt-2 min-w-44 overflow-hidden rounded-xl border border-line bg-card py-1.5 shadow-lift",
                 align === "end" ? "right-0" : "left-0",
+                panelClassName,
               )}
               initial={reduceMotion ? false : { opacity: 0, y: -6, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}

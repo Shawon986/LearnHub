@@ -159,6 +159,10 @@ export function NotificationBell({
     <Dropdown
       align="end"
       className="[&>div:first-child]:inline-flex"
+      /* On phones the bell sits left of the user menu, so a right-aligned
+         panel would poke off-screen — pin the panel across the viewport
+         instead, just under the topbar. */
+      panelClassName="max-sm:fixed max-sm:left-2 max-sm:right-2 max-sm:top-[4.5rem] max-sm:mt-0"
       trigger={
         <button
           type="button"
@@ -188,7 +192,7 @@ export function NotificationBell({
         )}
       </div>
 
-      <div className="max-h-[26rem] w-[min(20rem,calc(100vw-2rem))] overflow-y-auto">
+      <div className="max-h-[26rem] w-[min(20rem,calc(100vw-2rem))] overflow-y-auto max-sm:w-full">
         {!loaded && items === null ? (
           <div className="space-y-3 p-3.5">
             {[0, 1, 2].map((i) => (

@@ -61,7 +61,7 @@ export default async function AdminAnalyticsPage({
 
       <div className="grid gap-6 xl:grid-cols-2">
         {/* Revenue over time */}
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Revenue</CardTitle>
             <CardDescription>Completed payments per day</CardDescription>
@@ -72,7 +72,7 @@ export default async function AdminAnalyticsPage({
         </Card>
 
         {/* Enrollments over time */}
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Enrollments</CardTitle>
             <CardDescription>New enrollments per day</CardDescription>
@@ -83,7 +83,7 @@ export default async function AdminAnalyticsPage({
         </Card>
 
         {/* Top courses */}
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Top courses</CardTitle>
             <CardDescription>By revenue in this window</CardDescription>
@@ -101,7 +101,7 @@ export default async function AdminAnalyticsPage({
         </Card>
 
         {/* Top teachers */}
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Top earning teachers</CardTitle>
             <CardDescription>Wallet credits in this window</CardDescription>
