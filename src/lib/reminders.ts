@@ -36,7 +36,7 @@ export async function sendDueBookingReminders(): Promise<number> {
         userId: p.userId,
         type: "LIVE_CLASS_REMINDER",
         title: "Live class reminder ⏰",
-        body: `"${live.title}" starts in under 24 hours — don't miss it!`,
+        body: `"${live.title}" starts in under 24 hours (${live.startsAt.toDateString()}) — join: ${live.meetingUrl}`,
         data: { liveClassId: live.id },
       });
     }

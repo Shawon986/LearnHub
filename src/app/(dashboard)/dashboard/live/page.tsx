@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ActionButton } from "@/components/action-button";
 import { unregisterLiveClass } from "@/lib/actions/student";
 import { LiveRegisterButton } from "./live-register-button";
-import { formatBDT, formatDate, formatTime } from "@/lib/format";
+import { formatDate, formatTime } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Live Classes" };
 
@@ -20,7 +20,7 @@ export default async function LiveClassesPage() {
   const now = new Date();
   const [upcoming, past] = await Promise.all([
     db.liveClass.findMany({
-      where: { startsAt: { gte: now }, status: { in: ["SCHEDULED", "LIVE"] } },
+      where: { startsAt: { gte: now }, status: { in: ["SCHEDULED"] } },
       include: {
         teacher: true,
         participants: { where: { userId: user.id } },
@@ -44,7 +44,7 @@ export default async function LiveClassesPage() {
       <div>
         <h1 className="font-display text-xl font-extrabold text-foreground">Live Classes</h1>
         <p className="mt-1 text-sm text-muted-fg">
-          Register for upcoming sessions — you&apos;ll get a reminder before each one starts.
+          Register for upcoming sessions — you&apos;ll get the meeting link and a reminder before each one starts.
         </p>
       </div>
 
@@ -82,21 +82,23 @@ export default async function LiveClassesPage() {
                       {live.teacher.name} · {formatDate(live.startsAt)} at {formatTime(live.startsAt)} ·{" "}
                       {live.durationMinutes} min · {live._count.participants}/{live.maxStudents} seats
                     </p>
+                    {registered && !started && (
+                      <p className="mt-1 text-[11px] font-semibold text-muted-fg">
+                        Starts {formatDate(live.startsAt)} at {formatTime(live.startsAt)}
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
-                    {live.price > 0 && (
-                      <Badge variant="gold" size="md">
-                        {formatBDT(live.price)}
-                      </Badge>
-                    )}
                     {registered ? (
                       <>
-                        {live.status === "LIVE" && (
+                        {started && (
                           <a
-                            href={`/classroom/${live.id}`}
+                            href={live.meetingUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="inline-flex h-9 items-center rounded-xl bg-success px-4 text-[13px] font-bold text-white transition-colors hover:bg-success/90"
                           >
-                            Join now →
+                            Join meeting →
                           </a>
                         )}
                         <ActionButton
@@ -131,27 +133,20 @@ export default async function LiveClassesPage() {
           </p>
         ) : (
           <div className="space-y-3">
-            {past.map((live) => {
-              const attendance = live.participants[0]?.attendanceStatus;
-              return (
-                <Card key={live.id} className="flex items-center gap-4 p-5 opacity-80">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-card-2 text-muted-fg">
-                    <CalendarDays className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-[14px] font-bold text-foreground">{live.title}</h3>
-                    <p className="text-[12px] text-muted-fg">
-                      {live.teacher.name} · {formatDate(live.startsAt)}
-                    </p>
-                  </div>
-                  {attendance && (
-                    <Badge variant={attendance === "PRESENT" ? "success" : "neutral"}>
-                      {attendance === "PRESENT" ? "Attended" : attendance}
-                    </Badge>
-                  )}
-                </Card>
-              );
-            })}
+            {past.map((live) => (
+              <Card key={live.id} className="flex items-center gap-4 p-5 opacity-80">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-card-2 text-muted-fg">
+                  <CalendarDays className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate text-[14px] font-bold text-foreground">{live.title}</h3>
+                  <p className="text-[12px] text-muted-fg">
+                    {live.teacher.name} · {formatDate(live.startsAt)}
+                  </p>
+                </div>
+                <Badge variant={live.status === "CANCELLED" ? "danger" : "neutral"}>{live.status}</Badge>
+              </Card>
+            ))}
           </div>
         )}
       </section>

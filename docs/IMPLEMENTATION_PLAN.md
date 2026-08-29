@@ -115,9 +115,7 @@ Checkout → PaymentProvider (interface)
 
 ## 10. Live-class architecture
 
-- `LiveClass` + participants (attendance states), recording link to `Video`, materials, maxStudents, price.
-- Classroom (Phase 7): video via a WebRTC provider abstraction (LiveKit/Zoom-style adapter — documented credential requirements), with local dev fallback; chat/whiteboard/polls via the realtime layer.
-- Desktop layout: main video + side panel (chat/participants) + bottom controls; dedicated mobile layout.
+- `LiveClass` + plain participant registrations, maxStudents, external `meetingUrl` (Zoom/Meet) — free scheduled events with registration notifications + reminders. No built-in classroom (see `docs/live-classes.md`).
 
 ## 11. Realtime architecture
 

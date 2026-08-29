@@ -99,14 +99,12 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 - [x] Docs: `docs/payments.md` (architecture, credentials, invariants, webhooks)
 - [x] Verified: lint clean, build green (56 routes), lifecycle/idempotency/mismatch/refund tests pass, checkout + sandbox + admin pages render, zero server errors
 
-## Phase 7 — delivered
+## Phase 7 — delivered (replaced by external-meeting model)
 
-- [x] **Realtime layer**: in-process classroom event bus + SSE stream (`/api/classrooms/[id]/stream`, force-dynamic, immediate heartbeat, snapshot replay for late joiners); mutations flow server action → bus → SSE (Redis pub/sub swap documented for multi-instance)
-- [x] **Classroom UI** (`/classroom/[id]`): video/avatar tiles with mic states, chat panel, participants panel with raised hands + host mute/remove, polls (create/vote/close with live result bars), emoji reactions overlay, collaborative whiteboard (pointer strokes, colors, eraser, host clear, session replay), bottom control bar, mobile drawer layout
-- [x] **Lifecycle**: teacher Start/End class (attendance rollup → PRESENT/LATE/ABSENT), student Join now button, join/leave presence, chat lock, participant moderation, recording toggle event, start notifications to all registered students
-- [x] **WebRTC abstraction** (`src/lib/live/webrtc.ts`): provider interface; LiveKit implementation mints real access tokens with jose (HS256, no SDK); dev provider shows honest avatar-tile mode
-- [x] **Paid live classes**: registration creates a payment order → checkout → engine creates the participant on completion (Payment.liveClassId)
-- [x] Verified: bus pub/sub all event types (chat/poll/hand/reaction/stroke), SSE stream connects for student + host (403 for outsiders), classroom renders both roles with correct controls, zero server errors
+- [x] **Live classes as scheduled events**: teacher schedules a free class with an external meeting link (Zoom/Meet); students register and get a notification with title, date/time and the link; "Join meeting →" opens it in a new tab; reminders via cron. The built-in classroom (SSE bus, WebRTC/LiveKit, chat/whiteboard/polls, attendance) was removed — see `docs/live-classes.md`.
+- [x] **Messaging polish**: real unread counts per conversation, day dividers + grouped bubbles, live thread header with role badge, "Seen" read receipts, auto-resizing composer with char counter, attachment preview.
+- [x] **Notification UX**: bell in the public header (unread badge), fully clickable notification rows (mark read + badge decrement + navigate/expand), same behavior in the notification center.
+- [x] Verified: migration `live_classes_external_meetings` applied, seed green, 54 tests pass, lint + typecheck + build green.
 
 ## Phase 8 — delivered
 
@@ -182,7 +180,7 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 
 - [x] **Prisma migrations**: initial baseline migration (`prisma/migrations/20260828204730_init`), `db:migrate` / `db:deploy` scripts, Postgres migration path documented
 - [x] **CI pipeline** (`.github/workflows/ci.yml`): install → prisma generate → lint → next typegen → typecheck → tests → production build
-- [x] **Production verification plan** (`docs/production-verification.md`): per-gateway sandbox checklists (bKash/Nagad/Rocket/Stripe incl. webhook replay + refund tests), video provider, LiveKit, Resend, cron, observability, go/no-go gates
+- [x] **Production verification plan** (`docs/production-verification.md`): per-gateway sandbox checklists (bKash/Nagad/Rocket/Stripe incl. webhook replay + refund tests), video provider, live-class meeting link, Resend, cron, observability, go/no-go gates
 - [x] **Final quality sweep** — see checklist below.
 
 ---
@@ -196,9 +194,8 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 | Course creation / enrollment | ✅ | Builder + free/paid checkout flows |
 | Teacher & course search | ✅ | `/search` with filters, verified |
 | Booking / calendar | ✅ | Availability engine tested |
-| Live class / classroom chat / whiteboard / attendance | ✅ | SSE realtime verified |
-| Screen sharing / live video | ⚠️ Provider-gated | WebRTC adapter wired; needs LiveKit credentials (verification plan §3) |
-| Live recording capture | ⚠️ Provider-gated | Recording lifecycle wired; capture requires a video provider |
+| Live classes (external meeting link) | ✅ | Schedule → register → notify → join link flow |
+| Messaging inbox | ✅ | Real-time SSE + read receipts + unread counts |
 | Admin recorded-class upload / processing | ✅ | Upload → READY → publish flow tested |
 | Protected video playback / progress | ✅ | Signed tokens + Range streaming + access tests |
 | Payments / webhooks / commission / wallet / withdrawals | ✅ | Engine tested incl. idempotency; real-gateway sandbox runs in verification plan §1 |
@@ -219,6 +216,6 @@ Phases follow `docs/IMPLEMENTATION_PLAN.md`. This file is the working checklist 
 - Device-lab responsive testing, full WCAG audit, load testing
 
 1. PostgreSQL migration + Prisma migrate workflow, CI pipeline (lint + typecheck + tests on push)
-2. Real-provider verification plan: payment gateway sandbox tests, video provider smoke test, LiveKit room check
+2. Real-provider verification plan: payment gateway sandbox tests, video provider smoke test, meeting-link live-class check
 3. Monitoring: error tracking + uptime + analytics review, backup strategy for the database
 4. Final quality-checklist sweep (the master spec's 45-item list) against the running app

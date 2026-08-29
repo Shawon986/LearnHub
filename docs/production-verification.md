@@ -42,11 +42,12 @@ Set `PAYMENT_PROVIDERS` to include the provider, add its credentials, then:
 - [ ] Play it via the signed-token player with seek (Range requests)
 - [ ] Unenrolled user blocked on a course-linked recording
 
-## 3. Live classroom (LiveKit)
+## 3. Live classes (external meeting link)
 
-- [ ] `LIVE_PROVIDER=livekit` + credentials → join room token mints
-- [ ] Two browsers join the same class → audio/video flows
-- [ ] Host mute/remove reflects in the SFU session
+- [ ] Teacher schedules a class with a Zoom/Meet URL → link stored and shown
+- [ ] Student registers → notification contains date/time + meeting link
+- [ ] Reminder notification fires for classes starting within 24h
+- [ ] "Join meeting →" opens the link in a new tab (registered students only)
 
 ## 4. Email (Resend)
 

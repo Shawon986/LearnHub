@@ -18,7 +18,7 @@ const STEPS = [
     icon: Video,
     title: "Learn live or on-demand",
     description:
-      "Join interactive live classrooms with chat, whiteboard and polls — or watch recorded classes at your own pace.",
+      "Join live sessions over your favourite meeting app — or watch recorded classes at your own pace.",
   },
   {
     icon: GraduationCap,

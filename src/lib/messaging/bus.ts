@@ -17,6 +17,7 @@ export type MessageEvent =
     }
   | { type: "typing"; conversationId: string; userId: string; userName: string }
   | { type: "presence"; userId: string; online: boolean }
+  | { type: "conversation.read"; conversationId: string; userId: string; at: string }
   | { type: "conversation.new"; conversationId: string }
   | {
       type: "notification";

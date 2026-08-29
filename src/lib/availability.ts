@@ -54,7 +54,7 @@ export async function hasCommitmentOverlap(
     db.liveClass.findMany({
       where: {
         teacherId,
-        status: { in: ["SCHEDULED", "LIVE"] },
+        status: { in: ["SCHEDULED"] },
         startsAt: { lt: endsAt },
         endsAt: { gt: startsAt },
       },
@@ -163,7 +163,7 @@ export async function getAvailableSlots(teacherId: string, isoDate: string): Pro
       db.liveClass.findMany({
         where: {
           teacherId,
-          status: { in: ["SCHEDULED", "LIVE"] },
+          status: { in: ["SCHEDULED"] },
           startsAt: { gte: dayStart, lt: dayEnd },
         },
         select: { startsAt: true, endsAt: true },

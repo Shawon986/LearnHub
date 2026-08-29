@@ -49,7 +49,7 @@ export const BOOKING_STATUSES = [
 ] as const;
 export type BookingStatus = (typeof BOOKING_STATUSES)[number];
 
-export const LIVE_CLASS_STATUSES = ["SCHEDULED", "LIVE", "ENDED", "CANCELLED"] as const;
+export const LIVE_CLASS_STATUSES = ["SCHEDULED", "ENDED", "CANCELLED"] as const;
 
 export const RECORDED_CLASS_STATUSES = [
   "DRAFT",
@@ -133,7 +133,7 @@ export const NOTIFICATION_TYPES = [
   "PAYMENT_FAILED",
   "NEW_MESSAGE",
   "LIVE_CLASS_REMINDER",
-  "LIVE_CLASS_STARTING",
+  "LIVE_CLASS_REGISTERED",
   "COURSE_PURCHASED",
   "COURSE_COMPLETED",
   "NEW_REVIEW",
@@ -158,7 +158,6 @@ export const BADGE_CODES = {
   STREAK_30: "STREAK_30",
   COURSE_100: "COURSE_100",
   TOP_LEARNER: "TOP_LEARNER",
-  LIVE_CLASS_CHAMPION: "LIVE_CLASS_CHAMPION",
 } as const;
 
 /** Platform setting keys (value stored as JSON in PlatformSetting). */

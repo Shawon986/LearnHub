@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+import { cookies } from "next/headers";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
+import { LanguageProvider } from "@/components/i18n/language-provider";
+import type { Locale } from "@/lib/i18n/dict";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -59,9 +62,12 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const store = await cookies();
+  const locale: Locale = store.get("locale")?.value === "bn" ? "bn" : "en";
+
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${jakarta.variable}`}>
+    <html lang={locale} suppressHydrationWarning className={`${inter.variable} ${jakarta.variable}`}>
       <body className="min-h-full bg-background text-foreground antialiased">
         <a
           href="#main-content"
@@ -70,7 +76,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         <ThemeProvider>
-          <ToastProvider>{children}</ToastProvider>
+          <LanguageProvider initialLocale={locale}>
+            <ToastProvider>{children}</ToastProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

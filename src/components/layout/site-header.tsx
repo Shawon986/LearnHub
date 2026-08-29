@@ -8,6 +8,9 @@ import { cn } from "@/lib/utils";
 import { Logo } from "@/components/layout/logo";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { LanguageToggle } from "@/components/i18n/language-toggle";
+import { useLanguage } from "@/components/i18n/language-provider";
+import { NotificationBell } from "@/components/layout/notification-bell";
 import { UserMenu } from "@/components/layout/user-menu";
 
 const NAV_LINKS = [
@@ -25,10 +28,17 @@ export interface HeaderUser {
   avatarUrl: string | null;
 }
 
-export function SiteHeader({ user }: { user: HeaderUser | null }) {
+export function SiteHeader({
+  user,
+  unreadNotifications = 0,
+}: {
+  user: HeaderUser | null;
+  unreadNotifications?: number;
+}) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const reduceMotion = useReducedMotion();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -51,11 +61,11 @@ export function SiteHeader({ user }: { user: HeaderUser | null }) {
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Main">
           {NAV_LINKS.map((link) => (
             <Link
-              key={link.label}
+              key={t(link.label)}
               href={link.href}
               className="rounded-full px-3.5 py-2 text-[13px] font-semibold text-muted-fg transition-colors hover:bg-card-2 hover:text-foreground"
             >
-              {link.label}
+              {t(link.label)}
             </Link>
           ))}
         </nav>
@@ -68,13 +78,17 @@ export function SiteHeader({ user }: { user: HeaderUser | null }) {
             className="mr-1 hidden h-9 items-center gap-2 rounded-full border border-line bg-card px-3.5 text-[13px] text-faint-fg transition-colors hover:border-line-strong sm:inline-flex"
           >
             <Search className="h-3.5 w-3.5" />
-            <span className="hidden md:inline">Search courses, teachers…</span>
+            <span className="hidden md:inline">{t("Search courses, teachers…")}</span>
           </Link>
 
+          <LanguageToggle className="mr-0.5" />
           <ThemeToggle />
 
           {user ? (
-            <UserMenu user={user} />
+            <>
+              <NotificationBell initialUnread={unreadNotifications} />
+              <UserMenu user={user} />
+            </>
           ) : (
             <div className="hidden items-center gap-2 sm:flex">
               <Button href="/login" variant="ghost" size="sm">
@@ -120,12 +134,12 @@ export function SiteHeader({ user }: { user: HeaderUser | null }) {
             >
               {NAV_LINKS.map((link) => (
                 <Link
-                  key={link.label}
+                  key={t(link.label)}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
                   className="rounded-xl px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-card-2"
                 >
-                  {link.label}
+                  {t(link.label)}
                 </Link>
               ))}
               {!user && (

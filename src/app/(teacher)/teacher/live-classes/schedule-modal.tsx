@@ -27,8 +27,7 @@ export function ScheduleLiveClassModal() {
         startTime: String(form.get("startTime")),
         durationMinutes: Number(form.get("durationMinutes")),
         maxStudents: Number(form.get("maxStudents")),
-        recordingEnabled: form.get("recordingEnabled") === "on",
-        price: Number(form.get("price")),
+        meetingUrl: String(form.get("meetingUrl")),
       });
       if (result.ok) {
         setOpen(false);
@@ -49,11 +48,19 @@ export function ScheduleLiveClassModal() {
         open={open}
         onClose={() => setOpen(false)}
         title="Schedule a live class"
-        description="Students can register and get reminders automatically."
+        description="Students register for free and get the meeting link automatically."
       >
         <form onSubmit={onSubmit} className="space-y-4">
           <Input label="Title" name="title" placeholder="e.g. React Hooks Deep Dive" required />
           <Textarea label="Description" name="description" rows={3} placeholder="What will you cover? Any prerequisites?" />
+          <Input
+            label="Meeting link"
+            name="meetingUrl"
+            type="url"
+            required
+            placeholder="https://zoom.us/j/…"
+            hint="Students join via this link — it stays visible only to registered students."
+          />
           <div className="grid grid-cols-2 gap-4">
             <Input label="Date" name="date" type="date" required />
             <Input label="Start time" name="startTime" type="time" required />
@@ -62,11 +69,6 @@ export function ScheduleLiveClassModal() {
             <Input label="Duration (minutes)" name="durationMinutes" type="number" min={15} max={600} defaultValue={60} />
             <Input label="Max students" name="maxStudents" type="number" min={1} max={500} defaultValue={50} />
           </div>
-          <Input label="Price (৳, 0 = free)" name="price" type="number" min={0} defaultValue={0} />
-          <label className="inline-flex cursor-pointer items-center gap-2 text-[13px] font-semibold text-muted-fg">
-            <input type="checkbox" name="recordingEnabled" className="h-4 w-4 rounded border-line accent-[var(--brand)]" />
-            Record this class (recording available after it ends)
-          </label>
           {error && (
             <p role="alert" className="rounded-lg bg-danger-soft px-3 py-2 text-xs font-semibold text-danger">
               {error}

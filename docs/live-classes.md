@@ -1,46 +1,55 @@
-# Live Classes & Realtime
+# Live Classes (External Meeting Links)
 
-## Architecture
-
-```
-Server action (chat/hand/poll/whiteboard/…)
-   → classroomBus (in-process event bus, src/lib/live/bus.ts)
-   → SSE stream GET /api/classrooms/[id]/stream (force-dynamic)
-   → every connected participant
-```
-
-- The bus keeps session-scoped state: open polls (with votes), whiteboard
-  stroke buffer (replayed to late joiners), presence.
-- **Multi-instance production**: swap the bus store for Redis pub/sub —
-  the exported API (`subscribe`/`publish`/poll helpers) stays identical.
-- SSE gotchas already solved in this codebase: `export const dynamic =
-  "force-dynamic"` is required, an immediate first byte (`: connected`) is
-  required or headers never flush, and every `controller.enqueue` is
-  wrapped in try/catch (client disconnects otherwise raise
-  `uncaughtException`).
+Live classes are **scheduled free events with an external meeting link**
+(Zoom, Google Meet, …). There is no built-in classroom: the teacher
+schedules a class, students register, and everyone joins through the
+teacher's link.
 
 ## Lifecycle
 
-SCHEDULED → (teacher Start) → LIVE → (teacher End) → ENDED
-- End performs attendance rollup: joined ≤15 min after start = PRESENT,
-  later = LATE, registered but never joined = ABSENT.
-- Start notifies all registered participants; reminders run via
-  `/api/cron/reminders` (CRON_SECRET-gated) and opportunistically from
+`SCHEDULED → (teacher Mark-as-ended) → ENDED`
+or `SCHEDULED → (teacher Cancel) → CANCELLED`
+
+- **Schedule** — `scheduleLiveClass` in `src/lib/actions/teacher.ts`
+  (Zod schema `liveClassSchema` in `src/lib/validation/profile.ts`):
+  title, description, date/time, duration, capacity and a validated
+  `meetingUrl`.
+- **Register** — `registerLiveClass` in `src/lib/actions/student.ts`
+  (free — no checkout). Creates a `LiveClassParticipant` row and sends the
+  student a `LIVE_CLASS_REGISTERED` notification with title, date/time and
+  the meeting link (`data.liveClassId`). The teacher gets a `NEW_BOOKING`
+  notification. `unregisterLiveClass` frees the seat.
+- **Cancel** — `cancelLiveClass` notifies every registered student
+  (`BOOKING_CANCELLED`).
+- **End** — `markLiveClassEnded` moves a scheduled class to `ENDED`.
+
+## Notifications & reminders
+
+- Registration confirmation carries the meeting link (shown in the bell
+  popup and the notification center — the row links to `/dashboard/live`).
+- `sendDueBookingReminders` (`src/lib/reminders.ts`) sends a
+  `LIVE_CLASS_REMINDER` (with date and link) to every participant of
+  classes starting within 24h, once per class (`remindedAt` guard). Runs
+  via `/api/cron/reminders` (CRON_SECRET-gated) and opportunistically from
   dashboard layouts.
 
-## Video/audio (WebRTC)
+## Student & teacher surfaces
 
-`src/lib/live/webrtc.ts` — provider abstraction:
-- **dev** (default): no media transport; the classroom shows avatar tiles.
-- **livekit**: mints real LiveKit access tokens with `jose` (HS256, no SDK).
-  Requires `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `LIVEKIT_URL`
-  (`LIVE_PROVIDER=livekit`). The frontend then connects the SFU and media
-  replaces the avatar tiles.
+- Students: `/dashboard/live` — register/leave; once the class has started,
+  registered students see "Join meeting →" (opens `meetingUrl` in a new
+  tab with `rel="noopener noreferrer"`).
+- Teachers: `/teacher/live-classes` — schedule modal (meeting link
+  required), upcoming list with the link, Mark-as-ended and Cancel
+  actions, history with ENDED/CANCELLED badges. The calendar and the
+  overview page list SCHEDULED classes only.
+- Marketing home / search / teacher profiles show upcoming scheduled
+  classes via `LiveClassCard` ("Free to join →").
+- Scheduled classes count as teacher commitments in
+  `src/lib/availability.ts` (booking conflict checks).
 
-## Classroom UI
+## Data model
 
-`/classroom/[id]` — video tiles, chat (host-lockable), participants with
-raised hands + host mute/remove, polls with live result bars, emoji
-reactions, collaborative whiteboard (strokes synced via the bus), bottom
-control bar, mobile drawer layout. Host-only actions are enforced
-server-side in `src/lib/actions/live.ts`.
+`LiveClass`: title, description, startsAt/endsAt, durationMinutes,
+maxStudents, status (SCHEDULED|ENDED|CANCELLED), `meetingUrl`.
+`LiveClassParticipant`: plain registration rows (one per student per
+class, `@@unique([liveClassId, userId])`).

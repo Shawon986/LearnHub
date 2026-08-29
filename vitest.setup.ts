@@ -136,7 +136,6 @@ export async function clearData() {
     "conversationParticipant", // → conversation, user
     "conversation",
     "liveClassParticipant", // → liveClass, user
-    "liveClassRecording", // → liveClass, video
     "liveClass", // → course, user
     "booking", // → user, course
     "availabilityException", // → user

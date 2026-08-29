@@ -47,7 +47,7 @@ export default async function StudentDashboardPage() {
       }),
       db.courseProgress.findMany({ where: { studentId: user.id } }),
       db.liveClass.findMany({
-        where: { startsAt: { gte: new Date() }, status: { in: ["SCHEDULED", "LIVE"] } },
+        where: { startsAt: { gte: new Date() }, status: { in: ["SCHEDULED"] } },
         include: { teacher: true },
         orderBy: { startsAt: "asc" },
         take: 3,

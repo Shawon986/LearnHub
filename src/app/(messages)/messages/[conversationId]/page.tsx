@@ -45,6 +45,8 @@ export default async function ConversationPage({
     conversationId: conversation.id,
     otherName: other?.user.name ?? "Conversation",
     otherAvatarUrl: other?.user.avatarUrl ?? null,
+    otherRole: other?.user.role ?? "",
+    partnerLastReadAt: other?.lastReadAt?.toISOString() ?? null,
     messages: conversation.messages.map((m) => ({
       id: m.id,
       senderId: m.senderId,
@@ -55,26 +57,34 @@ export default async function ConversationPage({
     })),
   };
 
-  const list: ConversationData[] = conversations.map((c) => {
+  // Real unread counts: messages from the other party after my last read.
+  const unreadCounts = await Promise.all(
+    conversations.map((c) => {
+      const me = c.participants.find((p) => p.userId === user.id);
+      return db.message.count({
+        where: {
+          conversationId: c.id,
+          senderId: { not: user.id },
+          createdAt: { gt: me?.lastReadAt ?? new Date(0) },
+        },
+      });
+    }),
+  );
+
+  const list: ConversationData[] = conversations.map((c, i) => {
     const otherP = c.participants.find((p) => p.userId !== user.id);
-    const me = c.participants.find((p) => p.userId === user.id);
     const last = c.messages[0] ?? null;
-    const unread =
-      me && last && last.senderId !== user.id
-        ? last.createdAt > (me.lastReadAt ?? new Date(0))
-          ? 1
-          : 0
-        : 0;
     return {
       id: c.id,
       otherUserId: otherP?.userId ?? "",
       otherName: otherP?.user.name ?? "Conversation",
       otherAvatarUrl: otherP?.user.avatarUrl ?? null,
       otherRole: otherP?.user.role ?? "",
+      partnerLastReadAt: otherP?.lastReadAt?.toISOString() ?? null,
       lastContent: last ? (last.type === "IMAGE" ? "📷 Image" : last.content) : "Say hello 👋",
       lastAt: last?.createdAt.toISOString() ?? c.updatedAt.toISOString(),
       lastFromMe: last ? last.senderId === user.id : false,
-      unread,
+      unread: unreadCounts[i] ?? 0,
     };
   });
 

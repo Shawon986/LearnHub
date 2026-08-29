@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Bell, BellRing, CheckCheck } from "lucide-react";
 import { Dropdown, DropdownSeparator } from "@/components/ui/dropdown";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLanguage } from "@/components/i18n/language-provider";
 import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,9 @@ export function NotificationBell({ initialUnread = 0 }: { initialUnread?: number
   const [unread, setUnread] = useState(initialUnread);
   const [items, setItems] = useState<NotificationItem[] | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const router = useRouter();
+  const { t } = useLanguage();
 
   const load = useCallback(async () => {
     try {
@@ -80,12 +84,33 @@ export function NotificationBell({ initialUnread = 0 }: { initialUnread?: number
   }, []);
 
   async function markAll() {
+    setUnread(0);
+    setItems((prev) => (prev ?? []).map((n) => ({ ...n, read: true })));
     await fetch("/api/notifications", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ all: true }),
     });
     await load();
+  }
+
+  /** Clicking a notification: mark it read (badge decrements) and open it. */
+  function onRowClick(n: NotificationItem) {
+    if (!n.read) {
+      setUnread((u) => Math.max(0, u - 1));
+      setItems((prev) => (prev ?? []).map((i) => (i.id === n.id ? { ...i, read: true } : i)));
+      fetch("/api/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [n.id] }),
+      }).catch(() => {});
+    }
+    const link = linkFor(n);
+    if (link) {
+      router.push(link);
+    } else {
+      setExpandedId((cur) => (cur === n.id ? null : n.id));
+    }
   }
 
   return (
@@ -96,7 +121,7 @@ export function NotificationBell({ initialUnread = 0 }: { initialUnread?: number
         <button
           type="button"
           onClick={() => load()}
-          aria-label={`Notifications (${unread} unread)`}
+          aria-label={t("Notifications") + ` (${unread} unread)`}
           className="relative inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-fg transition-colors hover:bg-card-2 hover:text-foreground"
         >
           {unread > 0 ? <BellRing className="h-[18px] w-[18px]" /> : <Bell className="h-[18px] w-[18px]" />}
@@ -109,14 +134,14 @@ export function NotificationBell({ initialUnread = 0 }: { initialUnread?: number
       }
     >
       <div className="flex items-center justify-between border-b border-line px-3.5 py-2.5">
-        <p className="text-[13px] font-bold text-foreground">Notifications</p>
+        <p className="text-[13px] font-bold text-foreground">{t("Notifications")}</p>
         {unread > 0 && (
           <button
             type="button"
             onClick={markAll}
             className="inline-flex items-center gap-1 text-[11px] font-bold text-brand-fg hover:underline"
           >
-            <CheckCheck className="h-3 w-3" /> Mark all read
+            <CheckCheck className="h-3 w-3" /> {t("Mark all read")}
           </button>
         )}
       </div>
@@ -129,33 +154,49 @@ export function NotificationBell({ initialUnread = 0 }: { initialUnread?: number
             ))}
           </div>
         ) : items === null || items.length === 0 ? (
-          <p className="px-4 py-10 text-center text-xs text-faint-fg">No notifications yet</p>
+          <p className="px-4 py-10 text-center text-xs text-faint-fg">{t("No notifications yet")}</p>
         ) : (
           <ul className="py-1">
-            {items.map((n) => (
-              <li key={n.id} className={cn("flex gap-2.5 px-3.5 py-2.5", !n.read && "bg-brand-soft/40")}>
-                <span
+            {items.map((n) => {
+              const expanded = expandedId === n.id;
+              return (
+                <li
+                  key={n.id}
+                  onClick={() => onRowClick(n)}
                   className={cn(
-                    "mt-1.5 h-2 w-2 shrink-0 rounded-full",
-                    n.read ? "bg-transparent" : "bg-brand",
+                    "flex cursor-pointer gap-2.5 px-3.5 py-2.5 transition-colors hover:bg-card-2",
+                    !n.read && "bg-brand-soft/40",
                   )}
-                  aria-hidden
-                />
-                <div className="min-w-0">
-                  <p className="truncate text-[12px] font-bold text-foreground">{n.title}</p>
-                  {n.body && <p className="line-clamp-2 text-[11px] leading-relaxed text-muted-fg">{n.body}</p>}
-                  <p className="mt-0.5 text-[10px] text-faint-fg">{timeAgo(n.createdAt)}</p>
-                  {linkFor(n) && (
-                    <Link
-                      href={linkFor(n)!}
-                      className="mt-1 inline-block text-[11px] font-bold text-brand-fg hover:underline"
-                    >
-                      {n.data?.checkoutPath ? "Complete payment →" : "Open →"}
-                    </Link>
-                  )}
-                </div>
-              </li>
-            ))}
+                >
+                  <span
+                    className={cn(
+                      "mt-1.5 h-2 w-2 shrink-0 rounded-full",
+                      n.read ? "bg-transparent" : "bg-brand",
+                    )}
+                    aria-hidden
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[12px] font-bold text-foreground">{n.title}</p>
+                    {n.body && (
+                      <p
+                        className={cn(
+                          "text-[11px] leading-relaxed text-muted-fg",
+                          expanded ? "whitespace-pre-line" : "line-clamp-2",
+                        )}
+                      >
+                        {n.body}
+                      </p>
+                    )}
+                    <p className="mt-0.5 text-[10px] text-faint-fg">{timeAgo(n.createdAt)}</p>
+                    {linkFor(n) && (
+                      <span className="mt-1 inline-block text-[11px] font-bold text-brand-fg">
+                        {n.data?.checkoutPath ? "Complete payment →" : "Open →"}
+                      </span>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

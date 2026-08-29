@@ -13,7 +13,6 @@
      gateway credentials for each
    - `VIDEO_PROVIDER=cloudflare` (or mux) + credentials
    - `AI_PROVIDER=openai|anthropic|gateway` + keys
-   - `LIVE_PROVIDER=livekit` + LiveKit credentials (Phase 7 classroom)
    - `CRON_SECRET` (random) for `/api/cron/reminders`
 3. **Cron**: Vercel Cron Job → `/api/cron/reminders`, every 30 min,
    with header `Authorization: Bearer <CRON_SECRET>`.

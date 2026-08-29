@@ -21,8 +21,6 @@ Copy `.env.example` → `.env`. Everything has a safe dev default except
 | `CLOUDFLARE_STREAM_*` / `MUX_*` | — | Cloud video providers |
 | `AI_PROVIDER` | `dev` | `dev` / `openai` / `anthropic` / `gateway` |
 | `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `AI_GATEWAY_URL` | — | AI credentials |
-| `LIVE_PROVIDER` | `dev` | `livekit` enables real WebRTC |
-| `LIVEKIT_API_KEY/SECRET/URL` | — | LiveKit SFU |
 | `CRON_SECRET` | *(optional)* | Protects `/api/cron/reminders` |
 
 All secrets stay out of source control (`.env*` is git-ignored).

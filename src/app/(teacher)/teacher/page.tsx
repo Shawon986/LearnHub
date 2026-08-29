@@ -15,7 +15,7 @@ export const metadata: Metadata = { title: "Teacher Dashboard" };
 
 const QUICK_ACTIONS = [
   { href: "/teacher/courses", label: "Create a course", icon: BookOpen, blurb: "Build modules, lessons & quizzes" },
-  { href: "/teacher/live-classes", label: "Schedule live class", icon: MonitorPlay, blurb: "Set date, capacity & materials" },
+  { href: "/teacher/live-classes", label: "Schedule live class", icon: MonitorPlay, blurb: "Set date, time & meeting link" },
   { href: "/teacher/availability", label: "Set availability", icon: Clock3, blurb: "Define weekly tutoring slots" },
   { href: "/teacher/earnings", label: "View earnings", icon: CircleDollarSign, blurb: "Wallet, commissions & withdrawals" },
 ];
@@ -33,9 +33,9 @@ export default async function TeacherDashboardPage() {
         where: { course: { teacherId: user.id }, status: "ACTIVE" },
       }),
       db.course.count({ where: { teacherId: user.id, status: "PUBLISHED" } }),
-      db.liveClass.count({ where: { teacherId: user.id, status: { in: ["SCHEDULED", "LIVE"] } } }),
+      db.liveClass.count({ where: { teacherId: user.id, status: { in: ["SCHEDULED"] } } }),
       db.liveClass.findMany({
-        where: { teacherId: user.id, startsAt: { gte: new Date() }, status: { in: ["SCHEDULED", "LIVE"] } },
+        where: { teacherId: user.id, startsAt: { gte: new Date() }, status: { in: ["SCHEDULED"] } },
         orderBy: { startsAt: "asc" },
         take: 4,
       }),
@@ -112,8 +112,8 @@ export default async function TeacherDashboardPage() {
                       {formatDate(l.startsAt)} · {formatTime(l.startsAt)} · {l.durationMinutes} min
                     </p>
                   </div>
-                  <Badge variant={l.status === "LIVE" ? "success" : "accent"}>
-                    {l.status === "LIVE" ? "Live now" : "Scheduled"}
+                  <Badge variant={l.status === "CANCELLED" ? "danger" : "accent"}>
+                    {l.status === "CANCELLED" ? "Cancelled" : "Scheduled"}
                   </Badge>
                 </Card>
               ))}

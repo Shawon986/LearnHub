@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { MonitorPlay, Video } from "lucide-react";
+import { Link2, MonitorPlay, Video } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ActionButton } from "@/components/action-button";
-import { cancelLiveClass } from "@/lib/actions/teacher";
-import { endLiveClass, startLiveClass } from "@/lib/actions/live";
-import { formatBDT, formatDate, formatTime } from "@/lib/format";
+import { cancelLiveClass, markLiveClassEnded } from "@/lib/actions/teacher";
+import { formatDate, formatTime } from "@/lib/format";
 import { ScheduleLiveClassModal } from "./schedule-modal";
 
 export const metadata: Metadata = { title: "Live Classes" };
@@ -21,12 +20,12 @@ export default async function LiveClassesPage() {
   const now = new Date();
   const [upcoming, past] = await Promise.all([
     db.liveClass.findMany({
-      where: { teacherId: user.id, startsAt: { gte: now }, status: { in: ["SCHEDULED", "LIVE"] } },
+      where: { teacherId: user.id, startsAt: { gte: now }, status: { in: ["SCHEDULED"] } },
       include: { _count: { select: { participants: true } } },
       orderBy: { startsAt: "asc" },
     }),
     db.liveClass.findMany({
-      where: { teacherId: user.id, startsAt: { lt: now } },
+      where: { teacherId: user.id, OR: [{ startsAt: { lt: now } }, { status: { in: ["ENDED", "CANCELLED"] } }] },
       include: { _count: { select: { participants: true } } },
       orderBy: { startsAt: "desc" },
       take: 8,
@@ -39,7 +38,7 @@ export default async function LiveClassesPage() {
         <div>
           <h1 className="font-display text-xl font-extrabold text-foreground">Live Classes</h1>
           <p className="mt-1 text-sm text-muted-fg">
-            Schedule interactive sessions — the classroom itself arrives in Phase 7.
+            Schedule sessions with a meeting link — registered students get notified with the details.
           </p>
         </div>
         <ScheduleLiveClassModal />
@@ -64,49 +63,30 @@ export default async function LiveClassesPage() {
                   <MonitorPlay className="h-6 w-6" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-[15px] font-bold text-foreground">{live.title}</h3>
-                    {live.status === "LIVE" && <Badge variant="success">Live now</Badge>}
-                  </div>
+                  <h3 className="text-[15px] font-bold text-foreground">{live.title}</h3>
                   <p className="mt-0.5 text-[12px] text-muted-fg">
                     {formatDate(live.startsAt)} · {formatTime(live.startsAt)} · {live.durationMinutes} min ·{" "}
                     {live._count.participants}/{live.maxStudents} registered
                   </p>
-                  <p className="mt-1 text-[11px] text-faint-fg">
-                    {live.recordingEnabled ? "🎥 Recording enabled" : "No recording"} ·{" "}
-                    {live.price > 0 ? formatBDT(live.price) : "Free"}
-                  </p>
-                </div>
-                {live.status === "LIVE" && (
                   <a
-                    href={`/classroom/${live.id}`}
-                    className="inline-flex h-9 items-center rounded-xl bg-success px-4 text-[13px] font-bold text-white transition-colors hover:bg-success/90"
+                    href={live.meetingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-brand-fg hover:underline"
                   >
-                    Open classroom
+                    <Link2 className="h-3 w-3" /> Open meeting link ↗
                   </a>
-                )}
-                {live.status === "SCHEDULED" && (
-                  <ActionButton
-                    size="sm"
-                    action={startLiveClass.bind(null, live.id)}
-                    confirm={`Start "${live.title}" now? Registered students will be notified.`}
-                    successMessage="Class is live — students have been notified."
-                  >
-                    Start class
-                  </ActionButton>
-                )}
-                {live.status === "LIVE" && (
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
                   <ActionButton
                     size="sm"
                     variant="outline"
-                    action={endLiveClass.bind(null, live.id)}
-                    confirm="End this class? Attendance will be recorded."
-                    successMessage="Class ended — attendance recorded."
+                    action={markLiveClassEnded.bind(null, live.id)}
+                    confirm="Mark this class as ended?"
+                    successMessage="Class marked as ended."
                   >
-                    End class
+                    Mark as ended
                   </ActionButton>
-                )}
-                {live.status === "SCHEDULED" && (
                   <ActionButton
                     variant="outline"
                     size="sm"
@@ -115,7 +95,7 @@ export default async function LiveClassesPage() {
                   >
                     Cancel class
                   </ActionButton>
-                )}
+                </div>
               </Card>
             ))}
           </div>
@@ -140,10 +120,10 @@ export default async function LiveClassesPage() {
                 <div className="min-w-0 flex-1">
                   <h3 className="truncate text-[14px] font-bold text-foreground">{live.title}</h3>
                   <p className="text-[12px] text-muted-fg">
-                    {formatDate(live.startsAt)} · {live._count.participants} participants
+                    {formatDate(live.startsAt)} · {live._count.participants} registered
                   </p>
                 </div>
-                <Badge variant="neutral">{live.status}</Badge>
+                <Badge variant={live.status === "CANCELLED" ? "danger" : "neutral"}>{live.status}</Badge>
               </Card>
             ))}
           </div>

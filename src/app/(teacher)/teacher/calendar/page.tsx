@@ -27,7 +27,7 @@ export default async function CalendarPage() {
       include: { student: { select: { name: true } } },
     }),
     db.liveClass.findMany({
-      where: { teacherId: user.id, startsAt: { gte: from, lt: to }, status: { in: ["SCHEDULED", "LIVE"] } },
+      where: { teacherId: user.id, startsAt: { gte: from, lt: to }, status: { in: ["SCHEDULED"] } },
     }),
   ]);
 

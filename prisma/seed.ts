@@ -42,7 +42,6 @@ async function main() {
     { code: "STREAK_30", name: "30-Day Streak", description: "Learned 30 days in a row", icon: "flame" },
     { code: "COURSE_100", name: "100% Completion", description: "Finished a course with a perfect score", icon: "target" },
     { code: "TOP_LEARNER", name: "Top Learner", description: "Ranked in the weekly leaderboard top 10", icon: "crown" },
-    { code: "LIVE_CLASS_CHAMPION", name: "Live Class Champion", description: "Attended 10 live classes", icon: "video" },
   ];
   for (const b of badges) await db.badge.create({ data: { ...b, criteria: {} } });
 
@@ -1034,13 +1033,13 @@ async function main() {
   }
 
   // ---------------- Live classes ----------------
-  const liveDefs: { teacherKey: string; title: string; inHours: number; minutes: number; max: number; recording: boolean; price: number; ended?: boolean }[] = [
-    { teacherKey: "ayesha", title: "Live: React Hooks Deep Dive", inHours: 20, minutes: 90, max: 50, recording: true, price: 0 },
-    { teacherKey: "tanvir", title: "Machine Learning Q&A — Ask Me Anything", inHours: 44, minutes: 60, max: 100, recording: false, price: 0 },
-    { teacherKey: "nusrat", title: "Figma Live Workshop: Design a Landing Page", inHours: 68, minutes: 120, max: 40, recording: true, price: 0 },
-    { teacherKey: "rafiul", title: "DSA Problem Solving Marathon", inHours: 92, minutes: 150, max: 80, recording: true, price: 200 },
-    { teacherKey: "mahmudul", title: "English Speaking Club: Fluency Practice", inHours: 116, minutes: 60, max: 30, recording: false, price: 0 },
-    { teacherKey: "ayesha", title: "Intro to Web Dev — Live Q&A", inHours: -72, minutes: 60, max: 50, recording: true, price: 0, ended: true },
+  const liveDefs: { teacherKey: string; title: string; inHours: number; minutes: number; max: number; meetingUrl: string; ended?: boolean }[] = [
+    { teacherKey: "ayesha", title: "Live: React Hooks Deep Dive", inHours: 20, minutes: 90, max: 50, meetingUrl: "https://zoom.us/j/123456789" },
+    { teacherKey: "tanvir", title: "Machine Learning Q&A — Ask Me Anything", inHours: 44, minutes: 60, max: 100, meetingUrl: "https://meet.google.com/abc-defg-hij" },
+    { teacherKey: "nusrat", title: "Figma Live Workshop: Design a Landing Page", inHours: 68, minutes: 120, max: 40, meetingUrl: "https://zoom.us/j/987654321" },
+    { teacherKey: "rafiul", title: "DSA Problem Solving Marathon", inHours: 92, minutes: 150, max: 80, meetingUrl: "https://meet.google.com/xyz-uvw-rst" },
+    { teacherKey: "mahmudul", title: "English Speaking Club: Fluency Practice", inHours: 116, minutes: 60, max: 30, meetingUrl: "https://zoom.us/j/555111222" },
+    { teacherKey: "ayesha", title: "Intro to Web Dev — Live Q&A", inHours: -72, minutes: 60, max: 50, meetingUrl: "https://zoom.us/j/111222333", ended: true },
   ];
   const liveIds: string[] = [];
   for (const l of liveDefs) {
@@ -1055,35 +1054,20 @@ async function main() {
         durationMinutes: l.minutes,
         maxStudents: l.max,
         status: l.ended ? "ENDED" : "SCHEDULED",
-        recordingEnabled: l.recording,
-        price: l.price,
-        materials: [{ title: "Slides.pdf", url: "/uploads/demo/slides.pdf" }],
+        meetingUrl: l.meetingUrl,
       },
     });
     liveIds.push(live.id);
-    if (l.ended) {
-      await db.liveClassParticipant.create({
-        data: {
-          liveClassId: live.id,
-          userId: students.shawon.id,
-          role: "STUDENT",
-          joinedAt: hoursFromNow(-72),
-          leftAt: hoursFromNow(-71),
-          attendanceStatus: "PRESENT",
-        },
-      });
-    } else {
-      await db.liveClassParticipant.create({
-        data: { liveClassId: live.id, userId: students.shawon.id, role: "STUDENT", attendanceStatus: "REGISTERED" },
-      });
-    }
+    await db.liveClassParticipant.create({
+      data: { liveClassId: live.id, userId: students.shawon.id },
+    });
   }
   await db.notification.create({
     data: {
       userId: students.shawon.id,
       type: "LIVE_CLASS_REMINDER",
       title: "Live class reminder",
-      body: "React Hooks Deep Dive starts in under 24 hours.",
+      body: "React Hooks Deep Dive starts in under 24 hours — join: https://zoom.us/j/123456789",
       read: false,
       createdAt: hoursFromNow(-1),
     },

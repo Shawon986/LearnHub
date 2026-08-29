@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth/session";
 import { logAudit } from "@/lib/audit";
 import { createNotification } from "@/lib/notifications";
+import { formatDate, formatTime } from "@/lib/format";
 import { verifyPassword, hashPassword } from "@/lib/auth/password";
 import { changePasswordSchema, updateProfileSchema } from "@/lib/validation/profile";
 import { actionError, type ActionResult } from "@/lib/actions/shared";
@@ -96,9 +97,7 @@ export async function removeWishlistItem(id: string): Promise<ActionResult> {
   }
 }
 
-export async function registerLiveClass(
-  liveClassId: string,
-): Promise<ActionResult & { redirectUrl?: string; paid?: boolean }> {
+export async function registerLiveClass(liveClassId: string): Promise<ActionResult> {
   try {
     const user = await requireUser();
     const live = await db.liveClass.findUnique({
@@ -118,38 +117,21 @@ export async function registerLiveClass(
     });
     if (existing) return actionError("You are already registered for this class.");
 
-    // Paid classes go through checkout (verified server-side).
-    if (live.price > 0) {
-      const openOrder = await db.payment.findFirst({
-        where: { studentId: user.id, liveClassId, purpose: "LIVE_CLASS", status: "PENDING" },
-        orderBy: { createdAt: "desc" },
-      });
-      const payment = openOrder
-        ? openOrder
-        : await db.payment.create({
-            data: {
-              studentId: user.id,
-              amount: live.price,
-              currency: "BDT",
-              method: "DEV",
-              provider: "DEV",
-              status: "PENDING",
-              purpose: "LIVE_CLASS",
-              liveClassId,
-              metadata: { description: `Live class: ${live.title}` },
-            },
-          });
-      return { ok: true, redirectUrl: `/checkout/${payment.id}`, paid: true };
-    }
-
     await db.liveClassParticipant.create({
-      data: { liveClassId, userId: user.id, role: "STUDENT", attendanceStatus: "REGISTERED" },
+      data: { liveClassId, userId: user.id },
     });
     await createNotification({
       userId: live.teacherId,
       type: "NEW_BOOKING",
       title: "New live class registration",
       body: `${user.name} registered for "${live.title}".`,
+    });
+    await createNotification({
+      userId: user.id,
+      type: "LIVE_CLASS_REGISTERED",
+      title: "You're registered for a live class",
+      body: `"${live.title}" — ${formatDate(live.startsAt)} at ${formatTime(live.startsAt)}. Join link: ${live.meetingUrl}`,
+      data: { liveClassId },
     });
     await logAudit({
       actorId: user.id,

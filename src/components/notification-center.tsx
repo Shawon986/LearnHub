@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Bell, CheckCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,7 +17,7 @@ interface NotificationItem {
   type: string;
   title: string;
   body: string | null;
-  data: { checkoutPath?: string; conversationId?: string; disputeId?: string } | null;
+  data: { checkoutPath?: string; conversationId?: string; disputeId?: string; liveClassId?: string; courseId?: string } | null;
   read: boolean;
   createdAt: string;
 }
@@ -26,6 +26,8 @@ function linkFor(item: NotificationItem): string | null {
   if (item.data?.checkoutPath) return item.data.checkoutPath;
   if (item.data?.conversationId) return `/messages/${item.data.conversationId}`;
   if (item.data?.disputeId) return "/dashboard/disputes";
+  if (item.data?.liveClassId) return "/dashboard/live";
+  if (item.data?.courseId) return "/dashboard/courses";
   return null;
 }
 
@@ -33,6 +35,8 @@ function linkFor(item: NotificationItem): string | null {
 export function NotificationCenter() {
   const [items, setItems] = useState<NotificationItem[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const router = useRouter();
   const { toast } = useToast();
 
   const load = useCallback(async () => {
@@ -54,7 +58,6 @@ export function NotificationCenter() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids }),
     });
-    await load();
   }
 
   async function markAll() {
@@ -65,6 +68,20 @@ export function NotificationCenter() {
     });
     await load();
     toast({ title: "All notifications marked as read", variant: "success" });
+  }
+
+  /** Clicking a notification opens it (and marks it read). */
+  function onRowClick(n: NotificationItem) {
+    if (!n.read) {
+      setItems((prev) => (prev ?? []).map((i) => (i.id === n.id ? { ...i, read: true } : i)));
+      markRead([n.id]).catch(() => {});
+    }
+    const link = linkFor(n);
+    if (link) {
+      router.push(link);
+    } else {
+      setExpandedId((cur) => (cur === n.id ? null : n.id));
+    }
   }
 
   const unread = items?.filter((n) => !n.read).length ?? 0;
@@ -106,46 +123,51 @@ export function NotificationCenter() {
         <Card>
           <CardContent className="p-0">
             <ul className="divide-y divide-line">
-              {items?.map((n) => (
-                <li
-                  key={n.id}
-                  className={cn(
-                    "flex items-start gap-3 px-5 py-4 transition-colors",
-                    !n.read && "bg-brand-soft/40",
-                  )}
-                >
-                  <span
+              {items?.map((n) => {
+                const expanded = expandedId === n.id;
+                return (
+                  <li
+                    key={n.id}
+                    onClick={() => onRowClick(n)}
                     className={cn(
-                      "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full",
-                      n.read ? "bg-transparent" : "bg-brand",
+                      "flex cursor-pointer items-start gap-3 px-5 py-4 transition-colors hover:bg-card-2",
+                      !n.read && "bg-brand-soft/40",
                     )}
-                    aria-hidden
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className={cn("text-[13px] text-foreground", n.read ? "font-medium" : "font-bold")}>
-                        {n.title}
-                      </p>
-                      {!n.read && <Badge variant="brand" size="sm">New</Badge>}
+                  >
+                    <span
+                      className={cn(
+                        "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full",
+                        n.read ? "bg-transparent" : "bg-brand",
+                      )}
+                      aria-hidden
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className={cn("text-[13px] text-foreground", n.read ? "font-medium" : "font-bold")}>
+                          {n.title}
+                        </p>
+                        {!n.read && <Badge variant="brand" size="sm">New</Badge>}
+                      </div>
+                      {n.body && (
+                        <p
+                          className={cn(
+                            "mt-0.5 text-[12px] leading-relaxed text-muted-fg",
+                            expanded ? "whitespace-pre-line" : "line-clamp-2",
+                          )}
+                        >
+                          {n.body}
+                        </p>
+                      )}
+                      <p className="mt-1 text-[11px] text-faint-fg">{timeAgo(n.createdAt)}</p>
+                      {linkFor(n) && (
+                        <span className="mt-1.5 inline-block text-[12px] font-bold text-brand-fg">
+                          {n.data?.checkoutPath ? "Complete payment →" : "Open →"}
+                        </span>
+                      )}
                     </div>
-                    {n.body && <p className="mt-0.5 text-[12px] leading-relaxed text-muted-fg">{n.body}</p>}
-                    <p className="mt-1 text-[11px] text-faint-fg">{timeAgo(n.createdAt)}</p>
-                    {linkFor(n) && (
-                      <Link
-                        href={linkFor(n)!}
-                        className="mt-1.5 inline-block text-[12px] font-bold text-brand-fg hover:underline"
-                      >
-                        {n.data?.checkoutPath ? "Complete payment →" : "Open →"}
-                      </Link>
-                    )}
-                  </div>
-                  {!n.read && (
-                    <Button variant="ghost" size="sm" onClick={() => markRead([n.id])}>
-                      Mark read
-                    </Button>
-                  )}
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           </CardContent>
         </Card>

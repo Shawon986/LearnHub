@@ -281,8 +281,7 @@ export async function scheduleLiveClass(input: {
   startTime: string;
   durationMinutes: number;
   maxStudents: number;
-  recordingEnabled: boolean;
-  price: number;
+  meetingUrl: string;
 }): Promise<ActionResult> {
   try {
     const user = await requireTeacher();
@@ -299,10 +298,8 @@ export async function scheduleLiveClass(input: {
         endsAt: new Date(startsAt.getTime() + data.durationMinutes * 60_000),
         durationMinutes: data.durationMinutes,
         maxStudents: data.maxStudents,
-        recordingEnabled: data.recordingEnabled,
-        price: data.price,
+        meetingUrl: data.meetingUrl,
         status: "SCHEDULED",
-        materials: [],
       },
     });
     await logAudit({
@@ -312,6 +309,29 @@ export async function scheduleLiveClass(input: {
       entityType: "LiveClass",
     });
     revalidatePath("/teacher/live-classes");
+    return { ok: true };
+  } catch (e) {
+    return err(e);
+  }
+}
+
+export async function markLiveClassEnded(id: string): Promise<ActionResult> {
+  try {
+    const user = await requireTeacher();
+    const live = await db.liveClass.findFirst({ where: { id, teacherId: user.id } });
+    if (!live) return actionError("Class not found.");
+    if (live.status !== "SCHEDULED") return actionError("Only scheduled classes can be marked as ended.");
+
+    await db.liveClass.update({ where: { id }, data: { status: "ENDED" } });
+    await logAudit({
+      actorId: user.id,
+      actorEmail: user.email,
+      action: "liveClass.end",
+      entityType: "LiveClass",
+      entityId: id,
+    });
+    revalidatePath("/teacher/live-classes");
+    revalidatePath("/dashboard/live");
     return { ok: true };
   } catch (e) {
     return err(e);

@@ -129,6 +129,15 @@ export async function markConversationRead(conversationId: string): Promise<Acti
       where: { conversationId, userId: user.id },
       data: { lastReadAt: new Date() },
     });
+    // Tell the other party their messages are now seen (read receipts).
+    const others = await db.conversationParticipant.findMany({
+      where: { conversationId, userId: { not: user.id } },
+      select: { userId: true },
+    });
+    const at = new Date().toISOString();
+    for (const p of others) {
+      messagingBus.publishTo(p.userId, { type: "conversation.read", conversationId, userId: user.id, at });
+    }
     revalidatePath("/messages");
     return { ok: true };
   } catch (e) {

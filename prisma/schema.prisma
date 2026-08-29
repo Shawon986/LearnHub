@@ -406,7 +406,6 @@ model Resource {
   id              String   @id @default(cuid())
   courseId        String?
   lessonId        String?
-  liveClassId     String?
   recordedClassId String?
   title           String
   type            String // PDF|DOCX|PPTX|ZIP|IMAGE|LINK|OTHER
@@ -417,7 +416,6 @@ model Resource {
 
   course        Course?       @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lesson        Lesson?       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  liveClass     LiveClass?    @relation(fields: [liveClassId], references: [id], onDelete: Cascade)
   recordedClass RecordedClass? @relation(fields: [recordedClassId], references: [id], onDelete: Cascade)
   uploadedBy    User          @relation("ResourceUploader", fields: [uploadedById], references: [id])
 }
@@ -497,7 +495,6 @@ model Video {
   lesson             Lesson?
   recordedClass      RecordedClass?
   captions           CaptionTrack[]
-  liveClassRecordings LiveClassRecording[]
 
   @@index([status, createdAt])
 }
@@ -604,62 +601,39 @@ model VideoNote {
 // ============================== LIVE CLASSES ==============================
 
 model LiveClass {
-  id               String   @id @default(cuid())
-  courseId         String?
-  teacherId        String
-  title            String
-  description      String?
-  startsAt         DateTime
-  endsAt           DateTime
-  durationMinutes  Int      @default(60)
-  maxStudents      Int      @default(50)
-  status           String   @default("SCHEDULED") // SCHEDULED|LIVE|ENDED|CANCELLED
-  recordingEnabled Boolean  @default(false)
-  price            Int      @default(0)
-  chatLocked       Boolean  @default(false)
-  remindedAt       DateTime?
-  materials        Json?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id              String    @id @default(cuid())
+  courseId        String?
+  teacherId       String
+  title           String
+  description     String?
+  startsAt        DateTime
+  endsAt          DateTime
+  durationMinutes Int       @default(60)
+  maxStudents     Int       @default(50)
+  status          String    @default("SCHEDULED") // SCHEDULED|ENDED|CANCELLED
+  meetingUrl      String
+  remindedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  course     Course?                @relation(fields: [courseId], references: [id], onDelete: SetNull)
-  teacher    User                   @relation("LiveClassTeacher", fields: [teacherId], references: [id])
+  course       Course?                @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  teacher      User                   @relation("LiveClassTeacher", fields: [teacherId], references: [id])
   participants LiveClassParticipant[]
-  recording  LiveClassRecording?
-  resources  Resource[]
-  payments   Payment[]
 
   @@index([startsAt, status])
   @@index([teacherId, status])
 }
 
 model LiveClassParticipant {
-  id               String    @id @default(cuid())
-  liveClassId      String
-  userId           String
-  role             String    @default("STUDENT") // HOST|CO_HOST|STUDENT
-  muted            Boolean   @default(false)
-  joinedAt         DateTime?
-  leftAt           DateTime?
-  attendanceStatus String    @default("REGISTERED") // REGISTERED|PRESENT|LATE|ABSENT
-  createdAt        DateTime  @default(now())
+  id          String   @id @default(cuid())
+  liveClassId String
+  userId      String
+  createdAt   DateTime @default(now())
 
   liveClass LiveClass @relation(fields: [liveClassId], references: [id], onDelete: Cascade)
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([liveClassId, userId])
-}
-
-model LiveClassRecording {
-  id              String   @id @default(cuid())
-  liveClassId     String   @unique
-  videoId         String?
-  status          String   @default("NONE") // NONE|PROCESSING|READY|FAILED
-  durationSeconds Int      @default(0)
-  createdAt       DateTime @default(now())
-
-  liveClass LiveClass @relation(fields: [liveClassId], references: [id], onDelete: Cascade)
-  video     Video?    @relation(fields: [videoId], references: [id], onDelete: SetNull)
 }
 
 // ============================== BOOKINGS / TUTORING ==============================
@@ -802,10 +776,9 @@ model Payment {
   providerPaymentId String?   @unique
   providerTrxId     String?
   status            String    @default("PENDING") // PENDING|COMPLETED|FAILED|REFUNDED|PARTIALLY_REFUNDED
-  purpose           String // COURSE_PURCHASE|BOOKING|LIVE_CLASS
+  purpose           String // COURSE_PURCHASE|BOOKING
   courseId          String?
   bookingId         String?   @unique
-  liveClassId       String?   @unique
   metadata          Json?
   paidAt            DateTime?
   createdAt         DateTime  @default(now())
@@ -814,7 +787,6 @@ model Payment {
   student          User               @relation(fields: [studentId], references: [id])
   course           Course?            @relation(fields: [courseId], references: [id], onDelete: SetNull)
   booking          Booking?           @relation(fields: [bookingId], references: [id], onDelete: SetNull)
-  liveClass        LiveClass?         @relation(fields: [liveClassId], references: [id], onDelete: SetNull)
   transactions     Transaction[]
   commission       Commission?
   refund           Refund?

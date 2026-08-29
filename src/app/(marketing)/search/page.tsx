@@ -177,7 +177,7 @@ export default async function SearchPage({
     teachers = mapped.slice((params.page - 1) * PAGE_SIZE, params.page * PAGE_SIZE);
   } else {
     const where: Prisma.LiveClassWhereInput = {
-      status: { in: ["SCHEDULED", "LIVE"] },
+      status: { in: ["SCHEDULED"] },
       startsAt: { gte: new Date() },
       ...(params.q ? { title: { contains: params.q } } : {}),
     };

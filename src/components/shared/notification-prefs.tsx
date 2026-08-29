@@ -12,6 +12,7 @@ const TYPES: { value: string; label: string; description: string }[] = [
   { value: "BOOKING_ACCEPTED", label: "Booking updates", description: "When teachers accept or decline your bookings" },
   { value: "NEW_MESSAGE", label: "New messages", description: "When someone messages you" },
   { value: "LIVE_CLASS_REMINDER", label: "Class reminders", description: "Reminders for live classes and sessions" },
+  { value: "LIVE_CLASS_REGISTERED", label: "Class registration", description: "Confirmations when you register for a live class" },
   { value: "COURSE_COMPLETED", label: "Progress & completion", description: "Course completions, achievements and certificates" },
 ];
 

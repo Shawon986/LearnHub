@@ -22,13 +22,8 @@ export function LiveRegisterButton({ liveClassId }: { liveClassId: string }) {
             toast({ title: result.error ?? "Could not register.", variant: "error" });
             return;
           }
-          if (result.paid && result.redirectUrl) {
-            toast({ title: "This class requires payment", description: "Complete checkout to reserve your seat.", variant: "info" });
-            router.push(result.redirectUrl);
-          } else {
-            toast({ title: "Registered 🎉", description: "You'll get a reminder before the class.", variant: "success" });
-            router.refresh();
-          }
+          toast({ title: "Registered 🎉", description: "The meeting link is in your notification.", variant: "success" });
+          router.refresh();
         })
       }
     >

@@ -28,7 +28,7 @@ function CountdownChip({ target }: { target: string }) {
   return (
     <Badge variant={isUpcoming ? "accent" : "success"} className="tabular-nums">
       <Radio className="h-3 w-3 animate-pulse-soft" />
-      {isUpcoming ? `Starts in ${formatCountdown(target)}` : "Live now"}
+      {isUpcoming ? `Starts in ${formatCountdown(target)}` : "Started"}
     </Badge>
   );
 }
@@ -62,9 +62,9 @@ export function LiveClassCard({ liveClass }: { liveClass: LiveClassCardData }) {
       <div className="flex items-center justify-between border-t border-line pt-3">
         <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-muted-fg">
           <Clock className="h-3.5 w-3.5" />
-          {liveClass.status === "LIVE" ? "In session" : "Scheduled"}
+          {liveClass.status === "CANCELLED" ? "Cancelled" : liveClass.status === "ENDED" ? "Ended" : "Scheduled"}
         </span>
-        <span className="text-[11px] font-bold text-brand-fg">Classroom →</span>
+        <span className="text-[11px] font-bold text-brand-fg">Free to join →</span>
       </div>
     </Card>
   );

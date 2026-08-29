@@ -156,6 +156,83 @@ export async function archiveRecordedClass(id: string): Promise<ActionResult> {
   }
 }
 
+/** Edit metadata + course linking (any non-published state; published needs unpublish first). */
+export async function updateRecordedClass(
+  id: string,
+  input: {
+    title: string;
+    description?: string | null;
+    courseId?: string | null;
+    language?: string;
+    tags?: string | null;
+    durationSeconds?: number;
+  },
+): Promise<ActionResult> {
+  try {
+    const actor = await requireAdmin();
+    const rc = await db.recordedClass.findUnique({ where: { id } });
+    if (!rc) return actionError("Recording not found.");
+
+    let slug = slugify(input.title);
+    const clash = await db.recordedClass.findFirst({ where: { slug, id: { not: id } } });
+    if (clash) slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
+
+    await db.recordedClass.update({
+      where: { id },
+      data: {
+        title: input.title,
+        slug: rc.status === "PUBLISHED" ? rc.slug : slug, // keep the public URL stable once live
+        description: input.description ?? null,
+        courseId: input.courseId ?? null,
+        moduleId: null,
+        lessonId: null,
+        language: input.language ?? "English",
+        tags: splitList(input.tags),
+        durationSeconds: input.durationSeconds ?? rc.durationSeconds,
+      },
+    });
+
+    await logAudit({
+      actorId: actor.id,
+      actorEmail: actor.email,
+      action: "recordedClass.update",
+      entityType: "RecordedClass",
+      entityId: id,
+      metadata: { title: input.title },
+    });
+    revalidatePath("/admin/recorded-classes");
+    return { ok: true };
+  } catch (e) {
+    return err(e);
+  }
+}
+
+/** Restore an archived recording back to a publishable state. */
+export async function restoreRecordedClass(id: string): Promise<ActionResult> {
+  try {
+    const actor = await requireAdmin();
+    const rc = await db.recordedClass.findUnique({ where: { id } });
+    if (!rc) return actionError("Recording not found.");
+    if (rc.status !== "ARCHIVED") return actionError("Only archived recordings can be restored.");
+
+    await db.recordedClass.update({
+      where: { id },
+      data: { status: "READY", archivedAt: null },
+    });
+    await logAudit({
+      actorId: actor.id,
+      actorEmail: actor.email,
+      action: "recordedClass.restore",
+      entityType: "RecordedClass",
+      entityId: id,
+    });
+    revalidatePath("/admin/recorded-classes");
+    return { ok: true };
+  } catch (e) {
+    return err(e);
+  }
+}
+
 /** Delete a draft (used by the retry flow — re-upload replaces it). */
 export async function deleteRecordedClass(id: string): Promise<ActionResult> {
   try {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BookOpen, Plus } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -65,23 +66,25 @@ export default async function CoursesPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {courses.map((c) => (
-            <Card key={c.id} hoverable className="flex items-center gap-4 p-5">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-fg">
-                <BookOpen className="h-6 w-6" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="line-clamp-1 text-[14px] font-bold text-foreground">{c.title}</h2>
-                  <Badge variant={STATUS_VARIANT[c.status] ?? "neutral"}>{c.status}</Badge>
+            <Link key={c.id} href={`/teacher/courses/${c.id}`} className="block h-full">
+              <Card hoverable className="flex h-full items-center gap-4 p-5">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-fg">
+                  <BookOpen className="h-6 w-6" />
                 </div>
-                <p className="mt-0.5 text-[12px] text-muted-fg">
-                  {c.category.name} · {c.totalLessons} lessons · {formatNumber(c.enrollmentCount)} students
-                </p>
-                <p className="mt-1 text-[13px] font-extrabold text-foreground">
-                  {c.price === 0 ? "Free" : formatBDT(c.price)}
-                </p>
-              </div>
-            </Card>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="line-clamp-1 text-[14px] font-bold text-foreground">{c.title}</h2>
+                    <Badge variant={STATUS_VARIANT[c.status] ?? "neutral"}>{c.status}</Badge>
+                  </div>
+                  <p className="mt-0.5 text-[12px] text-muted-fg">
+                    {c.category.name} · {c.totalLessons} lessons · {formatNumber(c.enrollmentCount)} students
+                  </p>
+                  <p className="mt-1 text-[13px] font-extrabold text-foreground">
+                    {c.price === 0 ? "Free" : formatBDT(c.price)}
+                  </p>
+                </div>
+              </Card>
+            </Link>
           ))}
         </div>
       )}

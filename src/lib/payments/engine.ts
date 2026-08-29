@@ -80,9 +80,7 @@ export async function handlePaymentSuccess(
     ? (await db.course.findUnique({ where: { id: payment.courseId }, select: { teacherId: true } }))?.teacherId
     : payment.bookingId
       ? (await db.booking.findUnique({ where: { id: payment.bookingId }, select: { teacherId: true } }))?.teacherId
-      : payment.liveClassId
-        ? (await db.liveClass.findUnique({ where: { id: payment.liveClassId }, select: { teacherId: true } }))?.teacherId
-        : null;
+      : null;
 
   if (!teacherId) {
     console.error(`[payments] no teacher resolvable for payment ${paymentId}`);
@@ -112,23 +110,6 @@ export async function handlePaymentSuccess(
         paymentId,
       },
     });
-
-    // Paid live class → registration (if not already registered).
-    if (payment.purpose === "LIVE_CLASS" && payment.liveClassId) {
-      const existing = await tx.liveClassParticipant.findUnique({
-        where: { liveClassId_userId: { liveClassId: payment.liveClassId, userId: payment.studentId } },
-      });
-      if (!existing) {
-        await tx.liveClassParticipant.create({
-          data: {
-            liveClassId: payment.liveClassId,
-            userId: payment.studentId,
-            role: "STUDENT",
-            attendanceStatus: "REGISTERED",
-          },
-        });
-      }
-    }
 
     // Course purchase → enrollment (if not already enrolled).
     if (payment.purpose === "COURSE_PURCHASE" && payment.courseId) {

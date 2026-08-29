@@ -31,12 +31,15 @@ export default async function RecordedClassesAdminPage({
   if (!actor) redirect("/login?next=/admin/recorded-classes");
   const { status } = await searchParams;
 
-  const rows = await db.recordedClass.findMany({
-    where: status && status !== "ALL" ? { status } : {},
-    include: { video: true, course: { select: { title: true } } },
-    orderBy: { updatedAt: "desc" },
-    take: 100,
-  });
+  const [rows, courses] = await Promise.all([
+    db.recordedClass.findMany({
+      where: status && status !== "ALL" ? { status } : {},
+      include: { video: true, course: { select: { title: true } } },
+      orderBy: { updatedAt: "desc" },
+      take: 100,
+    }),
+    db.course.findMany({ orderBy: { title: "asc" }, select: { id: true, title: true } }),
+  ]);
 
   const filters = ["ALL", "DRAFT", "PROCESSING", "READY", "PUBLISHED", "ARCHIVED"];
 
@@ -135,7 +138,20 @@ export default async function RecordedClassesAdminPage({
                     <Badge variant={STATUS_VARIANT[r.status] ?? "neutral"}>{r.status}</Badge>
                   </td>
                   <td className="px-4 py-3.5 text-right">
-                    <RecordedActions id={r.id} status={r.status} videoStatus={r.video.status} />
+                    <RecordedActions
+                      id={r.id}
+                      status={r.status}
+                      videoStatus={r.video.status}
+                      courses={courses}
+                      initial={{
+                        title: r.title,
+                        description: r.description ?? "",
+                        language: r.language,
+                        tags: safeJsonParse<string[]>(r.tags, []).join(", "),
+                        durationSeconds: r.durationSeconds,
+                        courseId: r.courseId,
+                      }}
+                    />
                   </td>
                 </tr>
               ))}

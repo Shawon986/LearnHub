@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ImagePlus, MessageSquare, Search, Send } from "lucide-react";
+import { ImagePlus, MessageSquare, Search, Send, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
-import { timeAgo, formatTime } from "@/lib/format";
+import { timeAgo, formatTime, formatDate } from "@/lib/format";
 import { markConversationRead, sendMessage, sendTyping } from "@/lib/actions/messages";
 import { uploadChatImage } from "@/lib/actions/uploads";
 
@@ -17,6 +18,8 @@ export interface ConversationData {
   otherName: string;
   otherAvatarUrl: string | null;
   otherRole: string;
+  /** When the other party last read the thread (drives "Seen"). */
+  partnerLastReadAt: string | null;
   lastContent: string;
   lastAt: string;
   lastFromMe: boolean;
@@ -27,6 +30,8 @@ export interface ThreadData {
   conversationId: string;
   otherName: string;
   otherAvatarUrl: string | null;
+  otherRole: string;
+  partnerLastReadAt: string | null;
   messages: {
     id: string;
     senderId: string;
@@ -45,6 +50,32 @@ interface BusMessage {
   attachmentUrl: string | null;
   messageType: string;
   createdAt: string;
+}
+
+function sameDay(a: string, b: string): boolean {
+  const da = new Date(a);
+  const db = new Date(b);
+  return (
+    da.getFullYear() === db.getFullYear() &&
+    da.getMonth() === db.getMonth() &&
+    da.getDate() === db.getDate()
+  );
+}
+
+function dayLabel(iso: string): string {
+  const d = new Date(iso);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  if (sameDay(iso, today.toISOString())) return "Today";
+  if (sameDay(iso, yesterday.toISOString())) return "Yesterday";
+  return formatDate(d);
+}
+
+function roleLabel(role: string): string {
+  if (role === "TEACHER") return "Teacher";
+  if (role === "STUDENT") return "Student";
+  return role;
 }
 
 export function MessagingClient({
@@ -68,8 +99,16 @@ export function MessagingClient({
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map());
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [otherUserId, setOtherUserId] = useState<string>("");
-  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [partnerLastReadAt, setPartnerLastReadAt] = useState<string | null>(
+    initialThread.partnerLastReadAt,
+  );
+  const [pendingAttachment, setPendingAttachment] = useState<{ file: File; url: string } | null>(null);
   const [attachmentUploading, setAttachmentUploading] = useState(false);
+  // Two separate timers: one throttles outgoing typing events, the other
+  // clears the incoming indicator — sharing a ref made them clobber each other.
+  const typingThrottleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const typingClearRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Determine the other party (needed for presence + read receipts).
@@ -88,7 +127,7 @@ export function MessagingClient({
     const es = new EventSource("/api/messages/stream");
 
     const handle = (raw: string) => {
-      let event: BusMessage & { type?: string; userId?: string; online?: boolean };
+      let event: BusMessage & { type?: string; userId?: string; online?: boolean; at?: string };
       try {
         event = JSON.parse(raw);
       } catch {
@@ -97,8 +136,8 @@ export function MessagingClient({
 
       if (event.type === "typing") {
         setTypingUsers((prev) => new Map(prev).set(event.userId!, event.conversationId));
-        if (typingTimer.current) clearTimeout(typingTimer.current);
-        typingTimer.current = setTimeout(
+        if (typingClearRef.current) clearTimeout(typingClearRef.current);
+        typingClearRef.current = setTimeout(
           () => setTypingUsers((prev) => new Map(prev)),
           2500,
         );
@@ -111,6 +150,10 @@ export function MessagingClient({
           else next.delete(event.userId!);
           return next;
         });
+        return;
+      }
+      if (event.type === "conversation.read") {
+        if (event.conversationId === activeId) setPartnerLastReadAt(event.at ?? new Date().toISOString());
         return;
       }
       // "message"
@@ -131,7 +174,22 @@ export function MessagingClient({
         return next;
       });
       if (msg.conversationId === activeId) {
-        setThreadMessages((prev) => [...prev, { id: msg.id, senderId: msg.senderId, content: msg.content, type: msg.messageType, attachmentUrl: msg.attachmentUrl, createdAt: msg.createdAt }]);
+        setThreadMessages((prev) => {
+          // Replace the optimistic row with the confirmed message.
+          const withoutTemp =
+            msg.senderId === currentUserId ? prev.filter((m) => !m.id.startsWith("local-")) : prev;
+          return [
+            ...withoutTemp,
+            {
+              id: msg.id,
+              senderId: msg.senderId,
+              content: msg.content,
+              type: msg.messageType,
+              attachmentUrl: msg.attachmentUrl,
+              createdAt: msg.createdAt,
+            },
+          ];
+        });
         if (msg.senderId !== currentUserId) {
           markConversationRead(activeId).catch(() => {});
         }
@@ -151,61 +209,105 @@ export function MessagingClient({
   }, [threadMessages.length]);
 
   function open(id: string) {
+    const target = conversations.find((c) => c.id === id);
     setActiveId(id);
     setThreadMessages([]);
+    setPartnerLastReadAt(target?.partnerLastReadAt ?? null);
+    setPendingAttachment(null);
+    setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, unread: 0 } : c)));
     router.push(`/messages/${id}`);
     startTransition(() => {
       markConversationRead(id).catch(() => {});
     });
   }
 
-  function send() {
+  function sendText() {
     const content = draft.trim();
     if (!content || !activeId) return;
     setDraft("");
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
+    // Optimistic render: the message appears instantly; the SSE echo
+    // replaces the temporary row with the confirmed one.
+    const tempId = `local-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    setThreadMessages((prev) => [
+      ...prev,
+      {
+        id: tempId,
+        senderId: currentUserId,
+        content,
+        type: "TEXT",
+        attachmentUrl: null,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
     startTransition(async () => {
       const result = await sendMessage(activeId, { content });
-      if (!result.ok) toast({ title: result.error ?? "Message not sent.", variant: "error" });
+      if (!result.ok) {
+        setThreadMessages((prev) => prev.filter((m) => m.id !== tempId));
+        toast({ title: result.error ?? "Message not sent.", variant: "error" });
+      }
     });
+  }
+
+  async function sendAttachment() {
+    if (!pendingAttachment || !activeId) return;
+    const attachment = pendingAttachment;
+    setPendingAttachment(null);
+    URL.revokeObjectURL(attachment.url);
+    setAttachmentUploading(true);
+    try {
+      const upload = await uploadChatImage(attachment.file);
+      if (!upload.ok) {
+        toast({ title: upload.error, variant: "error" });
+        return;
+      }
+      const sent = await sendMessage(activeId, {
+        content: "📷 Image",
+        attachmentUrl: upload.path,
+        messageType: "IMAGE",
+      });
+      if (!sent.ok) toast({ title: sent.error ?? "Message not sent.", variant: "error" });
+    } finally {
+      setAttachmentUploading(false);
+    }
+  }
+
+  function send() {
+    if (pendingAttachment) {
+      sendText();
+      void sendAttachment();
+    } else {
+      sendText();
+    }
   }
 
   function onTyping() {
     if (!activeId) return;
     // Throttle typing events to once per 1.5s.
-    if (typingTimer.current) return;
-    typingTimer.current = setTimeout(() => {
-      typingTimer.current = null;
+    if (typingThrottleRef.current) return;
+    typingThrottleRef.current = setTimeout(() => {
+      typingThrottleRef.current = null;
     }, 1500);
     sendTyping(activeId).catch(() => {});
   }
 
-  async function attachImage(file: File) {
-    setAttachmentUploading(true);
-    try {
-      const result = await uploadChatImage(file);
-      if (!result.ok) {
-        toast({ title: result.error, variant: "error" });
-        return;
-      }
-      startTransition(async () => {
-        const sent = await sendMessage(activeId, {
-          content: "📷 Image",
-          attachmentUrl: result.path,
-          messageType: "IMAGE",
-        });
-        if (!sent.ok) toast({ title: sent.error ?? "Message not sent.", variant: "error" });
-      });
-    } finally {
-      setAttachmentUploading(false);
-    }
+  function resizeTextarea() {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 128)}px`;
   }
 
   const filtered = conversations.filter((c) =>
     c.otherName.toLowerCase().includes(filter.toLowerCase()),
   );
 
-  const typingName = [...typingUsers.entries()].find(([, cid]) => cid === activeId)?.[0];
-  const isOtherTyping = typingName && typingName !== currentUserId;
+  const typingUserId = [...typingUsers.entries()].find(([, cid]) => cid === activeId)?.[0];
+  const isOtherTyping = Boolean(typingUserId && typingUserId !== currentUserId);
+  const active = conversations.find((c) => c.id === activeId);
+  const threadName = active?.otherName || initialThread.otherName;
+  const threadAvatar = active?.otherAvatarUrl ?? initialThread.otherAvatarUrl;
+  const threadRole = active?.otherRole || initialThread.otherRole;
 
   return (
     <div className="mx-auto flex h-full max-w-6xl overflow-hidden border-x border-line bg-card">
@@ -229,7 +331,7 @@ export function MessagingClient({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          {filtered.length === 0 ? (
+          {conversations.length === 0 ? (
             <div className="p-6">
               <EmptyState
                 compact
@@ -238,6 +340,8 @@ export function MessagingClient({
                 description="Message a teacher from their profile to start one."
               />
             </div>
+          ) : filtered.length === 0 ? (
+            <p className="p-6 text-center text-[12px] text-faint-fg">No conversations match your search</p>
           ) : (
             <ul>
               {filtered.map((c) => {
@@ -255,7 +359,12 @@ export function MessagingClient({
                       <Avatar name={c.otherName} src={c.otherAvatarUrl} size="sm" status={online ? "online" : undefined} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="truncate text-[13px] font-bold text-foreground">{c.otherName}</p>
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            <p className="truncate text-[13px] font-bold text-foreground">{c.otherName}</p>
+                            {c.otherRole && (
+                              <Badge variant="outline" size="sm">{roleLabel(c.otherRole)}</Badge>
+                            )}
+                          </div>
                           <span className="shrink-0 text-[10px] text-faint-fg">{timeAgo(c.lastAt)}</span>
                         </div>
                         <div className="flex items-center justify-between gap-2">
@@ -265,7 +374,7 @@ export function MessagingClient({
                           </p>
                           {c.unread > 0 && (
                             <span className="flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-brand px-1 text-[9px] font-extrabold text-white">
-                              {c.unread}
+                              {c.unread > 99 ? "99+" : c.unread}
                             </span>
                           )}
                         </div>
@@ -296,11 +405,17 @@ export function MessagingClient({
               <button type="button" onClick={() => router.push("/messages")} className="text-[12px] font-bold text-brand-fg sm:hidden">
                 ← Back
               </button>
-              <Avatar name={initialThread.otherName || threadOtherName(conversations, activeId)} src={initialThread.otherAvatarUrl} size="sm" />
+              <Avatar
+                name={threadName}
+                src={threadAvatar}
+                size="sm"
+                status={otherUserId && onlineUsers.has(otherUserId) ? "online" : undefined}
+              />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-bold text-foreground">
-                  {initialThread.otherName || threadOtherName(conversations, activeId)}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="truncate text-[13px] font-bold text-foreground">{threadName}</p>
+                  {threadRole && <Badge variant="outline" size="sm">{roleLabel(threadRole)}</Badge>}
+                </div>
                 <p className="text-[11px] text-faint-fg">
                   {isOtherTyping
                     ? "typing…"
@@ -312,39 +427,91 @@ export function MessagingClient({
             </div>
 
             {/* Messages */}
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-5">
-              {threadMessages.map((m) => {
+            <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-5">
+              {threadMessages.length === 0 && (
+                <p className="pt-10 text-center text-[12px] text-faint-fg">
+                  No messages yet — say hello and start the conversation.
+                </p>
+              )}
+              {threadMessages.map((m, i) => {
                 const own = m.senderId === currentUserId;
+                const prev = threadMessages[i - 1];
+                const newDay = !prev || !sameDay(prev.createdAt, m.createdAt);
+                const firstOfGroup =
+                  newDay || !prev || prev.senderId !== m.senderId;
+                const seen =
+                  own &&
+                  Boolean(partnerLastReadAt && new Date(partnerLastReadAt) >= new Date(m.createdAt));
                 return (
-                  <div key={m.id} className={cn("flex gap-2.5", own && "flex-row-reverse")}>
-                    <div className={cn("max-w-[75%] min-w-0", own && "text-right")}>
-                      <div
-                        className={cn(
-                          "inline-block rounded-2xl px-4 py-2.5 text-left text-[13px] leading-relaxed",
-                          own ? "bg-brand text-white" : "bg-card-2 text-foreground",
-                        )}
-                      >
-                        {m.type === "IMAGE" && m.attachmentUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={`/api/uploads/${m.attachmentUrl}`} alt="Attachment" className="max-h-56 rounded-xl" />
-                        ) : (
-                          m.content
-                        )}
+                  <div key={m.id}>
+                    {newDay && (
+                      <div className="my-4 flex items-center gap-3">
+                        <span className="h-px flex-1 bg-line" />
+                        <span className="text-[10px] font-extrabold uppercase tracking-wide text-faint-fg">
+                          {dayLabel(m.createdAt)}
+                        </span>
+                        <span className="h-px flex-1 bg-line" />
                       </div>
-                      <p className="mt-1 text-[10px] text-faint-fg">{formatTime(m.createdAt)}</p>
+                    )}
+                    <div className={cn("flex gap-2.5", own ? "flex-row-reverse" : "", firstOfGroup && !newDay ? "mt-2.5" : "mt-0.5")}>
+                      <div className={cn("w-8 shrink-0", own && "hidden")}>
+                        {!own && firstOfGroup ? (
+                          <Avatar name={threadName} src={threadAvatar} size="sm" />
+                        ) : null}
+                      </div>
+                      <div className={cn("max-w-[75%] min-w-0", own && "text-right")}>
+                        <div
+                          className={cn(
+                            "inline-block rounded-2xl px-4 py-2.5 text-left text-[13px] leading-relaxed",
+                            own
+                              ? cn("bg-brand text-white", firstOfGroup && "rounded-br-md")
+                              : cn("bg-card-2 text-foreground", firstOfGroup && "rounded-bl-md"),
+                          )}
+                        >
+                          {m.type === "IMAGE" && m.attachmentUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={`/api/uploads/${m.attachmentUrl}`} alt="Attachment" className="max-h-56 rounded-xl" />
+                          ) : (
+                            m.content
+                          )}
+                        </div>
+                        <p className={cn("mt-1 text-[10px]", seen ? "font-bold text-success" : "text-faint-fg")}>
+                          {formatTime(m.createdAt)}
+                          {seen && " · Seen"}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 );
               })}
-              {threadMessages.length === 0 && (
-                <p className="pt-10 text-center text-[12px] text-faint-fg">No messages yet — say hello!</p>
-              )}
               <div ref={bottomRef} />
             </div>
 
             {/* Composer */}
             <div className="border-t border-line p-4">
-              {isOtherTyping && <p className="mb-1.5 text-[11px] font-bold text-brand-fg">Someone is typing…</p>}
+              {isOtherTyping && (
+                <p className="mb-1.5 text-[11px] font-bold text-brand-fg">{threadName} is typing…</p>
+              )}
+              {pendingAttachment && (
+                <div className="mb-2 flex items-center gap-2">
+                  <div className="relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={pendingAttachment.url} alt="Attachment preview" className="h-14 w-14 rounded-lg object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        URL.revokeObjectURL(pendingAttachment.url);
+                        setPendingAttachment(null);
+                      }}
+                      aria-label="Remove attachment"
+                      className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-foreground text-background"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-faint-fg">Ready to send — press send or remove it.</p>
+                </div>
+              )}
               <div className="flex items-end gap-2">
                 <label className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-line text-faint-fg transition-colors hover:text-foreground">
                   {attachmentUploading ? <SpinnerDots /> : <ImagePlus className="h-4 w-4" />}
@@ -354,31 +521,42 @@ export function MessagingClient({
                     className="hidden"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file) void attachImage(file);
+                      if (file) {
+                        setPendingAttachment({ file, url: URL.createObjectURL(file) });
+                      }
                       e.target.value = "";
                     }}
                   />
                 </label>
-                <input
-                  value={draft}
-                  onChange={(e) => {
-                    setDraft(e.target.value);
-                    onTyping();
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      send();
-                    }
-                  }}
-                  placeholder="Type a message…"
-                  aria-label="Message"
-                  className="h-10 min-w-0 flex-1 rounded-xl border border-line bg-card px-3.5 text-[13px] placeholder:text-faint-fg focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/25"
-                />
+                <div className="min-w-0 flex-1">
+                  <textarea
+                    ref={textareaRef}
+                    value={draft}
+                    onChange={(e) => {
+                      setDraft(e.target.value);
+                      resizeTextarea();
+                      onTyping();
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        send();
+                      }
+                    }}
+                    placeholder="Type a message…"
+                    aria-label="Message"
+                    rows={1}
+                    maxLength={2000}
+                    className="max-h-32 min-h-10 w-full resize-none overflow-y-auto rounded-xl border border-line bg-card px-3.5 py-2.5 text-[13px] placeholder:text-faint-fg focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/25"
+                  />
+                  {draft.length > 1500 && (
+                    <p className="mt-0.5 text-right text-[10px] text-faint-fg">{draft.length}/2000</p>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={send}
-                  disabled={!draft.trim()}
+                  disabled={(!draft.trim() && !pendingAttachment) || attachmentUploading}
                   aria-label="Send"
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand text-white transition-colors hover:bg-brand-hover disabled:opacity-50"
                 >
@@ -401,8 +579,4 @@ function SpinnerDots() {
       ))}
     </span>
   );
-}
-
-function threadOtherName(conversations: ConversationData[], id: string): string {
-  return conversations.find((c) => c.id === id)?.otherName ?? "";
 }

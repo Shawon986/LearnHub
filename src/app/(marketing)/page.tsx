@@ -76,7 +76,7 @@ export default async function HomePage() {
       take: 8,
     }),
     db.liveClass.findMany({
-      where: { startsAt: { gte: new Date() }, status: { in: ["SCHEDULED", "LIVE"] } },
+      where: { startsAt: { gte: new Date() }, status: { in: ["SCHEDULED"] } },
       include: { teacher: true },
       orderBy: { startsAt: "asc" },
       take: 3,

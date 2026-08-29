@@ -62,8 +62,7 @@ export const liveClassSchema = z
     startTime: z.string().regex(/^\d{2}:\d{2}$/, "Pick a start time."),
     durationMinutes: z.coerce.number().int().min(15).max(600),
     maxStudents: z.coerce.number().int().min(1).max(500),
-    recordingEnabled: z.coerce.boolean().default(false),
-    price: z.coerce.number().int().min(0).max(100_000),
+    meetingUrl: z.string().trim().url("Enter a valid meeting link (https://…).").max(500),
   });
 
 export const availabilitySlotSchema = z.object({

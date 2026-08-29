@@ -85,7 +85,7 @@ export default async function TeacherProfilePage({ params }: PageProps) {
       take: 6,
     }),
     db.liveClass.findMany({
-      where: { teacherId: id, startsAt: { gte: new Date() }, status: { in: ["SCHEDULED", "LIVE"] } },
+      where: { teacherId: id, startsAt: { gte: new Date() }, status: { in: ["SCHEDULED"] } },
       orderBy: { startsAt: "asc" },
       take: 4,
     }),
