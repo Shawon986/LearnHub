@@ -57,8 +57,9 @@ export function SiteHeader({
       <div className="relative mx-auto grid h-16 max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-3 px-4 sm:px-6">
         <Logo size="md" className="shrink-0" />
 
-        {/* Desktop nav — centered in the middle zone, never overlaps the sides */}
-        <nav className="hidden items-center justify-center gap-1 lg:flex" aria-label="Main">
+        {/* Desktop nav — centered in the middle zone, never overlaps the sides.
+            Shown from xl so the header never overflows at 1024-1279px. */}
+        <nav className="hidden items-center justify-center gap-1 xl:flex" aria-label="Main">
           {NAV_LINKS.map((link) => (
             <Link
               key={t(link.label)}
@@ -85,7 +86,7 @@ export function SiteHeader({
             </div>
           </form>
 
-          <LanguageToggle className="mr-0.5" />
+          <LanguageToggle className="mr-0.5 hidden sm:flex" />
           <ThemeToggle />
 
           {user ? (
@@ -131,7 +132,7 @@ export function SiteHeader({
             onClick={() => setMobileOpen((v) => !v)}
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileOpen}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-fg transition-colors hover:bg-card-2 lg:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-fg transition-colors hover:bg-card-2 xl:hidden"
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -168,6 +169,10 @@ export function SiteHeader({
                   className="h-10 w-full rounded-xl border border-line bg-card pl-9 pr-3 text-[13px] text-foreground placeholder:text-faint-fg focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/25"
                 />
               </form>
+              {/* Language switcher lives here on phones (hidden from the header bar). */}
+              <div className="mb-1 flex justify-end sm:hidden">
+                <LanguageToggle />
+              </div>
               {NAV_LINKS.map((link) => (
                 <Link
                   key={t(link.label)}

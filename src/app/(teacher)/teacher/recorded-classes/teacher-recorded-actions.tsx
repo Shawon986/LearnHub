@@ -79,7 +79,7 @@ export function TeacherRecordedActions({
         <form onSubmit={onEdit} className="space-y-4">
           <Input label="Title" name="title" defaultValue={initial.title} required />
           <Textarea label="Description" name="description" rows={3} defaultValue={initial.description} />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <Input label="Duration (seconds)" name="durationSeconds" type="number" min={0} defaultValue={initial.durationSeconds} />
             <Input label="Language" name="language" defaultValue={initial.language} />
           </div>

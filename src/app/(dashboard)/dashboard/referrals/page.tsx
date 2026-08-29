@@ -74,7 +74,7 @@ export default async function ReferralsPage() {
         <div className="bg-gradient-to-r from-brand to-accent p-6 text-white">
           <p className="text-xs font-bold uppercase tracking-widest text-white/70">Your referral code</p>
           <div className="mt-2 flex flex-wrap items-center gap-3">
-            <p className="font-mono text-2xl font-extrabold tracking-wider">{user.referralCode}</p>
+            <p className="break-all font-mono text-2xl font-extrabold tracking-wider">{user.referralCode}</p>
             <ReferralCopy code={user.referralCode} />
             <ReferralShare code={user.referralCode} />
           </div>

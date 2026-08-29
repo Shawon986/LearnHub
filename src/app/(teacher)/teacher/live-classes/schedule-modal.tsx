@@ -61,11 +61,11 @@ export function ScheduleLiveClassModal() {
             placeholder="https://zoom.us/j/…"
             hint="Students join via this link — it stays visible only to registered students."
           />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <Input label="Date" name="date" type="date" required />
             <Input label="Start time" name="startTime" type="time" required />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <Input label="Duration (minutes)" name="durationMinutes" type="number" min={15} max={600} defaultValue={60} />
             <Input label="Max students" name="maxStudents" type="number" min={1} max={500} defaultValue={50} />
           </div>

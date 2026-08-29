@@ -188,7 +188,7 @@ export function NotificationBell({
         )}
       </div>
 
-      <div className="max-h-[26rem] w-80 overflow-y-auto">
+      <div className="max-h-[26rem] w-[min(20rem,calc(100vw-2rem))] overflow-y-auto">
         {!loaded && items === null ? (
           <div className="space-y-3 p-3.5">
             {[0, 1, 2].map((i) => (

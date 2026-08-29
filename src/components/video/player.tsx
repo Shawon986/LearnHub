@@ -362,7 +362,7 @@ export function VideoPlayer({
                       type="button"
                       aria-label="Delete bookmark"
                       onClick={() => onDeleteBookmark?.(b.id)}
-                      className="text-[10px] font-bold text-white/50 hover:text-danger"
+                      className="p-1 text-[10px] font-bold text-white/50 hover:text-danger"
                     >
                       Delete
                     </button>
@@ -393,7 +393,7 @@ export function VideoPlayer({
                         type="button"
                         aria-label="Delete note"
                         onClick={() => onDeleteNote?.(n.id)}
-                        className="text-[10px] font-bold text-white/50 hover:text-danger"
+                        className="p-1 text-[10px] font-bold text-white/50 hover:text-danger"
                       >
                         Delete
                       </button>
@@ -479,11 +479,11 @@ export function VideoPlayer({
                 setVolume(Number(e.target.value));
                 setMuted(Number(e.target.value) === 0);
               }}
-              className="h-1 w-20 cursor-pointer appearance-none rounded-full bg-white/25 accent-[var(--brand)]"
+              className="hidden h-1 w-20 cursor-pointer appearance-none rounded-full bg-white/25 accent-[var(--brand)] sm:block"
             />
           </div>
 
-          <span className="ml-2 text-[11px] font-bold tabular-nums text-white/85">
+          <span className="ml-2 hidden text-[11px] font-bold tabular-nums text-white/85 sm:inline">
             {fmt(current)} / {fmt(duration)}
           </span>
 
@@ -503,7 +503,7 @@ export function VideoPlayer({
                 <Captions className="h-4 w-4" />
               </IconBtn>
             )}
-            <IconBtn label="Picture in picture" onClick={() => void togglePiP()}>
+            <IconBtn label="Picture in picture" onClick={() => void togglePiP()} className="hidden sm:inline-flex">
               <PictureInPicture2 className="h-4 w-4" />
             </IconBtn>
 
@@ -554,12 +554,14 @@ function IconBtn({
   onClick,
   primary,
   active,
+  className,
 }: {
   children: React.ReactNode;
   label: string;
   onClick: () => void;
   primary?: boolean;
   active?: boolean;
+  className?: string;
 }) {
   return (
     <button
@@ -571,6 +573,7 @@ function IconBtn({
         "rounded-full p-1.5 text-white/85 transition-colors hover:bg-white/15",
         primary && "bg-brand text-white hover:bg-brand-hover",
         active && "bg-white/15",
+        className,
       )}
     >
       {children}

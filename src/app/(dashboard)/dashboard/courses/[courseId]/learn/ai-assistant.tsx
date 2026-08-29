@@ -78,7 +78,7 @@ export function AiAssistant({
 
       {/* Panel */}
       {open && (
-        <div className="fixed bottom-6 right-6 z-40 flex h-[560px] w-[380px] max-w-[92vw] flex-col overflow-hidden rounded-2xl border border-line bg-card shadow-lift">
+        <div className="fixed bottom-4 right-4 z-40 flex h-[min(560px,calc(100dvh-2rem))] w-[380px] max-w-[92vw] flex-col overflow-hidden rounded-2xl border border-line bg-card shadow-lift">
           <div className="flex items-center justify-between bg-gradient-to-r from-brand to-accent px-4 py-3 text-white">
             <p className="flex items-center gap-2 text-[13px] font-bold">
               <Bot className="h-4 w-4" /> AI Study Assistant

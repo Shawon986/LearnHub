@@ -119,8 +119,8 @@ export function LearnShell({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-      {/* Sidebar */}
-      <aside className="lg:sticky lg:top-24 lg:self-start">
+      {/* Sidebar — below the lesson on mobile, left column on desktop. */}
+      <aside className="order-2 lg:order-none lg:sticky lg:top-24 lg:self-start">
         <Card className="overflow-hidden">
           <div className="border-b border-line p-4">
             <p className="line-clamp-2 text-[13px] font-bold text-foreground">{course.title}</p>
@@ -178,8 +178,8 @@ export function LearnShell({
         </Card>
       </aside>
 
-      {/* Main content */}
-      <main className="min-w-0 space-y-5">
+      {/* Main content — lesson/video first on mobile. */}
+      <main className="order-1 min-w-0 space-y-5 lg:order-none">
         <Card className="p-6">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="brand" size="md">

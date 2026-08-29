@@ -706,7 +706,7 @@ function QuestionForm({
         defaultValue={options}
         hint="2–6 options. Mark the correct one below."
       />
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid gap-4 sm:grid-cols-3">
         <Input label="Correct option #" name="correctIndex" type="number" min={1} max={6} defaultValue={question ? question.correctIndex + 1 : 1} />
         <Input label="Points" name="points" type="number" min={1} defaultValue={question?.points ?? 1} />
         <Input label="Explanation (optional)" name="explanation" defaultValue={question?.explanation ?? ""} />
