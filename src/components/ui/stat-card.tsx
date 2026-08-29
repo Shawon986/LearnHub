@@ -25,14 +25,15 @@ export function StatCard({ label, value, icon, delta, up = true, tone = "neutral
   return (
     <div
       className={cn(
-        "flex items-center gap-4 rounded-2xl border border-line bg-card p-5 shadow-soft transition-shadow hover:shadow-lift",
+        // Compact on phones (2-col stat grids get ~150px cells); roomier at sm+.
+        "flex items-center gap-3 rounded-2xl border border-line bg-card p-3.5 shadow-soft transition-shadow hover:shadow-lift sm:gap-4 sm:p-5",
         className,
       )}
     >
       {icon && (
         <div
           className={cn(
-            "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl [&>svg]:h-5 [&>svg]:w-5",
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg [&>svg]:h-4 [&>svg]:w-4 sm:h-11 sm:w-11 sm:rounded-xl sm:[&>svg]:h-5 sm:[&>svg]:w-5",
             TONES[tone],
           )}
         >
@@ -40,8 +41,8 @@ export function StatCard({ label, value, icon, delta, up = true, tone = "neutral
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-semibold uppercase tracking-wide text-faint-fg">{label}</p>
-        <p className="mt-0.5 font-display text-xl font-bold text-foreground">{value}</p>
+        <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-faint-fg sm:text-xs">{label}</p>
+        <p className="mt-0.5 break-words font-display text-lg font-bold leading-tight text-foreground sm:text-xl">{value}</p>
       </div>
       {delta && (
         <span
