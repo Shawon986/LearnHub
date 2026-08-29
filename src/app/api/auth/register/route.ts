@@ -22,9 +22,10 @@ export const POST = apiHandler(async (req) => {
   }
 
   // Referral handling — invalid codes are ignored silently.
+  const referralCode = input.referralCode?.trim().toUpperCase();
   let referrerId: string | null = null;
-  if (input.referralCode) {
-    const referrer = await db.user.findUnique({ where: { referralCode: input.referralCode } });
+  if (referralCode) {
+    const referrer = await db.user.findUnique({ where: { referralCode } });
     if (referrer && referrer.id) referrerId = referrer.id;
   }
 

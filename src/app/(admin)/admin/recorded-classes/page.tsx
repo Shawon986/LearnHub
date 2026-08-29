@@ -105,9 +105,18 @@ export default async function RecordedClassesAdminPage({
                 <tr key={r.id} className="transition-colors hover:bg-card-2/50">
                   <td className="max-w-80 px-5 py-3.5">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-fg">
-                        <Clapperboard className="h-4 w-4" />
-                      </span>
+                      {r.thumbnailUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={`/api/uploads/${r.thumbnailUrl.replace(/^\/+/, "")}`}
+                          alt=""
+                          className="h-10 w-16 shrink-0 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-fg">
+                          <Clapperboard className="h-4 w-4" />
+                        </span>
+                      )}
                       <div className="min-w-0">
                         <p className="truncate text-[13px] font-bold text-foreground">{r.title}</p>
                         <p className="text-[11px] text-faint-fg">

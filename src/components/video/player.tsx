@@ -44,8 +44,8 @@ export function VideoPlayer({
   src,
   poster,
   initialPosition = 0,
-  bookmarks,
-  notes,
+  bookmarks = [],
+  notes = [],
   onProgress,
   onComplete,
   onAddBookmark,
@@ -56,14 +56,14 @@ export function VideoPlayer({
   src: string;
   poster?: string | null;
   initialPosition?: number;
-  bookmarks: BookmarkItem[];
-  notes: NoteItem[];
-  onProgress: (positionSeconds: number, durationSeconds: number) => void;
-  onComplete: () => void;
-  onAddBookmark: (timeSeconds: number, label: string) => void;
-  onDeleteBookmark: (id: string) => void;
-  onAddNote: (timeSeconds: number, content: string) => void;
-  onDeleteNote: (id: string) => void;
+  bookmarks?: BookmarkItem[];
+  notes?: NoteItem[];
+  onProgress?: (positionSeconds: number, durationSeconds: number) => void;
+  onComplete?: () => void;
+  onAddBookmark?: (timeSeconds: number, label: string) => void;
+  onDeleteBookmark?: (id: string) => void;
+  onAddNote?: (timeSeconds: number, content: string) => void;
+  onDeleteNote?: (id: string) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -81,7 +81,9 @@ export function VideoPlayer({
   const [notesOpen, setNotesOpen] = useState(false);
   const [bookmarkPrompt, setBookmarkPrompt] = useState(false);
   const [notePrompt, setNotePrompt] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [resumePrompt, setResumePrompt] = useState(initialPosition > 10 && initialPosition < (duration || Infinity) - 10);
+  const lastReported = useRef(-1);
 
   const showControls = useCallback(() => {
     setControlsVisible(true);
@@ -179,23 +181,24 @@ export function VideoPlayer({
           setMuted((v) => !v);
           break;
         case "b":
-          setBookmarkPrompt(true);
+          if (onAddBookmark) setBookmarkPrompt(true);
           break;
         case "n":
-          setNotePrompt(true);
+          if (onAddNote) setNotePrompt(true);
           break;
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [onAddBookmark, onAddNote]);
 
-  /* ---- Progress reporting (throttled) ---- */
+  /* ---- Progress reporting (throttled, only on real movement) ---- */
   useEffect(() => {
     const el = videoRef.current;
-    if (!el) return;
+    if (!el || !onProgress) return;
     const timer = setInterval(() => {
-      if (!el.paused && el.duration > 0) {
+      if (!el.paused && el.duration > 0 && Math.abs(el.currentTime - lastReported.current) > 3) {
+        lastReported.current = el.currentTime;
         onProgress(el.currentTime, el.duration);
       }
     }, 5000);
@@ -243,10 +246,51 @@ export function VideoPlayer({
         }}
         onEnded={() => {
           setPlaying(false);
-          onComplete();
-          onProgress(duration, duration);
+          onComplete?.();
+          onProgress?.(duration, duration);
+        }}
+        onError={(e) => {
+          // Token expired, file moved, network lost — surface it instead of
+          // dying silently; reloading re-mints a fresh signed URL.
+          const mediaError = e.currentTarget.error;
+          setError(
+            mediaError?.code === MediaError.MEDIA_ERR_NETWORK
+              ? "Network error while loading the video."
+              : "The video could not be played. It may have been removed or your access expired.",
+          );
+          setPlaying(false);
         }}
       />
+
+      {/* Fatal playback error overlay */}
+      {error && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-black/80 p-6 text-center">
+          <p className="max-w-md text-sm font-bold text-white">{error}</p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="rounded-xl bg-brand px-4 py-2 text-[13px] font-bold text-white transition-colors hover:bg-brand-hover"
+            >
+              Reload player
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                const el = videoRef.current;
+                if (el) {
+                  el.load();
+                  void el.play();
+                }
+              }}
+              className="rounded-xl bg-white/15 px-4 py-2 text-[13px] font-bold text-white transition-colors hover:bg-white/25"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Resume overlay */}
       {resumePrompt && !playing && (
@@ -317,7 +361,7 @@ export function VideoPlayer({
                     <button
                       type="button"
                       aria-label="Delete bookmark"
-                      onClick={() => onDeleteBookmark(b.id)}
+                      onClick={() => onDeleteBookmark?.(b.id)}
                       className="text-[10px] font-bold text-white/50 hover:text-danger"
                     >
                       Delete
@@ -348,7 +392,7 @@ export function VideoPlayer({
                       <button
                         type="button"
                         aria-label="Delete note"
-                        onClick={() => onDeleteNote(n.id)}
+                        onClick={() => onDeleteNote?.(n.id)}
                         className="text-[10px] font-bold text-white/50 hover:text-danger"
                       >
                         Delete
@@ -364,7 +408,7 @@ export function VideoPlayer({
       )}
 
       {/* Bookmark / note prompts */}
-      {bookmarkPrompt && (
+      {bookmarkPrompt && onAddBookmark && (
         <PromptBar
           label="Bookmark label"
           onSubmit={(v) => {
@@ -374,7 +418,7 @@ export function VideoPlayer({
           onClose={() => setBookmarkPrompt(false)}
         />
       )}
-      {notePrompt && (
+      {notePrompt && onAddNote && (
         <PromptBar
           label={`Note at ${fmt(current)}`}
           multiline
@@ -444,15 +488,21 @@ export function VideoPlayer({
           </span>
 
           <div className="ml-auto flex items-center gap-1">
-            <IconBtn label="Add bookmark" onClick={() => setBookmarkPrompt(true)}>
-              <Bookmark className="h-4 w-4" />
-            </IconBtn>
-            <IconBtn label="Add note" onClick={() => setNotePrompt(true)}>
-              <NotebookPen className="h-4 w-4" />
-            </IconBtn>
-            <IconBtn label="Toggle notes" active={notesOpen} onClick={() => setNotesOpen((v) => !v)}>
-              <Captions className="h-4 w-4" />
-            </IconBtn>
+            {onAddBookmark && (
+              <IconBtn label="Add bookmark" onClick={() => setBookmarkPrompt(true)}>
+                <Bookmark className="h-4 w-4" />
+              </IconBtn>
+            )}
+            {onAddNote && (
+              <IconBtn label="Add note" onClick={() => setNotePrompt(true)}>
+                <NotebookPen className="h-4 w-4" />
+              </IconBtn>
+            )}
+            {(onAddNote || notes.length > 0) && (
+              <IconBtn label="Toggle notes" active={notesOpen} onClick={() => setNotesOpen((v) => !v)}>
+                <Captions className="h-4 w-4" />
+              </IconBtn>
+            )}
             <IconBtn label="Picture in picture" onClick={() => void togglePiP()}>
               <PictureInPicture2 className="h-4 w-4" />
             </IconBtn>

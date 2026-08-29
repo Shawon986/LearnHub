@@ -1,16 +1,39 @@
 "use server";
 
+import { promises as fs } from "fs";
+import path from "path";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth/session";
+import { env } from "@/lib/env";
+import { requireAdmin, requireRole } from "@/lib/auth/session";
 import { logAudit } from "@/lib/audit";
 import { slugify } from "@/lib/utils";
 import { splitList } from "@/lib/validation/course";
 import { recordedClassSchema } from "@/lib/validation/recorded";
 import { actionError, type ActionResult } from "@/lib/actions/shared";
 
+const ADMIN_ROLES = ["ADMIN", "MODERATOR", "SUPPORT", "SUPER_ADMIN"];
+
+/** Teachers and admins both create/upload recordings. */
+function requireUploader() {
+  return requireRole("TEACHER", ...ADMIN_ROLES);
+}
+
 function err(message: unknown): ActionResult {
   return actionError(message instanceof Error ? message.message : "Something went wrong.");
+}
+
+/** Best-effort removal of a local media file (never throws, traversal-guarded). */
+async function deleteLocalFile(rel: string | null | undefined): Promise<void> {
+  if (!rel) return;
+  try {
+    const root = path.resolve(process.cwd(), env.VIDEO_LOCAL_DIR);
+    const full = path.resolve(root, rel.replace(/^[\\/]+/, ""));
+    if (!full.startsWith(root)) return;
+    await fs.unlink(full);
+  } catch {
+    /* file already gone or unreadable — fine */
+  }
 }
 
 /** Create a recorded class around an uploaded Video asset. */
@@ -28,7 +51,7 @@ export async function createRecordedClass(input: {
   resources?: { title: string; type: string; path: string }[];
 }): Promise<ActionResult & { id?: string; slug?: string }> {
   try {
-    const actor = await requireAdmin();
+    const actor = await requireUploader();
     const data = recordedClassSchema.parse(input);
 
     const video = await db.video.findUnique({ where: { id: data.videoId } });
@@ -77,6 +100,7 @@ export async function createRecordedClass(input: {
       metadata: { title: data.title },
     });
     revalidatePath("/admin/recorded-classes");
+    revalidatePath("/teacher/recorded-classes");
     return { ok: true, id: recorded.id, slug: recorded.slug };
   } catch (e) {
     return err(e);
@@ -169,9 +193,12 @@ export async function updateRecordedClass(
   },
 ): Promise<ActionResult> {
   try {
-    const actor = await requireAdmin();
+    const actor = await requireUploader();
     const rc = await db.recordedClass.findUnique({ where: { id } });
     if (!rc) return actionError("Recording not found.");
+    if (rc.uploadedById !== actor.id && !ADMIN_ROLES.includes(actor.role)) {
+      return actionError("You can only edit your own recordings.");
+    }
 
     let slug = slugify(input.title);
     const clash = await db.recordedClass.findFirst({ where: { slug, id: { not: id } } });
@@ -201,6 +228,7 @@ export async function updateRecordedClass(
       metadata: { title: input.title },
     });
     revalidatePath("/admin/recorded-classes");
+    revalidatePath("/teacher/recorded-classes");
     return { ok: true };
   } catch (e) {
     return err(e);
@@ -233,23 +261,43 @@ export async function restoreRecordedClass(id: string): Promise<ActionResult> {
   }
 }
 
-/** Delete a draft (used by the retry flow — re-upload replaces it). */
+/** Permanently delete a recording — cascades progress/bookmarks/notes/resources
+ *  AND cleans up the linked Video row plus its local files. Admins may delete
+ *  any recording; teachers may delete their own (except live/published ones). */
 export async function deleteRecordedClass(id: string): Promise<ActionResult> {
   try {
-    const actor = await requireAdmin();
-    const rc = await db.recordedClass.findUnique({ where: { id } });
+    const actor = await requireUploader();
+    const rc = await db.recordedClass.findUnique({
+      where: { id },
+      include: { video: true },
+    });
     if (!rc) return actionError("Recording not found.");
-    if (rc.status === "PUBLISHED") return actionError("Unpublish before deleting.");
+    const isAdmin = ADMIN_ROLES.includes(actor.role);
+    if (!isAdmin && rc.uploadedById !== actor.id) {
+      return actionError("You can only delete your own recordings.");
+    }
+    if (!isAdmin && rc.status === "PUBLISHED") {
+      return actionError("Published recordings can only be removed by an admin.");
+    }
 
     await db.recordedClass.delete({ where: { id } });
+    if (rc.video) {
+      // The RecordedClass required the Video, so the row survives the delete.
+      await db.video.delete({ where: { id: rc.video.id } }).catch(() => {});
+      await deleteLocalFile(rc.video.filePath);
+      await deleteLocalFile(rc.video.thumbnailUrl);
+    }
     await logAudit({
       actorId: actor.id,
       actorEmail: actor.email,
       action: "recordedClass.delete",
       entityType: "RecordedClass",
       entityId: id,
+      metadata: { title: rc.title, status: rc.status },
     });
     revalidatePath("/admin/recorded-classes");
+    revalidatePath("/teacher/recorded-classes");
+    revalidatePath("/recorded-classes");
     return { ok: true };
   } catch (e) {
     return err(e);

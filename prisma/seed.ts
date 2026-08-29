@@ -1,9 +1,73 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import { hash } from "bcryptjs";
+import { promises as fs } from "fs";
+import path from "path";
 
 const db = new PrismaClient();
 
 const DEMO_PASSWORD = "Password123!";
+const DEMO_DIR = path.resolve(process.cwd(), "uploads", "demo");
+
+/**
+ * Demo media files. Videos are copied from the uploads/video folder (a real
+ * mp4 uploaded through the wizard) so seeded recordings actually PLAY; PDFs
+ * are generated as minimal valid documents. Returns a storage-relative path
+ * (no leading slash) that the streaming routes resolve under the uploads root.
+ */
+async function ensureDemoFile(name: string, kind: "video" | "pdf" | "thumb"): Promise<string> {
+  await fs.mkdir(DEMO_DIR, { recursive: true });
+  const rel = path.posix.join("demo", name);
+  const target = path.join(DEMO_DIR, name);
+  try {
+    await fs.access(target);
+    return rel;
+  } catch {
+    /* create below */
+  }
+
+  if (kind === "pdf") {
+    await fs.writeFile(
+      target,
+      `%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n`,
+    );
+    return rel;
+  }
+
+  if (kind === "thumb") {
+    // Cover image: reuse a real uploaded thumbnail when one exists.
+    const thumbDir = path.resolve(process.cwd(), "uploads", "thumbnail");
+    try {
+      const files = (await fs.readdir(thumbDir)).filter((f) => /\.(jpe?g|png|webp)$/i.test(f));
+      if (files.length > 0) {
+        await fs.copyFile(path.join(thumbDir, files[0]), target);
+        return rel;
+      }
+    } catch {
+      /* no thumbnails yet */
+    }
+    // Fallback: a small branded SVG cover (renders in <img> via the uploads route).
+    await fs.writeFile(
+      target,
+      `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2563eb"/><stop offset="1" stop-color="#0d9488"/></linearGradient></defs><rect width="640" height="360" fill="url(#g)"/><circle cx="320" cy="180" r="52" fill="rgba(255,255,255,0.85)"/><path d="M300 168 l40 12 -40 12 z" fill="#2563eb"/><text x="320" y="280" text-anchor="middle" font-family="sans-serif" font-size="26" font-weight="700" fill="#fff">LearnHub</text></svg>`,
+    );
+    return rel;
+  }
+
+  // Video: reuse a real uploaded mp4 when one exists; otherwise a placeholder.
+  const videoDir = path.resolve(process.cwd(), "uploads", "video");
+  try {
+    const files = (await fs.readdir(videoDir)).filter((f) => f.toLowerCase().endsWith(".mp4"));
+    if (files.length > 0) {
+      await fs.copyFile(path.join(videoDir, files[0]), target);
+      return rel;
+    }
+  } catch {
+    /* no uploads dir yet */
+  }
+  console.warn(`[seed] No real mp4 found — "${name}" is a placeholder (upload a video to enable playback).`);
+  await fs.writeFile(target, Buffer.from("demo-placeholder"));
+  return rel;
+}
 
 const hoursFromNow = (h: number) => new Date(Date.now() + h * 60 * 60_000);
 const daysFromNow = (d: number, hour = 10) => {
@@ -296,10 +360,10 @@ async function main() {
         status: t.verified ? "APPROVED" : "PENDING",
         documents: t.verified
           ? [
-              { type: "ID_CARD", title: "National ID", url: "/uploads/demo/nid.pdf" },
-              { type: "DEGREE", title: "Degree certificate", url: "/uploads/demo/degree.pdf" },
+              { type: "ID_CARD", title: "National ID", url: await ensureDemoFile("nid.pdf", "pdf") },
+              { type: "DEGREE", title: "Degree certificate", url: await ensureDemoFile("degree.pdf", "pdf") },
             ]
-          : [{ type: "ID_CARD", title: "National ID", url: "/uploads/demo/nid.pdf" }],
+          : [{ type: "ID_CARD", title: "National ID", url: await ensureDemoFile("nid.pdf", "pdf") }],
         submittedAt: daysFromNow(-30),
         reviewedAt: t.verified ? daysFromNow(-25) : null,
         reviewedById: t.verified ? admin.id : null,
@@ -354,7 +418,7 @@ async function main() {
       data: {
         title,
         source: "LOCAL",
-        filePath: `/uploads/demo/${title.toLowerCase().replace(/\s+/g, "-")}.mp4`,
+        filePath: await ensureDemoFile(`${title.toLowerCase().replace(/\s+/g, "-")}.mp4`, "video"),
         durationSeconds,
         sizeBytes: durationSeconds * 120_000,
         mimeType: "video/mp4",
@@ -1121,6 +1185,7 @@ async function main() {
         moduleId,
         lessonId,
         videoId: video.id,
+        thumbnailUrl: await ensureDemoFile(`cover-${rc.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.jpg`, "thumb"),
         status: rc.status,
         durationSeconds: rc.seconds,
         tags: rc.tags,

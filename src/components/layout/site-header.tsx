@@ -55,7 +55,7 @@ export function SiteHeader({
       )}
     >
       <div className="relative mx-auto grid h-16 max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-3 px-4 sm:px-6">
-        <Logo size="md" typewriter className="shrink-0" />
+        <Logo size="md" className="shrink-0" />
 
         {/* Desktop nav — centered in the middle zone, never overlaps the sides */}
         <nav className="hidden items-center justify-center gap-1 lg:flex" aria-label="Main">

@@ -56,7 +56,7 @@ export function safeJsonParse<T>(value: unknown, fallback: T): T {
 /** Deterministic gradient key for placeholder thumbnails/avatars. */
 export function gradientFor(seed: string): string {
   const gradients = [
-    "from-violet-500 via-purple-500 to-fuchsia-500",
+    "from-blue-500 via-sky-500 to-teal-500",
     "from-teal-500 via-emerald-500 to-cyan-500",
     "from-amber-500 via-orange-500 to-rose-500",
     "from-sky-500 via-blue-500 to-indigo-500",

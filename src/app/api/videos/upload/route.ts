@@ -1,14 +1,15 @@
 import { apiHandler, json } from "@/lib/api";
-import { requireAdmin } from "@/lib/auth/session";
+import { requireUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { getVideoProvider } from "@/lib/video/provider";
 
 const MAX_UPLOAD_BYTES = 500 * 1024 * 1024; // 500 MB
 
-// Admin video upload (multipart). Creates the central Video asset row;
-// processing status is provider-driven (local = READY immediately).
+// Video upload (multipart) — teachers AND admins upload recorded classes
+// through this endpoint. Creates the central Video asset row; processing
+// status is provider-driven (local = READY immediately).
 export const POST = apiHandler(async (req) => {
-  const actor = await requireAdmin();
+  const actor = await requireUser();
 
   const form = await req.formData();
   const file = form.get("file");
@@ -41,7 +42,7 @@ export const POST = apiHandler(async (req) => {
       durationSeconds: 0,
       sizeBytes: result.sizeBytes,
       mimeType: result.mimeType,
-      status: "READY", // local provider: ready; cloud providers set their own
+      status: "READY",
       processingProgress: 100,
       uploadedById: actor.id,
     },

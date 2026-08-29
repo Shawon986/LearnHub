@@ -9,6 +9,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { formatBDT, formatDate } from "@/lib/format";
 import { ReferralCopy } from "./referral-copy";
+import { ReferralShare } from "./referral-share";
 
 export const metadata: Metadata = { title: "Referrals" };
 
@@ -48,15 +49,37 @@ export default async function ReferralsPage() {
         />
       </div>
 
+      <div className="grid gap-3 rounded-2xl border border-line bg-card p-5 text-[13px] sm:grid-cols-3">
+        <div className="flex gap-3">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-soft font-extrabold text-brand-fg">1</span>
+          <p className="leading-relaxed text-muted-fg">
+            Share your code or invite link with a friend.
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft font-extrabold text-accent">2</span>
+          <p className="leading-relaxed text-muted-fg">
+            They sign up with your code — the invite stays pending until then.
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold-soft font-extrabold text-gold">3</span>
+          <p className="leading-relaxed text-muted-fg">
+            When they make their first purchase, your reward lands in your referral balance instantly.
+          </p>
+        </div>
+      </div>
+
       <Card className="overflow-hidden">
         <div className="bg-gradient-to-r from-brand to-accent p-6 text-white">
           <p className="text-xs font-bold uppercase tracking-widest text-white/70">Your referral code</p>
           <div className="mt-2 flex flex-wrap items-center gap-3">
             <p className="font-mono text-2xl font-extrabold tracking-wider">{user.referralCode}</p>
             <ReferralCopy code={user.referralCode} />
+            <ReferralShare code={user.referralCode} />
           </div>
           <p className="mt-2 text-[12px] text-white/80">
-            Friends enter this code when they sign up.
+            Friends enter this code when they sign up — or just send them the invite link.
           </p>
         </div>
         <CardContent className="space-y-3">

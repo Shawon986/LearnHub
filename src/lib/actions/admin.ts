@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/session";
 import { logAudit } from "@/lib/audit";
@@ -54,6 +55,42 @@ export async function setUserStatus(input: { userId: string; action: "SUSPEND" |
       action: `user.${data.action.toLowerCase()}`,
       entityType: "User",
       entityId: target.id,
+      metadata: { targetEmail: target.email },
+    });
+    revalidatePath("/admin/users");
+    return { ok: true };
+  } catch (e) {
+    return err(e);
+  }
+}
+
+/** Permanently delete a user (fails with guidance when content references exist). */
+export async function deleteUser(userId: string): Promise<ActionResult> {
+  try {
+    const actor = await requireAdminActor();
+    const target = await db.user.findUnique({ where: { id: userId } });
+    if (!target) return actionError("User not found.");
+    if (target.id === actor.id) return actionError("You cannot delete your own account.");
+    if (ADMIN_ROLES.includes(target.role) && actor.role !== "SUPER_ADMIN") {
+      return actionError("Only a super admin can delete another admin.");
+    }
+
+    try {
+      await db.user.delete({ where: { id: userId } });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
+        return actionError(
+          "This user has courses, bookings, payments or messages — suspend or ban them instead.",
+        );
+      }
+      throw e;
+    }
+    await logAudit({
+      actorId: actor.id,
+      actorEmail: actor.email,
+      action: "user.delete",
+      entityType: "User",
+      entityId: userId,
       metadata: { targetEmail: target.email },
     });
     revalidatePath("/admin/users");

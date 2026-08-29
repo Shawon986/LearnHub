@@ -143,6 +143,7 @@ export default async function HomePage() {
     viewCount: r.viewCount,
     avgRating: r.avgRating,
     ratingCount: r.ratingCount,
+    thumbnailUrl: r.thumbnailUrl,
   }));
 
   const testimonials: TestimonialData[] = testimonialsRaw

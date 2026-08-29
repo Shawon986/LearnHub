@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Bell, CheckCheck } from "lucide-react";
+import { Bell, CheckCheck, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -73,6 +73,29 @@ export function NotificationCenter({ role }: { role?: string }) {
     toast({ title: "All notifications marked as read", variant: "success" });
   }
 
+  /** Permanently remove one notification. */
+  async function deleteOne(id: string) {
+    setItems((prev) => (prev ?? []).filter((n) => n.id !== id));
+    await fetch("/api/notifications", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: [id] }),
+    }).catch(() => {});
+    toast({ title: "Notification deleted", variant: "success" });
+  }
+
+  /** Permanently clear every notification. */
+  async function clearAll() {
+    if (!window.confirm("Permanently delete ALL notifications? This cannot be undone.")) return;
+    await fetch("/api/notifications", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ all: true }),
+    });
+    await load();
+    toast({ title: "All notifications deleted", variant: "success" });
+  }
+
   /** Clicking a notification opens it (and marks it read). */
   function onRowClick(n: NotificationItem) {
     if (!n.read) {
@@ -109,11 +132,18 @@ export function NotificationCenter({ role }: { role?: string }) {
             {unread > 0 ? `${unread} unread notification${unread === 1 ? "" : "s"}` : "You're all caught up"}
           </p>
         </div>
-        {unread > 0 && (
-          <Button variant="secondary" size="sm" leftIcon={<CheckCheck className="h-3.5 w-3.5" />} onClick={markAll}>
-            Mark all read
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {unread > 0 && (
+            <Button variant="secondary" size="sm" leftIcon={<CheckCheck className="h-3.5 w-3.5" />} onClick={markAll}>
+              Mark all read
+            </Button>
+          )}
+          {items && items.length > 0 && (
+            <Button variant="danger" size="sm" leftIcon={<Trash2 className="h-3.5 w-3.5" />} onClick={clearAll}>
+              Clear all
+            </Button>
+          )}
+        </div>
       </div>
 
       {items && items.length === 0 ? (
@@ -168,6 +198,17 @@ export function NotificationCenter({ role }: { role?: string }) {
                         </span>
                       )}
                     </div>
+                    <button
+                      type="button"
+                      aria-label={`Delete notification: ${n.title}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void deleteOne(n.id);
+                      }}
+                      className="mt-0.5 shrink-0 rounded-lg p-1.5 text-faint-fg transition-colors hover:bg-danger-soft hover:text-danger"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </li>
                 );
               })}

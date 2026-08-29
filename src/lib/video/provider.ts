@@ -19,6 +19,25 @@ const RESOURCE_EXTENSIONS = [".pdf", ".doc", ".docx", ".ppt", ".pptx", ".zip"];
 
 const VIDEO_MIMES = ["video/mp4", "video/webm", "video/quicktime", "video/x-m4v", "video/x-matroska"];
 
+/** Browsers sometimes send an empty MIME — derive it from the extension. */
+const EXT_MIME: Record<string, string> = {
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
+  ".mov": "video/quicktime",
+  ".m4v": "video/x-m4v",
+  ".mkv": "video/x-matroska",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".pdf": "application/pdf",
+  ".doc": "application/msword",
+  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".ppt": "application/vnd.ms-powerpoint",
+  ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  ".zip": "application/zip",
+};
+
 export type UploadKind = "video" | "thumbnail" | "resource";
 
 export interface UploadResult {
@@ -53,7 +72,8 @@ export class LocalVideoProvider implements VideoProvider {
     if (!allowedExt.includes(ext)) {
       throw new Error(`Unsupported file type ".${ext}" for ${kind} uploads.`);
     }
-    if (kind === "video" && !VIDEO_MIMES.includes(file.type)) {
+    const mime = file.type || (EXT_MIME[ext] ?? "");
+    if (kind === "video" && !VIDEO_MIMES.includes(mime)) {
       throw new Error("Only video files can be uploaded as videos.");
     }
   }
@@ -77,7 +97,11 @@ export class LocalVideoProvider implements VideoProvider {
     const buffer = Buffer.from(await input.file.arrayBuffer());
     await writeFile(path.join(root, unique), buffer);
 
-    return { path: relPath, sizeBytes: buffer.length, mimeType: input.file.type || "application/octet-stream" };
+    return {
+      path: relPath,
+      sizeBytes: buffer.length,
+      mimeType: input.file.type || EXT_MIME[ext] || "application/octet-stream",
+    };
   }
 
   async processingStatus(): Promise<string> {
@@ -86,8 +110,8 @@ export class LocalVideoProvider implements VideoProvider {
   }
 
   async playbackUrl(video: { id: string; filePath: string | null }, userId: string): Promise<string> {
-    const token = signPlaybackToken(video.id, userId);
-    return `/api/videos/${video.id}/stream?token=${token}&exp=${token.exp}`;
+    const signed = signPlaybackToken(video.id, userId);
+    return `/api/videos/${video.id}/stream?token=${signed.token}&exp=${signed.exp}`;
   }
 }
 

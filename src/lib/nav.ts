@@ -59,6 +59,7 @@ export const TEACHER_NAV: NavItem[] = [
   { href: "/teacher/profile", label: "Profile", icon: GraduationCap },
   { href: "/teacher/students", label: "Students", icon: Users },
   { href: "/teacher/courses", label: "Courses", icon: BookOpen },
+  { href: "/teacher/recorded-classes", label: "Recorded Classes", icon: FileVideo },
   { href: "/teacher/live-classes", label: "Live Classes", icon: MonitorPlay },
   { href: "/teacher/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/teacher/availability", label: "Availability", icon: Clock3 },

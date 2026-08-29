@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 type Role = "STUDENT" | "TEACHER";
 
-export function RegisterForm() {
+export function RegisterForm({ initialReferralCode }: { initialReferralCode?: string }) {
   const [role, setRole] = useState<Role>("STUDENT");
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -132,6 +132,7 @@ export function RegisterForm() {
           label="Referral code (optional)"
           name="referralCode"
           placeholder="LEARN-XXXX-000"
+          defaultValue={initialReferralCode}
           autoCapitalize="characters"
         />
 

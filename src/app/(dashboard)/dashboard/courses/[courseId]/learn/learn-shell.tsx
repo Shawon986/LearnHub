@@ -217,7 +217,7 @@ export function LearnShell({
               )
             ) : (
               /* Video placeholder — real player arrives in Phase 8 */
-              <div className="relative flex aspect-video items-center justify-center rounded-xl bg-gradient-to-br from-brand via-violet-700 to-accent">
+              <div className="relative flex aspect-video items-center justify-center rounded-xl bg-gradient-to-br from-brand via-blue-700 to-accent">
                 <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/25 backdrop-blur-md">
                   <PlayCircle className="h-8 w-8 fill-white text-white" />
                 </span>

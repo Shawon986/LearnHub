@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Textarea } from "@/components/ui/textarea";
 import { ActionButton } from "@/components/action-button";
-import { reviewCourse, setCourseStatus } from "@/lib/actions/admin-course";
+import { deleteCourse, reviewCourse, setCourseStatus } from "@/lib/actions/admin-course";
 
 export function CourseReviewActions({
   courseId,
@@ -58,6 +58,18 @@ export function CourseReviewActions({
       )}
       {status === "ARCHIVED" && (
         <span className="text-[11px] font-semibold text-faint-fg">Archived</span>
+      )}
+
+      {status !== "PUBLISHED" && (
+        <ActionButton
+          size="sm"
+          variant="danger"
+          action={deleteCourse.bind(null, courseId)}
+          confirm={`Permanently delete "${courseTitle}"? Courses with enrollments or payments cannot be deleted.`}
+          successMessage="Course deleted."
+        >
+          Delete
+        </ActionButton>
       )}
 
       <Modal

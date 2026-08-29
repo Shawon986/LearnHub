@@ -28,7 +28,15 @@ interface UploadedFile {
   resourceType?: string;
 }
 
-export function UploadWizard({ courses }: { courses: SerializedCourse[] }) {
+/** Shared upload wizard — used by both the admin and the teacher dashboards. */
+export function UploadWizard({
+  courses,
+  listHref,
+}: {
+  courses: SerializedCourse[];
+  /** Where to land after saving (role-specific recorded-classes list). */
+  listHref: string;
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
@@ -57,7 +65,7 @@ export function UploadWizard({ courses }: { courses: SerializedCourse[] }) {
     form.append("kind", kind);
 
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/api/admin/videos");
+    xhr.open("POST", "/api/videos/upload");
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
     };
@@ -86,6 +94,12 @@ export function UploadWizard({ courses }: { courses: SerializedCourse[] }) {
       setError("Upload failed — check your connection and try again.");
     };
     xhr.send(form);
+  }
+
+  function removeUpload(u: UploadedFile) {
+    setUploads((prev) => prev.filter((x) => x.id !== u.id));
+    // Clean the orphaned asset + its file server-side (best effort).
+    fetch(`/api/videos/${u.id}`, { method: "DELETE" }).catch(() => {});
   }
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -118,8 +132,8 @@ export function UploadWizard({ courses }: { courses: SerializedCourse[] }) {
         resources,
       });
       if (result.ok) {
-        toast({ title: "Recording saved", description: "You can publish it from the list.", variant: "success" });
-        router.push("/admin/recorded-classes");
+        toast({ title: "Recording saved", description: "It will appear in your list.", variant: "success" });
+        router.push(listHref);
         router.refresh();
       } else {
         setError(result.error ?? "Could not save the recording.");
@@ -175,7 +189,7 @@ export function UploadWizard({ courses }: { courses: SerializedCourse[] }) {
                   <button
                     type="button"
                     aria-label={`Remove ${u.title}`}
-                    onClick={() => setUploads((prev) => prev.filter((x) => x.id !== u.id))}
+                    onClick={() => removeUpload(u)}
                     className="rounded-lg p-1.5 text-faint-fg transition-colors hover:bg-danger-soft hover:text-danger"
                   >
                     <Trash2 className="h-3.5 w-3.5" />

@@ -8,12 +8,14 @@ import { UploadWizard, type SerializedCourse } from "@/components/recorded/uploa
 
 export const metadata: Metadata = { title: "Upload Recording" };
 
-export default async function UploadRecordingPage() {
+export default async function TeacherUploadRecordingPage() {
   const actor = await getCurrentUser();
-  if (!actor) redirect("/login?next=/admin/recorded-classes/upload");
+  if (!actor || actor.role !== "TEACHER") redirect("/login?next=/teacher/recorded-classes/upload");
 
+  // Teachers link recordings only to their own courses.
   const courses: SerializedCourse[] = (
     await db.course.findMany({
+      where: { teacherId: actor.id },
       include: {
         modules: {
           orderBy: { sortOrder: "asc" },
@@ -35,18 +37,19 @@ export default async function UploadRecordingPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <Link
-        href="/admin/recorded-classes"
+        href="/teacher/recorded-classes"
         className="inline-flex items-center gap-1.5 text-[12px] font-bold text-muted-fg transition-colors hover:text-foreground"
       >
-        <ArrowLeft className="h-3.5 w-3.5" /> All recordings
+        <ArrowLeft className="h-3.5 w-3.5" /> My recordings
       </Link>
       <div>
         <h1 className="font-display text-xl font-extrabold text-foreground">Upload a recorded class</h1>
         <p className="mt-1 text-sm text-muted-fg">
-          Upload the video, attach it to a course (optional), add metadata, then save and publish.
+          Upload the video, attach it to one of your courses (optional) and add metadata — an admin
+          publishes it to the marketplace.
         </p>
       </div>
-      <UploadWizard courses={courses} listHref="/admin/recorded-classes" />
+      <UploadWizard courses={courses} listHref="/teacher/recorded-classes" />
     </div>
   );
 }

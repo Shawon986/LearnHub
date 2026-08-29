@@ -4,6 +4,7 @@ import "./globals.css";
 import { cookies } from "next/headers";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
+import { RouteLoaderVeil } from "@/components/ui/route-loader-veil";
 import { LanguageProvider } from "@/components/i18n/language-provider";
 import type { Locale } from "@/lib/i18n/dict";
 import { cn } from "@/lib/utils";
@@ -95,6 +96,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <ThemeProvider>
           <LanguageProvider initialLocale={locale}>
             <ToastProvider>{children}</ToastProvider>
+            {/* Shows the branded loader for a minimum duration on navigation. */}
+            <RouteLoaderVeil />
           </LanguageProvider>
         </ThemeProvider>
       </body>

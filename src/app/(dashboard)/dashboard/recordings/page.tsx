@@ -29,6 +29,7 @@ export default async function RecordingsPage() {
     avgRating: r.avgRating,
     ratingCount: r.ratingCount,
     courseTitle: r.course?.title ?? null,
+    thumbnailUrl: r.thumbnailUrl,
   }));
 
   return (

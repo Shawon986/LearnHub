@@ -56,7 +56,7 @@ export default async function VerifyCertificatePage({
       </div>
       <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-line bg-card shadow-lift">
         {/* Certificate header */}
-        <div className="bg-gradient-to-r from-brand via-violet-700 to-accent p-8 text-center text-white">
+        <div className="bg-gradient-to-r from-brand via-blue-700 to-accent p-8 text-center text-white">
           <Award className="mx-auto h-10 w-10" aria-hidden />
           <h1 className="mt-2 font-display text-2xl font-extrabold">Certificate of Completion</h1>
           <p className="mt-1 text-[13px] text-white/80">Verified by LearnHub</p>

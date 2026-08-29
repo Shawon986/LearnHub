@@ -43,7 +43,7 @@ export function CategoriesSection({ categories }: { categories: CategoryCardData
     <RevealGroup className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
       {categories.map((cat) => {
         const Icon = (cat.icon && ICONS[cat.icon]) || BookOpen;
-        const color = cat.color ?? "#6d28d9";
+        const color = cat.color ?? "#2563eb";
         return (
           <RevealItem key={cat.id}>
             <a

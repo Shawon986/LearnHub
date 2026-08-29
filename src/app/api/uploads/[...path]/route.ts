@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: Request, ctx: { params: Promise<{ path: string[] }> }) {
   const { path: segments } = await ctx.params;
-  const rel = segments.join("/");
+  const rel = segments.filter(Boolean).join("/");
   if (!rel || rel.includes("..")) return NextResponse.json({ error: "Invalid path." }, { status: 400 });
 
   const root = path.resolve(
@@ -49,11 +49,13 @@ export async function GET(req: Request, ctx: { params: Promise<{ path: string[] 
   const contentType =
     rel.endsWith(".pdf")
       ? "application/pdf"
-      : /\.(png|jpe?g|webp|gif|avif)$/i.test(rel)
-        ? `image/${rel.endsWith(".jpg") ? "jpeg" : rel.slice(rel.lastIndexOf(".") + 1)}`
-        : rel.startsWith("thumbnail/")
-          ? "image/webp"
-          : "application/octet-stream";
+      : rel.endsWith(".svg")
+        ? "image/svg+xml"
+        : /\.(png|jpe?g|webp|gif|avif)$/i.test(rel)
+          ? `image/${rel.endsWith(".jpg") ? "jpeg" : rel.slice(rel.lastIndexOf(".") + 1)}`
+          : rel.startsWith("thumbnail/")
+            ? "image/webp"
+            : "application/octet-stream";
 
   return new NextResponse(createReadStream(filePath) as unknown as ReadableStream, {
     status: 200,

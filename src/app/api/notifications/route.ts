@@ -42,3 +42,14 @@ export const POST = apiHandler(async (req) => {
   await markNotificationsRead(user.id, input.all ? undefined : input.ids);
   return json({ ok: true });
 });
+
+/** Permanently delete notifications: { ids: [...] } or { all: true }. */
+export const DELETE = apiHandler(async (req) => {
+  const user = await requireUser();
+  const input = await parseJson(req, markSchema);
+  const where = input.all
+    ? { userId: user.id }
+    : { userId: user.id, id: { in: input.ids ?? [] } };
+  await db.notification.deleteMany({ where });
+  return json({ ok: true });
+});

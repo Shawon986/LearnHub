@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CalendarDays, Eye, Lock, Tags } from "lucide-react";
+import { CalendarDays, Eye, Lock, Play, Tags } from "lucide-react";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { canWatchRecording } from "@/lib/video/access";
@@ -61,10 +61,12 @@ export default async function WatchPage({ params }: PageProps) {
     }),
   ]);
 
-  // Mint the signed playback URL only for authorized viewers.
+  // Mint the signed playback URL for authorized viewers. Standalone
+  // (public) recordings play for guests with an anonymous token;
+  // course-linked recordings still require a signed-in enrolled user.
   let playbackUrl: string | null = null;
-  if (access.allowed && user) {
-    playbackUrl = await getVideoProvider().playbackUrl(rc.video, user.id);
+  if (access.allowed) {
+    playbackUrl = await getVideoProvider().playbackUrl(rc.video, user?.id ?? "anonymous");
   }
 
   const jsonLd = {
@@ -96,13 +98,15 @@ export default async function WatchPage({ params }: PageProps) {
       <div className="grid gap-8 lg:grid-cols-[1.7fr_1fr]">
         <div className="space-y-6">
           {/* Player / gate */}
-          {access.allowed && playbackUrl && user ? (
+          {access.allowed && playbackUrl ? (
             <WatchClient
               recordedClassId={rc.id}
               playbackUrl={playbackUrl}
               initialPosition={progress?.lastPositionSeconds ?? 0}
               bookmarks={bookmarks.map((b) => ({ id: b.id, timeSeconds: b.timeSeconds, label: b.label }))}
               notes={notes.map((n) => ({ id: n.id, timeSeconds: n.timeSeconds, content: n.content }))}
+              canTrack={Boolean(user)}
+              poster={rc.thumbnailUrl ? `/api/uploads/${rc.thumbnailUrl.replace(/^\/+/, "")}` : null}
             />
           ) : (
             <div className="flex aspect-video flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-line bg-card p-8 text-center">
@@ -195,12 +199,26 @@ export default async function WatchPage({ params }: PageProps) {
               <Link
                 key={r.id}
                 href={`/recorded-classes/${r.slug}`}
-                className="block rounded-2xl border border-line bg-card p-4 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-lift"
+                className="flex gap-3 rounded-2xl border border-line bg-card p-3 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-lift"
               >
-                <p className="line-clamp-2 text-[13px] font-bold text-foreground">{r.title}</p>
-                <p className="mt-1 text-[11px] text-faint-fg">
-                  {formatDurationSeconds(r.durationSeconds)} · {formatNumber(r.viewCount)} views
-                </p>
+                {r.thumbnailUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={`/api/uploads/${r.thumbnailUrl.replace(/^\/+/, "")}`}
+                    alt=""
+                    className="h-14 w-24 shrink-0 rounded-lg object-cover"
+                  />
+                ) : (
+                  <span className="flex h-14 w-24 shrink-0 items-center justify-center rounded-lg bg-brand-soft">
+                    <Play className="h-4 w-4 fill-brand text-brand" />
+                  </span>
+                )}
+                <div className="min-w-0">
+                  <p className="line-clamp-2 text-[13px] font-bold text-foreground">{r.title}</p>
+                  <p className="mt-1 text-[11px] text-faint-fg">
+                    {formatDurationSeconds(r.durationSeconds)} · {formatNumber(r.viewCount)} views
+                  </p>
+                </div>
               </Link>
             ))}
           </div>

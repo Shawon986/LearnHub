@@ -1,34 +1,24 @@
 "use client";
 
 import { useState, useTransition, type FormEvent } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, Pencil, RotateCcw } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { ActionButton } from "@/components/action-button";
-import {
-  archiveRecordedClass,
-  deleteRecordedClass,
-  publishRecordedClass,
-  restoreRecordedClass,
-  unpublishRecordedClass,
-  updateRecordedClass,
-} from "@/lib/actions/recorded";
+import { deleteRecordedClass, updateRecordedClass } from "@/lib/actions/recorded";
 
-export function RecordedActions({
+export function TeacherRecordedActions({
   id,
   status,
-  videoStatus,
   courses,
   initial,
 }: {
   id: string;
   status: string;
-  videoStatus: string;
   courses: { id: string; title: string }[];
   initial: {
     title: string;
@@ -66,15 +56,6 @@ export function RecordedActions({
 
   return (
     <div className="flex items-center justify-end gap-1.5">
-      {/* Preview (admin bypass — any status) */}
-      <Link
-        href={`/admin/recorded-classes/${id}/preview`}
-        className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-bold text-muted-fg transition-colors hover:bg-card-2 hover:text-foreground"
-      >
-        <Eye className="h-3.5 w-3.5" /> Preview
-      </Link>
-
-      {/* Edit metadata */}
       <button
         type="button"
         onClick={() => setEditOpen(true)}
@@ -82,59 +63,17 @@ export function RecordedActions({
       >
         <Pencil className="h-3.5 w-3.5" /> Edit
       </button>
-
-      {["DRAFT", "READY"].includes(status) && videoStatus === "READY" && (
+      {status !== "PUBLISHED" && (
         <ActionButton
           size="sm"
-          action={publishRecordedClass.bind(null, id)}
-          successMessage="Recording published 🎬"
+          variant="danger"
+          action={deleteRecordedClass.bind(null, id)}
+          confirm="Permanently delete this recording and its video file? This cannot be undone."
+          successMessage="Recording deleted."
         >
-          Publish
+          <Trash2 className="h-3.5 w-3.5" /> Delete
         </ActionButton>
       )}
-      {status === "PUBLISHED" && (
-        <ActionButton
-          size="sm"
-          variant="outline"
-          action={unpublishRecordedClass.bind(null, id)}
-          confirm="Unpublish this recording? It will disappear from the library."
-        >
-          Unpublish
-        </ActionButton>
-      )}
-      {status === "ARCHIVED" && (
-        <ActionButton
-          size="sm"
-          variant="secondary"
-          action={restoreRecordedClass.bind(null, id)}
-          successMessage="Recording restored — publish it to go live again."
-        >
-          <RotateCcw className="h-3.5 w-3.5" /> Restore
-        </ActionButton>
-      )}
-      {status !== "ARCHIVED" && status !== "PUBLISHED" && (
-        <ActionButton
-          size="sm"
-          variant="ghost"
-          action={archiveRecordedClass.bind(null, id)}
-          confirm="Archive this recording?"
-        >
-          Archive
-        </ActionButton>
-      )}
-      <ActionButton
-        size="sm"
-        variant="danger"
-        action={deleteRecordedClass.bind(null, id)}
-        confirm={
-          status === "PUBLISHED"
-            ? "This recording is LIVE. Permanently delete it along with its video file? This cannot be undone."
-            : "Permanently delete this recording and its video file? This cannot be undone."
-        }
-        successMessage="Recording deleted (video file removed)."
-      >
-        Delete
-      </ActionButton>
 
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit recording" size="md">
         <form onSubmit={onEdit} className="space-y-4">

@@ -51,7 +51,6 @@ export function NotificationBell({
   const [unread, setUnread] = useState(initialUnread);
   const [items, setItems] = useState<NotificationItem[] | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   const router = useRouter();
   const { t } = useLanguage();
 
@@ -135,7 +134,7 @@ export function NotificationBell({
     });
   }
 
-  /** Clicking a notification opens it (and clears its unread state). */
+  /** Clicking a notification opens it; once seen it leaves the popup list. */
   function onRowClick(n: NotificationItem) {
     if (!n.read) {
       setUnread((u) => {
@@ -143,18 +142,16 @@ export function NotificationBell({
         publishUnread(next);
         return next;
       });
-      setItems((prev) => (prev ?? []).map((i) => (i.id === n.id ? { ...i, read: true } : i)));
       fetch("/api/notifications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: [n.id] }),
       }).catch(() => {});
     }
+    setItems((prev) => (prev ?? []).filter((i) => i.id !== n.id));
     const link = linkFor(n, role);
     if (link) {
       router.push(link);
-    } else {
-      setExpandedId((cur) => (cur === n.id ? null : n.id));
     }
   }
 
@@ -202,46 +199,38 @@ export function NotificationBell({
           <p className="px-4 py-10 text-center text-xs text-faint-fg">{t("No notifications yet")}</p>
         ) : (
           <ul className="py-1">
-            {items.map((n) => {
-              const expanded = expandedId === n.id;
-              return (
-                <li
-                  key={n.id}
-                  onClick={() => onRowClick(n)}
+            {items.map((n) => (
+              <li
+                key={n.id}
+                onClick={() => onRowClick(n)}
+                className={cn(
+                  "flex cursor-pointer gap-2.5 px-3.5 py-2.5 transition-colors hover:bg-card-2",
+                  !n.read && "bg-brand-soft/40",
+                )}
+              >
+                <span
                   className={cn(
-                    "flex cursor-pointer gap-2.5 px-3.5 py-2.5 transition-colors hover:bg-card-2",
-                    !n.read && "bg-brand-soft/40",
+                    "mt-1.5 h-2 w-2 shrink-0 rounded-full",
+                    n.read ? "bg-transparent" : "bg-brand",
                   )}
-                >
-                  <span
-                    className={cn(
-                      "mt-1.5 h-2 w-2 shrink-0 rounded-full",
-                      n.read ? "bg-transparent" : "bg-brand",
-                    )}
-                    aria-hidden
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[12px] font-bold text-foreground">{n.title}</p>
-                    {n.body && (
-                      <p
-                        className={cn(
-                          "text-[11px] leading-relaxed text-muted-fg",
-                          expanded ? "whitespace-pre-line" : "line-clamp-2",
-                        )}
-                      >
-                        {n.body}
-                      </p>
-                    )}
-                    <p className="mt-0.5 text-[10px] text-faint-fg">{timeAgo(n.createdAt)}</p>
-                    {linkFor(n, role) && (
-                      <span className="mt-1 inline-block text-[11px] font-bold text-brand-fg">
-                        {n.data?.checkoutPath ? "Complete payment →" : "Open →"}
-                      </span>
-                    )}
-                  </div>
-                </li>
-              );
-            })}
+                  aria-hidden
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[12px] font-bold text-foreground">{n.title}</p>
+                  {n.body && (
+                    <p className="line-clamp-2 text-[11px] leading-relaxed text-muted-fg">
+                      {n.body}
+                    </p>
+                  )}
+                  <p className="mt-0.5 text-[10px] text-faint-fg">{timeAgo(n.createdAt)}</p>
+                  {linkFor(n, role) && (
+                    <span className="mt-1 inline-block text-[11px] font-bold text-brand-fg">
+                      {n.data?.checkoutPath ? "Complete payment →" : "Open →"}
+                    </span>
+                  )}
+                </div>
+              </li>
+            ))}
           </ul>
         )}
       </div>

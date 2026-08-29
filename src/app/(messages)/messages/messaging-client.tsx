@@ -6,7 +6,6 @@ import { ImagePlus, MessageSquare, Search, Send, ShieldCheck, X } from "lucide-r
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { timeAgo, formatTime, formatDate } from "@/lib/format";
@@ -84,6 +83,12 @@ function roleLabel(role: string): string {
   if (role === "TEACHER") return "Teacher";
   if (role === "STUDENT") return "Student";
   return role;
+}
+
+/** Local blob previews render directly; server files go through /api/uploads. */
+function attachmentSrc(url: string | null): string | null {
+  if (!url) return null;
+  return url.startsWith("blob:") ? url : `/api/uploads/${url}`;
 }
 
 export function MessagingClient({
@@ -220,6 +225,16 @@ export function MessagingClient({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [threadMessages.length]);
 
+  // Escape closes the image lightbox.
+  useEffect(() => {
+    if (!previewImage) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPreviewImage(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [previewImage]);
+
   function open(id: string) {
     const target = conversations.find((c) => c.id === id);
     setActiveId(id);
@@ -283,11 +298,26 @@ export function MessagingClient({
     if (!pendingAttachment || !activeId) return;
     const attachment = pendingAttachment;
     setPendingAttachment(null);
-    URL.revokeObjectURL(attachment.url);
+    // Optimistic: the photo appears in the thread instantly (local blob
+    // preview) while the upload runs — the SSE echo replaces it with the
+    // confirmed message, same as text.
+    const tempId = `local-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    setThreadMessages((prev) => [
+      ...prev,
+      {
+        id: tempId,
+        senderId: currentUserId,
+        content: "📷 Image",
+        type: "IMAGE",
+        attachmentUrl: attachment.url,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
     setAttachmentUploading(true);
     try {
       const upload = await uploadChatImage(attachment.file);
       if (!upload.ok) {
+        setThreadMessages((prev) => prev.filter((m) => m.id !== tempId));
         toast({ title: upload.error, variant: "error" });
         return;
       }
@@ -296,7 +326,12 @@ export function MessagingClient({
         attachmentUrl: upload.path,
         messageType: "IMAGE",
       });
-      if (!sent.ok) toast({ title: sent.error ?? "Message not sent.", variant: "error" });
+      if (!sent.ok) {
+        setThreadMessages((prev) => prev.filter((m) => m.id !== tempId));
+        toast({ title: sent.error ?? "Message not sent.", variant: "error" });
+      } else {
+        URL.revokeObjectURL(attachment.url);
+      }
     } finally {
       setAttachmentUploading(false);
     }
@@ -547,12 +582,12 @@ export function MessagingClient({
                               : cn("bg-card-2 text-foreground", firstOfGroup && "rounded-bl-md"),
                           )}
                         >
-                          {m.type === "IMAGE" && m.attachmentUrl ? (
+                          {m.type === "IMAGE" && attachmentSrc(m.attachmentUrl) ? (
                             <button
                               type="button"
                               onClick={() =>
                                 setPreviewImage({
-                                  src: `/api/uploads/${m.attachmentUrl}`,
+                                  src: attachmentSrc(m.attachmentUrl)!,
                                   alt: `Image from ${own ? "you" : threadName}`,
                                 })
                               }
@@ -561,7 +596,7 @@ export function MessagingClient({
                             >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
-                                src={`/api/uploads/${m.attachmentUrl}`}
+                                src={attachmentSrc(m.attachmentUrl)!}
                                 alt="Attachment"
                                 className="max-h-56 rounded-xl transition-transform hover:scale-[1.02]"
                               />
@@ -664,24 +699,37 @@ export function MessagingClient({
       </section>
     </div>
 
-      {/* Image preview lightbox — sender and receiver both get this. */}
-      <Modal
-        open={previewImage !== null}
-        onClose={() => setPreviewImage(null)}
-        title="Image preview"
-        size="md"
-      >
-        {previewImage && (
-          <div className="flex justify-center">
+      {/* Image preview lightbox — fixed-position so it can never be clipped
+          by the overflow-hidden messaging layout (sender + receiver). */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-6 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label={previewImage.alt}
+          onClick={() => setPreviewImage(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setPreviewImage(null)}
+            aria-label="Close preview"
+            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/30"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <div
+            className="max-h-[85vh] max-w-[92vw]"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={previewImage.src}
               alt={previewImage.alt}
-              className="max-h-[70vh] w-auto rounded-xl object-contain"
+              className="max-h-[85vh] max-w-[92vw] rounded-xl object-contain shadow-lift"
             />
           </div>
-        )}
-      </Modal>
+        </div>
+      )}
     </>
   );
 }

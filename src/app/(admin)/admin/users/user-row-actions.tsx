@@ -6,7 +6,7 @@ import { MoreHorizontal } from "lucide-react";
 import { Dropdown, DropdownItem, DropdownSeparator } from "@/components/ui/dropdown";
 import { ActionButton } from "@/components/action-button";
 import { useToast } from "@/components/ui/toast";
-import { setUserRole, setUserStatus } from "@/lib/actions/admin";
+import { deleteUser, setUserRole, setUserStatus } from "@/lib/actions/admin";
 import type { ActionResult } from "@/lib/actions/shared";
 
 const ROLES = ["STUDENT", "TEACHER", "ADMIN", "MODERATOR", "SUPPORT", "SUPER_ADMIN"];
@@ -112,6 +112,25 @@ export function UserRowActions({
               Make {role}
             </DropdownItem>
           ))}
+        {(!isAdminTarget || canDisciplineAdmin) && (
+          <>
+            <DropdownSeparator />
+            <DropdownItem
+              danger
+              onClick={() => {
+                if (
+                  window.confirm(
+                    `Permanently delete ${targetName}? This cannot be undone. Users with courses, bookings, payments or messages cannot be deleted.`,
+                  )
+                ) {
+                  run(() => deleteUser(targetId), `${targetName} has been deleted.`);
+                }
+              }}
+            >
+              Delete user
+            </DropdownItem>
+          </>
+        )}
       </Dropdown>
     </div>
   );

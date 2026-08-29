@@ -11,18 +11,18 @@
    ============================================================ */
 
 :root {
-  --background: #f6f6fb;
-  --foreground: #101223;
+  --background: #f5f7fa;
+  --foreground: #0f172a;
   --card: #ffffff;
-  --card-2: #f1f1f8;
-  --line: #e4e4f0;
-  --line-strong: #d3d3e4;
-  --muted-fg: #5d6478;
-  --faint-fg: #8b91a7;
-  --brand: #6d28d9;
-  --brand-hover: #5b21b6;
-  --brand-soft: #ede9fe;
-  --brand-fg: #5b21b6;
+  --card-2: #eef2f7;
+  --line: #e2e8f0;
+  --line-strong: #cbd5e1;
+  --muted-fg: #4a5568;
+  --faint-fg: #8a94a6;
+  --brand: #2563eb;
+  --brand-hover: #1d4ed8;
+  --brand-soft: #dbeafe;
+  --brand-fg: #1d4ed8;
   --accent: #0d9488;
   --accent-soft: #ccfbf1;
   --gold: #d97706;
@@ -31,26 +31,26 @@
   --danger-soft: #ffe4e6;
   --success: #059669;
   --success-soft: #d1fae5;
-  --soft-shadow: 0 1px 2px rgb(16 18 35 / 0.04), 0 6px 20px rgb(16 18 35 / 0.06);
-  --lift-shadow: 0 2px 4px rgb(16 18 35 / 0.05), 0 16px 40px rgb(16 18 35 / 0.12);
-  --glow-shadow: 0 0 0 1px rgb(109 40 217 / 0.12), 0 10px 40px rgb(109 40 217 / 0.25);
+  --soft-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 6px 20px rgb(15 23 42 / 0.06);
+  --lift-shadow: 0 2px 4px rgb(15 23 42 / 0.05), 0 16px 40px rgb(15 23 42 / 0.12);
+  --glow-shadow: 0 0 0 1px rgb(37 99 235 / 0.12), 0 10px 40px rgb(37 99 235 / 0.25);
 }
 
 .dark {
-  --background: #0b0b14;
-  --foreground: #eef0fb;
-  --card: #14141f;
-  --card-2: #1b1b2a;
-  --line: #26263c;
-  --line-strong: #33334e;
-  --muted-fg: #9aa1b8;
-  --faint-fg: #6f7690;
-  --brand: #8b5cf6;
-  --brand-hover: #a78bfa;
-  --brand-soft: #241a45;
-  --brand-fg: #c4b5fd;
+  --background: #0b1220;
+  --foreground: #eef2f9;
+  --card: #121a2a;
+  --card-2: #1a2334;
+  --line: #24304a;
+  --line-strong: #31405f;
+  --muted-fg: #93a1bc;
+  --faint-fg: #6b7a99;
+  --brand: #3b82f6;
+  --brand-hover: #60a5fa;
+  --brand-soft: #17294d;
+  --brand-fg: #93c5fd;
   --accent: #2dd4bf;
-  --accent-soft: #0f332e;
+  --accent-soft: #0e3b36;
   --gold: #fbbf24;
   --gold-soft: #3a2d10;
   --danger: #fb7185;
@@ -59,7 +59,7 @@
   --success-soft: #0d3326;
   --soft-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 20px rgb(0 0 0 / 0.35);
   --lift-shadow: 0 2px 4px rgb(0 0 0 / 0.45), 0 16px 40px rgb(0 0 0 / 0.5);
-  --glow-shadow: 0 0 0 1px rgb(139 92 246 / 0.25), 0 10px 44px rgb(139 92 246 / 0.3);
+  --glow-shadow: 0 0 0 1px rgb(59 130 246 / 0.25), 0 10px 44px rgb(59 130 246 / 0.3);
 }
 
 @theme inline {
@@ -113,17 +113,76 @@
     from { background-position: 200% 0; }
     to { background-position: -200% 0; }
   }
-  /* Types the wordmark, holds, deletes and repeats forever. */
-  @keyframes logo-typing {
-    0% { width: 0; animation-timing-function: steps(8, end); }
-    35% { width: 8ch; }
-    55% { width: 8ch; animation-timing-function: steps(8, end); }
-    90% { width: 0; }
-    100% { width: 0; }
+  /* Logo "knowledge orbit": spinning gradient ring, orbiting sparkles,
+     bobbing cap and a letter wave. */
+  @keyframes logo-spin {
+    to { transform: rotate(360deg); }
   }
-  @keyframes logo-caret {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
+  @keyframes logo-spin-rev {
+    to { transform: rotate(-360deg); }
+  }
+  @keyframes logo-bob {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-2px) rotate(-5deg); }
+  }
+  @keyframes logo-wave {
+    0%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-2.5px); }
+    60% { transform: translateY(1px); }
+  }
+  /* Page loader — "neural knowledge cosmos". */
+  @keyframes pl-spin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes pl-spin-rev {
+    to { transform: rotate(-360deg); }
+  }
+  @keyframes pl-orbit-a {
+    from { transform: rotateX(62deg) rotateZ(0deg); }
+    to { transform: rotateX(62deg) rotateZ(360deg); }
+  }
+  @keyframes pl-orbit-b {
+    from { transform: rotateX(28deg) rotateZ(360deg); }
+    to { transform: rotateX(28deg) rotateZ(0deg); }
+  }
+  @keyframes pl-orbit-c {
+    from { transform: rotateZ(0deg); }
+    to { transform: rotateZ(360deg); }
+  }
+  @keyframes pl-pulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.25); }
+  }
+  @keyframes pl-breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  @keyframes pl-synapse {
+    0%, 100% { opacity: 0.1; transform: scale(0.6); }
+    20% { opacity: 1; transform: scale(1.15); }
+    50% { opacity: 0.35; transform: scale(1); }
+  }
+  @keyframes pl-sweep {
+    from { transform: translateX(-110%); }
+    to { transform: translateX(420%); }
+  }
+  /* Logo assembly: the whole logo arrives from outside the display while
+     a swarm of tiny particles converges on it, particle by particle.
+     The cycle then repeats every few seconds — enter, hold, repeat. */
+  @keyframes logo-enter {
+    0% { opacity: 0; transform: translate(-340px, -46px) scale(0.55); }
+    8% { opacity: 1; transform: translate(12px, 3px) scale(1.03); }
+    14%, 100% { opacity: 1; transform: translate(0, 0) scale(1); }
+  }
+  @keyframes logo-particle-in {
+    0% { transform: translate(var(--px), var(--py)) scale(0.4); opacity: 0; }
+    11% { opacity: 1; }
+    22% { transform: translate(0, 0) scale(1); opacity: 1; }
+    28%, 100% { transform: translate(0, 0) scale(0.3); opacity: 0; }
+  }
+  @keyframes logo-particle-drift {
+    0%, 100% { transform: translate(0, 0) scale(0.8); opacity: 0.25; }
+    50% { transform: translate(var(--dx), var(--dy)) scale(1.05); opacity: 0.85; }
   }
   @keyframes marquee {
     from { transform: translateX(0); }
@@ -132,6 +191,28 @@
   @keyframes rotate-slow {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
+  }
+}
+
+/* All loader + logo animation classes disable themselves for reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .pl-spin { animation: pl-spin 70s linear infinite; }
+  .pl-spin-rev { animation: pl-spin-rev 100s linear infinite; }
+  .pl-orbit-a { animation: pl-orbit-a 11s linear infinite; }
+  .pl-orbit-b { animation: pl-orbit-b 8s linear infinite; }
+  .pl-orbit-c { animation: pl-orbit-c 6s linear infinite; }
+  .pl-orbit-c-fast { animation: pl-orbit-c 9s linear infinite; }
+  .pl-orbit-c-slow { animation: pl-orbit-c 13s linear infinite; }
+  .pl-pulse { animation: pl-pulse 3s ease-in-out infinite; }
+  .pl-breathe { animation: pl-breathe 3.2s ease-in-out infinite; }
+  .pl-synapse { animation: pl-synapse 2.4s ease-in-out infinite; }
+  .pl-sweep { animation: pl-sweep 1.4s ease-in-out infinite; }
+  .logo-enter { animation: logo-enter 8s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+  .logo-particle { animation: logo-particle-in 9s cubic-bezier(0.22, 1, 0.36, 1) var(--d) infinite; }
+  .logo-particle-drift {
+    animation:
+      logo-particle-in 9s cubic-bezier(0.22, 1, 0.36, 1) var(--d) infinite,
+      logo-particle-drift 7s ease-in-out 2.4s infinite;
   }
 }
 

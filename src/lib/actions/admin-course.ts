@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAudit } from "@/lib/audit";
@@ -10,6 +11,38 @@ import { actionError, type ActionResult } from "@/lib/actions/shared";
 
 function err(message: unknown): ActionResult {
   return actionError(message instanceof Error ? message.message : "Something went wrong.");
+}
+
+/** Permanently delete a course (fails with guidance when enrollments exist). */
+export async function deleteCourse(courseId: string): Promise<ActionResult> {
+  try {
+    const actor = await requireAdmin();
+    const course = await db.course.findUnique({ where: { id: courseId }, select: { id: true, title: true } });
+    if (!course) return actionError("Course not found.");
+
+    try {
+      await db.course.delete({ where: { id: courseId } });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
+        return actionError(
+          "This course has enrollments or payments — unpublish or archive it instead.",
+        );
+      }
+      throw e;
+    }
+    await logAudit({
+      actorId: actor.id,
+      actorEmail: actor.email,
+      action: "course.delete",
+      entityType: "Course",
+      entityId: courseId,
+      metadata: { title: course.title },
+    });
+    revalidatePath("/admin/courses");
+    return { ok: true };
+  } catch (e) {
+    return err(e);
+  }
 }
 
 /** Approve or reject a course submitted for review. */

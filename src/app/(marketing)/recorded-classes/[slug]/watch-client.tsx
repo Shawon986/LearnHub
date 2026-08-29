@@ -18,12 +18,17 @@ export function WatchClient({
   initialPosition,
   bookmarks,
   notes,
+  canTrack = true,
+  poster = null,
 }: {
   recordedClassId: string;
   playbackUrl: string;
   initialPosition: number;
   bookmarks: { id: string; timeSeconds: number; label: string | null }[];
   notes: { id: string; timeSeconds: number; content: string }[];
+  /** Guests (anonymous viewers) can watch but not save progress/notes. */
+  canTrack?: boolean;
+  poster?: string | null;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -44,26 +49,48 @@ export function WatchClient({
   return (
     <VideoPlayer
       src={playbackUrl}
-      initialPosition={initialPosition}
+      poster={poster}
+      initialPosition={canTrack ? initialPosition : 0}
       bookmarks={bookmarks}
       notes={notes}
-      onProgress={(pos, dur) => {
-        void saveVideoProgress(recordedClassId, { positionSeconds: Math.floor(pos), durationSeconds: Math.floor(dur) });
-      }}
-      onComplete={() => {
-        run(
-          () => saveVideoProgress(recordedClassId, { positionSeconds: 100000, durationSeconds: 100000 }),
-          "Recording completed 🎉",
-        );
-      }}
-      onAddBookmark={(timeSeconds, label) =>
-        run(() => addBookmark(recordedClassId, { timeSeconds, label }), "Bookmark saved")
+      onProgress={
+        canTrack
+          ? (pos, dur) => {
+              void saveVideoProgress(recordedClassId, {
+                positionSeconds: Math.floor(pos),
+                durationSeconds: Math.floor(dur),
+              });
+            }
+          : undefined
       }
-      onDeleteBookmark={(id) => run(() => deleteBookmark(id))}
-      onAddNote={(timeSeconds, content) =>
-        run(() => addNote(recordedClassId, { timeSeconds, content }), "Note saved")
+      onComplete={
+        canTrack
+          ? () => {
+              run(
+                () =>
+                  saveVideoProgress(recordedClassId, {
+                    positionSeconds: 100000,
+                    durationSeconds: 100000,
+                  }),
+                "Recording completed 🎉",
+              );
+            }
+          : undefined
       }
-      onDeleteNote={(id) => run(() => deleteNote(id))}
+      onAddBookmark={
+        canTrack
+          ? (timeSeconds, label) =>
+              run(() => addBookmark(recordedClassId, { timeSeconds, label }), "Bookmark saved")
+          : undefined
+      }
+      onDeleteBookmark={canTrack ? (id) => run(() => deleteBookmark(id)) : undefined}
+      onAddNote={
+        canTrack
+          ? (timeSeconds, content) =>
+              run(() => addNote(recordedClassId, { timeSeconds, content }), "Note saved")
+          : undefined
+      }
+      onDeleteNote={canTrack ? (id) => run(() => deleteNote(id)) : undefined}
     />
   );
 }

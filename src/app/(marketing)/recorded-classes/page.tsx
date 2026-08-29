@@ -48,6 +48,7 @@ export default async function RecordedClassesPage({
     viewCount: r.viewCount,
     avgRating: r.avgRating,
     ratingCount: r.ratingCount,
+    thumbnailUrl: r.thumbnailUrl,
   }));
 
   return (

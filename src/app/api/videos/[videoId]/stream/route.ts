@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { verifyPlaybackToken } from "@/lib/video/provider";
 import { canWatchRecording } from "@/lib/video/access";
-import { getCurrentUser } from "@/lib/auth/session";
+import { getCurrentUser, isAdminRole } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -23,10 +23,14 @@ export async function GET(req: Request, ctx: { params: Promise<{ videoId: string
   const verified = verifyPlaybackToken(videoId, token, exp);
   if (!verified) return NextResponse.json({ error: "Invalid or expired playback token." }, { status: 401 });
 
+  // "anonymous" tokens are minted for public standalone recordings;
+  // personal tokens must match the signed-in session.
   const currentUser = await getCurrentUser();
-  if (!currentUser) return NextResponse.json({ error: "Sign in." }, { status: 401 });
-  if (currentUser.id !== verified.userId) {
-    return NextResponse.json({ error: "Token does not match this session." }, { status: 401 });
+  if (verified.userId !== "anonymous") {
+    if (!currentUser) return NextResponse.json({ error: "Sign in." }, { status: 401 });
+    if (currentUser.id !== verified.userId) {
+      return NextResponse.json({ error: "Token does not match this session." }, { status: 401 });
+    }
   }
 
   const video = await db.video.findUnique({ where: { id: videoId } });
@@ -34,9 +38,15 @@ export async function GET(req: Request, ctx: { params: Promise<{ videoId: string
 
   const recording = await db.recordedClass.findUnique({ where: { videoId } });
   if (recording) {
-    const access = await canWatchRecording(recording.id, currentUser.id);
-    if (!access.allowed) {
-      return NextResponse.json({ error: access.reason ?? "Access denied." }, { status: 403 });
+    // Admins bypass public access rules (the admin preview plays drafts,
+    // processing and archived recordings) — everything else is re-checked
+    // at the byte level so tokens alone are never enough.
+    const adminBypass = Boolean(currentUser && isAdminRole(currentUser.role));
+    if (!adminBypass) {
+      const access = await canWatchRecording(recording.id, currentUser?.id ?? null);
+      if (!access.allowed) {
+        return NextResponse.json({ error: access.reason ?? "Access denied." }, { status: 403 });
+      }
     }
   }
 
@@ -44,13 +54,15 @@ export async function GET(req: Request, ctx: { params: Promise<{ videoId: string
     return NextResponse.json({ error: "No local file for this video." }, { status: 404 });
   }
 
-  // Resolve within the uploads root and prevent path traversal.
+  // Resolve within the uploads root and prevent path traversal. Leading
+  // slashes (legacy URL-style paths) are treated as root-relative.
   const root = path.resolve(
     /* turbopackIgnore: true */
     process.cwd(),
     env.VIDEO_LOCAL_DIR,
   );
-  const filePath = path.resolve(root, video.filePath);
+  const rel = video.filePath.replace(/^[\\/]+/, "");
+  const filePath = path.resolve(root, rel);
   if (!filePath.startsWith(root)) {
     return NextResponse.json({ error: "Invalid file path." }, { status: 400 });
   }
