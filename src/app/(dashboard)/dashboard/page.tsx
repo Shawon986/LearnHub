@@ -147,16 +147,17 @@ export default async function StudentDashboardPage() {
             {enrollments.map((e) => {
               const p = progressByCourse.get(e.courseId)?.percentComplete ?? 0;
               return (
-                <Card key={e.id} hoverable className="flex items-center gap-4 p-4">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-accent text-white">
-                    <BookOpen className="h-6 w-6" />
+                /* Compact single-row card on phones; roomier from sm up. */
+                <Card key={e.id} hoverable className="flex items-center gap-3 p-3.5 sm:gap-4 sm:p-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-accent text-white sm:h-14 sm:w-14">
+                    <BookOpen className="h-5 w-5 sm:h-6 sm:w-6" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[13px] font-bold text-foreground">{e.course.title}</p>
                     <p className="truncate text-[11px] text-faint-fg">by {e.course.teacher.name}</p>
-                    <div className="mt-2 flex items-center gap-2">
-                      <ProgressBar value={p} className="flex-1" />
-                      <span className="text-[11px] font-bold tabular-nums text-muted-fg">{Math.round(p)}%</span>
+                    <div className="mt-1.5 flex min-w-0 items-center gap-2 sm:mt-2">
+                      <ProgressBar value={p} className="min-w-0 flex-1" />
+                      <span className="shrink-0 text-[11px] font-bold tabular-nums text-muted-fg">{Math.round(p)}%</span>
                     </div>
                   </div>
                 </Card>

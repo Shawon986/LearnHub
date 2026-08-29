@@ -8,7 +8,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
-import { formatBDT, formatDate, formatTime } from "@/lib/format";
+import { formatBDT, formatDate, formatTime, timeAgo } from "@/lib/format";
 import { EmptyState } from "@/components/ui/empty-state";
 
 export const metadata: Metadata = { title: "Teacher Dashboard" };
@@ -102,17 +102,19 @@ export default async function TeacherDashboardPage() {
           ) : (
             <div className="space-y-3">
               {upcomingLive.map((l) => (
-                <Card key={l.id} hoverable className="flex flex-wrap items-center gap-4 p-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-fg">
+                /* Single row (no wrap): icon + text truncate, badge pinned
+                   right — stays clean on narrow phones. */
+                <Card key={l.id} hoverable className="flex items-center gap-3 p-3.5 sm:gap-4 sm:p-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-fg sm:h-11 sm:w-11">
                     <MonitorPlay className="h-5 w-5" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-foreground">{l.title}</p>
-                    <p className="text-[12px] text-faint-fg">
+                    <p className="truncate text-[12px] text-faint-fg">
                       {formatDate(l.startsAt)} · {formatTime(l.startsAt)} · {l.durationMinutes} min
                     </p>
                   </div>
-                  <Badge variant={l.status === "CANCELLED" ? "danger" : "accent"}>
+                  <Badge className="shrink-0" variant={l.status === "CANCELLED" ? "danger" : "accent"}>
                     {l.status === "CANCELLED" ? "Cancelled" : "Scheduled"}
                   </Badge>
                 </Card>
@@ -127,19 +129,24 @@ export default async function TeacherDashboardPage() {
             Recent activity
           </h2>
           <Card>
-            <CardContent className="space-y-4">
+            <CardContent className="p-0">
               {latestNotifications.length === 0 ? (
                 <p className="py-6 text-center text-[13px] text-faint-fg">No recent activity</p>
               ) : (
-                latestNotifications.map((n) => (
-                  <div key={n.id} className="flex items-start gap-3">
-                    <Avatar name={n.title.charAt(0)} size="xs" />
-                    <div className="min-w-0">
-                      <p className="text-[13px] font-semibold text-foreground">{n.title}</p>
-                      {n.body && <p className="truncate text-[12px] text-muted-fg">{n.body}</p>}
-                    </div>
-                  </div>
-                ))
+                <ul className="divide-y divide-line">
+                  {latestNotifications.map((n) => (
+                    <li key={n.id} className="flex items-center gap-3 px-4 py-3">
+                      <Avatar name={n.title.charAt(0)} size="xs" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[13px] font-semibold text-foreground">{n.title}</p>
+                        {n.body && <p className="truncate text-[12px] text-muted-fg">{n.body}</p>}
+                      </div>
+                      <span className="shrink-0 text-[10px] font-semibold text-faint-fg">
+                        {timeAgo(n.createdAt)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               )}
             </CardContent>
           </Card>
