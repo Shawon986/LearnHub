@@ -93,7 +93,7 @@ export function DashboardShell({
     <div className="flex h-full flex-col">
       <div className={cn("flex h-16 items-center border-b border-line", collapsed ? "justify-center" : "px-5")}>
         <Link href="/" aria-label="LearnHub home">
-          <Logo withText={!collapsed} size="sm" />
+          <Logo animated={false} withText={!collapsed} size="sm" />
         </Link>
       </div>
 

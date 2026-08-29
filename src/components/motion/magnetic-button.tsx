@@ -12,8 +12,9 @@ export function MagneticButton({ children, strength = 0.22 }: { children: ReactN
   const reduced = useReducedMotion();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const sx = useSpring(x, { stiffness: 220, damping: 18 });
-  const sy = useSpring(y, { stiffness: 220, damping: 18 });
+  // Critically damped springs — no bounce/jitter while following the cursor.
+  const sx = useSpring(x, { stiffness: 300, damping: 30, mass: 0.6 });
+  const sy = useSpring(y, { stiffness: 300, damping: 30, mass: 0.6 });
   const [hovering, setHovering] = useState(false);
 
   function onMove(e: React.MouseEvent) {
@@ -32,7 +33,7 @@ export function MagneticButton({ children, strength = 0.22 }: { children: ReactN
   return (
     <motion.div
       ref={ref}
-      className="inline-block"
+      className="inline-block will-change-transform"
       style={{ x: sx, y: sy }}
       onMouseMove={onMove}
       onMouseEnter={() => setHovering(true)}
@@ -40,8 +41,6 @@ export function MagneticButton({ children, strength = 0.22 }: { children: ReactN
         setHovering(false);
         onLeave();
       }}
-      whileHover={reduced ? undefined : { scale: 1.03 }}
-      transition={{ type: "spring", stiffness: 320, damping: 22 }}
       data-magnetic={hovering}
     >
       {children}

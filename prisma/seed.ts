@@ -34,21 +34,20 @@ async function ensureDemoFile(name: string, kind: "video" | "pdf" | "thumb"): Pr
   }
 
   if (kind === "thumb") {
-    // Cover image: reuse a real uploaded thumbnail when one exists.
-    const thumbDir = path.resolve(process.cwd(), "uploads", "thumbnail");
-    try {
-      const files = (await fs.readdir(thumbDir)).filter((f) => /\.(jpe?g|png|webp)$/i.test(f));
-      if (files.length > 0) {
-        await fs.copyFile(path.join(thumbDir, files[0]), target);
-        return rel;
-      }
-    } catch {
-      /* no thumbnails yet */
-    }
-    // Fallback: a small branded SVG cover (renders in <img> via the uploads route).
+    // Cover image: every demo recording gets its OWN generated SVG cover —
+    // the gradient hue is derived from the file name so each video looks
+    // distinct (real uploads keep their real thumbnails).
+    const hue = [...name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 0);
+    const c1 = `hsl(${hue},72%,45%)`;
+    const c2 = `hsl(${(hue + 42) % 360},70%,34%)`;
+    const label = name
+      .replace(/^cover-/, "")
+      .replace(/\.(jpg|svg)$/i, "")
+      .replace(/-/g, " ")
+      .slice(0, 26);
     await fs.writeFile(
       target,
-      `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2563eb"/><stop offset="1" stop-color="#0d9488"/></linearGradient></defs><rect width="640" height="360" fill="url(#g)"/><circle cx="320" cy="180" r="52" fill="rgba(255,255,255,0.85)"/><path d="M300 168 l40 12 -40 12 z" fill="#2563eb"/><text x="320" y="280" text-anchor="middle" font-family="sans-serif" font-size="26" font-weight="700" fill="#fff">LearnHub</text></svg>`,
+      `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><rect width="640" height="360" fill="url(#g)"/><circle cx="320" cy="148" r="54" fill="rgba(255,255,255,0.88)"/><path d="M298 128 l44 14 -44 14 z" fill="${c2}"/><text x="320" y="252" text-anchor="middle" font-family="sans-serif" font-size="24" font-weight="700" fill="#fff">${label}</text><text x="320" y="284" text-anchor="middle" font-family="sans-serif" font-size="14" fill="rgba(255,255,255,0.75)">LearnHub</text></svg>`,
     );
     return rel;
   }
@@ -1185,7 +1184,7 @@ async function main() {
         moduleId,
         lessonId,
         videoId: video.id,
-        thumbnailUrl: await ensureDemoFile(`cover-${rc.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.jpg`, "thumb"),
+        thumbnailUrl: await ensureDemoFile(`cover-${rc.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.svg`, "thumb"),
         status: rc.status,
         durationSeconds: rc.seconds,
         tags: rc.tags,

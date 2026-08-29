@@ -207,9 +207,19 @@ export function UploadWizard({
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (!file) return;
-              const kind: "video" | "thumbnail" | "resource" = file.type.startsWith("video/")
+              // Browsers sometimes send an empty MIME — derive the kind from
+              // the extension too, so an uploaded cover image is ALWAYS
+              // recognized as the thumbnail for this recording.
+              const ext = file.name.toLowerCase().split(".").pop() ?? "";
+              const isVideo =
+                file.type.startsWith("video/") ||
+                ["mp4", "webm", "mov", "m4v", "mkv"].includes(ext);
+              const isImage =
+                file.type.startsWith("image/") ||
+                ["jpg", "jpeg", "png", "webp"].includes(ext);
+              const kind: "video" | "thumbnail" | "resource" = isVideo
                 ? "video"
-                : file.type.startsWith("image/")
+                : isImage
                   ? "thumbnail"
                   : "resource";
               uploadFile(file, kind);

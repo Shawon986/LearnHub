@@ -83,7 +83,7 @@ export default async function TeacherRecordedClassesPage() {
                         <img
                           src={`/api/uploads/${r.thumbnailUrl.replace(/^\/+/, "")}`}
                           alt=""
-                          className="h-10 w-16 shrink-0 rounded-lg object-cover"
+                          className="aspect-video w-16 shrink-0 self-center rounded-lg object-cover" loading="lazy" decoding="async"
                         />
                       ) : null}
                       <div className="min-w-0">

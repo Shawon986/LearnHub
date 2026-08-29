@@ -52,7 +52,7 @@ export default async function VerifyCertificatePage({
   return (
     <div className="bg-brand-surface flex min-h-screen flex-col items-center justify-center px-4 py-10">
       <div className="mb-6">
-        <Logo size="md" />
+        <Logo animated={false} size="md" />
       </div>
       <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-line bg-card shadow-lift">
         {/* Certificate header */}

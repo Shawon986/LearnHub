@@ -166,19 +166,19 @@
     from { transform: translateX(-110%); }
     to { transform: translateX(420%); }
   }
-  /* Logo assembly: the whole logo arrives from outside the display while
-     a swarm of tiny particles converges on it, particle by particle.
-     The cycle then repeats every few seconds — enter, hold, repeat. */
+  /* Logo assembly — both loops share the SAME 9s cycle so they stay in
+     sync: the particle swarm flies in first, the logo materializes at the
+     exact moment the last particles land, holds, then repeats. */
   @keyframes logo-enter {
-    0% { opacity: 0; transform: translate(-340px, -46px) scale(0.55); }
-    8% { opacity: 1; transform: translate(12px, 3px) scale(1.03); }
-    14%, 100% { opacity: 1; transform: translate(0, 0) scale(1); }
+    0%, 14% { opacity: 0; transform: translate(-340px, -46px) scale(0.55); }
+    22% { opacity: 1; transform: translate(10px, 2px) scale(1.04); }
+    28%, 100% { opacity: 1; transform: translate(0, 0) scale(1); }
   }
   @keyframes logo-particle-in {
     0% { transform: translate(var(--px), var(--py)) scale(0.4); opacity: 0; }
-    11% { opacity: 1; }
-    22% { transform: translate(0, 0) scale(1); opacity: 1; }
-    28%, 100% { transform: translate(0, 0) scale(0.3); opacity: 0; }
+    12% { opacity: 1; }
+    24% { transform: translate(0, 0) scale(1); opacity: 1; }
+    30%, 100% { transform: translate(0, 0) scale(0.3); opacity: 0; }
   }
   @keyframes logo-particle-drift {
     0%, 100% { transform: translate(0, 0) scale(0.8); opacity: 0.25; }
@@ -207,12 +207,19 @@
   .pl-breathe { animation: pl-breathe 3.2s ease-in-out infinite; }
   .pl-synapse { animation: pl-synapse 2.4s ease-in-out infinite; }
   .pl-sweep { animation: pl-sweep 1.4s ease-in-out infinite; }
-  .logo-enter { animation: logo-enter 8s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
-  .logo-particle { animation: logo-particle-in 9s cubic-bezier(0.22, 1, 0.36, 1) var(--d) infinite; }
+  .logo-enter {
+    animation: logo-enter 9s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+    will-change: transform, opacity;
+  }
+  .logo-particle {
+    animation: logo-particle-in 9s cubic-bezier(0.22, 1, 0.36, 1) var(--d) infinite;
+    will-change: transform, opacity;
+  }
   .logo-particle-drift {
     animation:
       logo-particle-in 9s cubic-bezier(0.22, 1, 0.36, 1) var(--d) infinite,
       logo-particle-drift 7s ease-in-out 2.4s infinite;
+    will-change: transform, opacity;
   }
 }
 

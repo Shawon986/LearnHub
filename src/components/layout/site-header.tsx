@@ -105,11 +105,22 @@ export function SiteHeader({
             </>
           ) : (
             <div className="hidden items-center gap-2 sm:flex">
-              <Button href="/login" variant="ghost" size="sm">
-                Sign in
+              {/* h-9 keeps both buttons on the exact same baseline as the
+                  bell/theme/search cluster — aligned in every language. */}
+              <Button
+                href="/login"
+                variant="ghost"
+                size="sm"
+                className="h-9 whitespace-nowrap transition-none"
+              >
+                {t("Sign in")}
               </Button>
-              <Button href="/register" size="sm">
-                Get started
+              <Button
+                href="/register"
+                size="sm"
+                className="h-9 whitespace-nowrap transition-none"
+              >
+                {t("Get started")}
               </Button>
             </div>
           )}
@@ -169,11 +180,11 @@ export function SiteHeader({
               ))}
               {!user && (
                 <div className="mt-2 flex flex-col gap-2 border-t border-line pt-4">
-                  <Button href="/login" variant="secondary" className="w-full">
-                    Sign in
+                  <Button href="/login" variant="secondary" className="w-full transition-none">
+                    {t("Sign in")}
                   </Button>
-                  <Button href="/register" className="w-full">
-                    Get started
+                  <Button href="/register" className="w-full transition-none">
+                    {t("Get started")}
                   </Button>
                 </div>
               )}

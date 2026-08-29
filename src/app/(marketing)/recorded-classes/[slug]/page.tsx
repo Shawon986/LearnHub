@@ -206,10 +206,10 @@ export default async function WatchPage({ params }: PageProps) {
                   <img
                     src={`/api/uploads/${r.thumbnailUrl.replace(/^\/+/, "")}`}
                     alt=""
-                    className="h-14 w-24 shrink-0 rounded-lg object-cover"
+                    className="aspect-video w-24 shrink-0 self-center rounded-lg object-cover" loading="lazy" decoding="async"
                   />
                 ) : (
-                  <span className="flex h-14 w-24 shrink-0 items-center justify-center rounded-lg bg-brand-soft">
+                  <span className="flex aspect-video w-24 shrink-0 items-center justify-center rounded-lg bg-brand-soft">
                     <Play className="h-4 w-4 fill-brand text-brand" />
                   </span>
                 )}

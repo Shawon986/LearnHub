@@ -25,7 +25,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { CountUp } from "@/components/ui/count-up";
-import { MagneticButton } from "@/components/motion/magnetic-button";
 import { useLanguage } from "@/components/i18n/language-provider";
 
 const HEADLINE = ["Learn", "from", "Bangladesh's", "best", "teachers"];
@@ -138,16 +137,26 @@ export function Hero({ stats }: HeroProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.62 }}
           >
-            <MagneticButton>
-              <Button href="/courses" size="lg" rightIcon={<ArrowRight className="h-4 w-4" />}>
-                {t("Explore courses")}
-              </Button>
-            </MagneticButton>
-            <MagneticButton strength={0.16}>
-              <Button href="/register" size="lg" variant="secondary" leftIcon={<GraduationCap className="h-4 w-4" />}>
-                {t("Become a Teacher")}
-              </Button>
-            </MagneticButton>
+            {/* Completely fixed buttons: no scale, no shadow pop, no magnetic
+                pull — the ONLY hover feedback is the background color, and
+                it switches instantly (no transition delay). */}
+            <Button
+              href="/courses"
+              size="lg"
+              rightIcon={<ArrowRight className="h-4 w-4" />}
+              className="transition-none"
+            >
+              {t("Explore courses")}
+            </Button>
+            <Button
+              href="/register"
+              size="lg"
+              variant="secondary"
+              leftIcon={<GraduationCap className="h-4 w-4" />}
+              className="transition-none"
+            >
+              {t("Become a Teacher")}
+            </Button>
           </motion.div>
 
           <motion.div

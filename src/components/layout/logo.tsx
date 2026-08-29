@@ -115,12 +115,12 @@ export function Logo({
                   ...(p.drift
                     ? { "--dx": `${p.drift.dx}px`, "--dy": `${p.drift.dy}px` }
                     : {}),
-                  width: p.size,
-                  height: p.size,
-                  left: -p.size / 2,
-                  top: -p.size / 2,
-                  background: p.color,
-                  boxShadow: `0 0 6px ${p.color}`,
+                  // Radial-gradient dots are cheaper to paint than box-shadows.
+                  width: p.size * 2,
+                  height: p.size * 2,
+                  left: -p.size,
+                  top: -p.size,
+                  background: `radial-gradient(circle, ${p.color} 0%, transparent 70%)`,
                 } as CSSProperties
               }
             />

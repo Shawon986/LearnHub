@@ -47,7 +47,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
         <div className="grid grid-cols-2 gap-10 md:grid-cols-6">
           <div className="col-span-2 space-y-4">
-            <Logo size="md" />
+            <Logo animated={false} size="md" />
             <p className="max-w-xs text-[13px] leading-relaxed text-muted-fg">
               Bangladesh&apos;s premium education marketplace — live classes, recorded courses and
               1-on-1 tutoring with verified teachers.

@@ -37,7 +37,7 @@ export default async function VerifyEmailPage({
     <div className="bg-brand-surface flex min-h-screen flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-8 flex justify-center">
-          <Logo size="lg" />
+          <Logo animated={false} size="lg" />
         </div>
         <div className="space-y-6 rounded-2xl border border-line bg-card p-8 text-center shadow-lift">
           {ok ? (

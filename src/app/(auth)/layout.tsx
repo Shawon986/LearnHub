@@ -11,7 +11,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
       <div className="relative w-full max-w-md">
         <div className="mb-8 flex items-center justify-between">
-          <Logo size="md" />
+          <Logo animated={false} size="md" />
           <Link
             href="/"
             className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted-fg transition-colors hover:text-foreground"

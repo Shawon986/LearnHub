@@ -24,15 +24,16 @@ export function RecordedClassCard({ recorded }: { recorded: RecordedClassCardDat
     : null;
   return (
     <Card hoverable className="group overflow-hidden">
+      {/* 16:9 cover — matches the generated thumbnail aspect exactly. */}
       <div
-        className={`relative flex h-40 items-center justify-center overflow-hidden bg-gradient-to-br ${gradientFor(recorded.title)}`}
+        className={`relative flex aspect-video items-center justify-center overflow-hidden bg-gradient-to-br ${gradientFor(recorded.title)}`}
       >
         {cover && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={cover}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" decoding="async"
           />
         )}
         <span className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" aria-hidden />

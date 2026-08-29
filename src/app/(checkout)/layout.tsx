@@ -7,7 +7,7 @@ export default function CheckoutLayout({ children }: { children: React.ReactNode
     <div className="bg-brand-surface min-h-screen">
       <header className="border-b border-line bg-card/70 backdrop-blur-sm">
         <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-4">
-          <Logo size="md" />
+          <Logo animated={false} size="md" />
           <span className="flex items-center gap-1.5 text-[12px] font-bold text-muted-fg">
             <ShieldCheck className="h-4 w-4 text-accent" />
             Secure checkout

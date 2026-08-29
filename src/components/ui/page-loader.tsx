@@ -57,11 +57,11 @@ export function PageLoader({ label = "Loading your learning space…" }: { label
     >
       {/* Slowly rotating particle backdrop (two counter-rotating layers). */}
       <div
-        className="pl-spin pointer-events-none absolute inset-0 opacity-60 [background-image:radial-gradient(circle,rgb(37_99_235/0.28)_1px,transparent_1px)] [background-size:26px_26px]"
+        className="pl-spin pointer-events-none absolute inset-0 opacity-60 will-change-transform [background-image:radial-gradient(circle,rgb(37_99_235/0.28)_1px,transparent_1px)] [background-size:26px_26px]"
         aria-hidden
       />
       <div
-        className="pl-spin-rev pointer-events-none absolute inset-0 opacity-40 [background-image:radial-gradient(circle,rgb(13_148_136/0.25)_1px,transparent_1px)] [background-size:44px_44px]"
+        className="pl-spin-rev pointer-events-none absolute inset-0 opacity-40 will-change-transform [background-image:radial-gradient(circle,rgb(13_148_136/0.25)_1px,transparent_1px)] [background-size:44px_44px]"
         aria-hidden
       />
 

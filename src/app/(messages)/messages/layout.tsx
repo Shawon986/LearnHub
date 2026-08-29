@@ -11,7 +11,7 @@ export default async function MessagesLayout({ children }: { children: React.Rea
   return (
     <div className="flex h-screen flex-col bg-background">
       <header className="glass flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line px-4">
-        <Logo size="sm" />
+        <Logo animated={false} size="sm" />
         <Link
           href={
             user.role === "TEACHER"

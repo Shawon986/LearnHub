@@ -10,10 +10,12 @@ const MIN_VISIBLE_MS = 2200;
 const FADE_MS = 400;
 
 /**
- * Keeps the branded page loader on screen long enough to actually be seen:
- * covers the viewport on every client navigation for a minimum of ~2.2s
- * (700ms under reduced motion), then fades out. The server-side
- * `loading.tsx` boundary still handles genuinely slow renders.
+ * Keeps the branded page loader on screen long enough to be seen — but only
+ * for the moments that matter:
+ *   • the FIRST entry into the website (initial page load / full refresh)
+ *   • navigating HOME (e.g. clicking the logo)
+ * All other page-to-page navigations stay instant (the server-side
+ * `loading.tsx` boundary still handles genuinely slow renders).
  */
 export function RouteLoaderVeil() {
   const pathname = usePathname();
@@ -22,11 +24,11 @@ export function RouteLoaderVeil() {
   const [phase, setPhase] = useState<"hidden" | "show" | "leave">("hidden");
 
   useEffect(() => {
-    // Skip the initial mount (the page itself is already visible).
-    if (firstRender.current) {
-      firstRender.current = false;
-      return;
-    }
+    const isInitial = firstRender.current;
+    firstRender.current = false;
+    // Show only on the initial load/refresh or when arriving at the home page.
+    if (!isInitial && pathname !== "/") return;
+
     const min = reduceMotion ? 700 : MIN_VISIBLE_MS;
     let leaveTimer: ReturnType<typeof setTimeout> | null = null;
     const raf = requestAnimationFrame(() => {
