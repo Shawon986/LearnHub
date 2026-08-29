@@ -87,8 +87,9 @@ export default async function TeacherDashboardPage() {
       </section>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Upcoming classes */}
-        <section className="lg:col-span-2" aria-labelledby="upcoming-heading">
+        {/* Upcoming classes — min-w-0 lets the grid column shrink instead of
+            blowing out to the content's intrinsic width on mobile. */}
+        <section className="min-w-0 lg:col-span-2" aria-labelledby="upcoming-heading">
           <h2 id="upcoming-heading" className="mb-4 font-display text-lg font-bold text-foreground">
             Your upcoming live classes
           </h2>
@@ -124,7 +125,7 @@ export default async function TeacherDashboardPage() {
         </section>
 
         {/* Recent activity */}
-        <section aria-labelledby="activity-heading">
+        <section className="min-w-0" aria-labelledby="activity-heading">
           <h2 id="activity-heading" className="mb-4 font-display text-lg font-bold text-foreground">
             Recent activity
           </h2>

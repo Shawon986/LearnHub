@@ -147,8 +147,10 @@ export default async function StudentDashboardPage() {
             {enrollments.map((e) => {
               const p = progressByCourse.get(e.courseId)?.percentComplete ?? 0;
               return (
-                /* Compact single-row card on phones; roomier from sm up. */
-                <Card key={e.id} hoverable className="flex items-center gap-3 p-3.5 sm:gap-4 sm:p-4">
+                /* Compact single-row card on phones; roomier from sm up.
+                   min-w-0 lets the grid column shrink on mobile instead of
+                   sizing to the title's full intrinsic width. */
+                <Card key={e.id} hoverable className="flex min-w-0 items-center gap-3 p-3.5 sm:gap-4 sm:p-4">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-accent text-white sm:h-14 sm:w-14">
                     <BookOpen className="h-5 w-5 sm:h-6 sm:w-6" />
                   </div>
@@ -177,7 +179,9 @@ export default async function StudentDashboardPage() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {liveCards.map((l) => (
-              <LiveClassCard key={l.id} liveClass={l} />
+              <div key={l.id} className="min-w-0">
+                <LiveClassCard liveClass={l} />
+              </div>
             ))}
           </div>
         )}
@@ -225,7 +229,9 @@ export default async function StudentDashboardPage() {
         </div>
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {recCards.map((c) => (
-            <CourseCard key={c.id} course={c} href={`/courses/${c.slug}`} />
+            <div key={c.id} className="min-w-0">
+              <CourseCard course={c} href={`/courses/${c.slug}`} />
+            </div>
           ))}
         </div>
       </section>
