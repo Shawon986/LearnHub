@@ -43,3 +43,11 @@ prisma/test.db
 prisma/dev.db
 prisma/dev.db-journal
 uploads/
+
+.vercel
+.env*
+
+# local tooling
+.agents/
+.claude/
+skills-lock.json
