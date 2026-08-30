@@ -95,6 +95,10 @@ export function NotificationBell({
 
   // Real-time delivery: notifications arrive over the SHARED SSE stream
   // (one connection per app — the messaging inbox uses the same one).
+  // A notification can arrive twice (instant bus push + DB-canonical poll),
+  // so dedupe by id BEFORE touching state — otherwise the unread counter
+  // incremented for every duplicate.
+  const seenIds = useRef(new Set<string>());
   const { connection } = useRealtimeStream((raw) => {
     let event: { type?: string } & Partial<NotificationItem>;
     try {
@@ -103,12 +107,10 @@ export function NotificationBell({
       return;
     }
     if (event.type === "notification") {
-      // Idempotency: ignore an event we've already rendered (reconnects).
-      setItems((prev) => {
-        const list = prev ?? [];
-        if (list.some((i) => i.id === (event as NotificationItem).id)) return list;
-        return [{ ...(event as NotificationItem) }, ...list.slice(0, 49)];
-      });
+      const notification = event as NotificationItem;
+      if (!notification.id || seenIds.current.has(notification.id)) return;
+      seenIds.current.add(notification.id);
+      setItems((prev) => [notification, ...(prev ?? []).slice(0, 49)]);
       setUnread((u) => {
         const next = u + 1;
         publishUnread(next);

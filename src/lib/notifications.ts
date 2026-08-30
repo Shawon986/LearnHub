@@ -53,7 +53,7 @@ export async function createNotificationMany(
   input: Omit<CreateNotificationInput, "userId">,
 ) {
   if (userIds.length === 0) return;
-  const result = await db.notification.createMany({
+  const rows = await db.notification.createManyAndReturn({
     data: userIds.map((userId) => ({
       userId,
       type: input.type,
@@ -62,18 +62,20 @@ export async function createNotificationMany(
       data: (input.data ?? {}) as object,
     })),
   });
-  // Realtime: push the event to every recipient's open bell/stream.
-  for (const userId of userIds) {
-    messagingBus.publishTo(userId, {
+  // Realtime: push each REAL row to its recipient's open stream. Real ids
+  // matter — the DB-canonical stream also delivers these rows, and the bell
+  // dedupes by id. Fake ids here made every fan-out appear TWICE.
+  for (const n of rows) {
+    messagingBus.publishTo(n.userId, {
       type: "notification",
-      id: `fanout-${Date.now()}-${userId}`,
-      title: input.title,
-      body: input.body ?? null,
-      data: (input.data ?? {}) as Record<string, unknown>,
-      createdAt: new Date().toISOString(),
+      id: n.id,
+      title: n.title,
+      body: n.body,
+      data: (n.data ?? {}) as Record<string, unknown>,
+      createdAt: n.createdAt.toISOString(),
     });
   }
-  return result;
+  return rows;
 }
 
 /** Notify every admin/mod/support account — platform activity feed. */

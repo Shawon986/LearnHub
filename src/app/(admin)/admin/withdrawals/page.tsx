@@ -36,11 +36,20 @@ export default async function AdminWithdrawalsPage({
     db.withdrawal.findMany({
       where: status && status !== "ALL" ? { status } : {},
       include: { teacher: { select: { name: true, avatarUrl: true, email: true } } },
-      orderBy: [{ status: "asc" }, { requestedAt: "desc" }],
+      orderBy: { requestedAt: "desc" },
       take: 100,
     }),
     db.withdrawal.aggregate({ where: { status: "PENDING" }, _sum: { amount: true } }),
   ]);
+
+  // New requests must be unmissable: PENDING always sorts to the top
+  // (statuses sort alphabetically in SQL, which buried PENDING 4th).
+  const statusPriority: Record<string, number> = { PENDING: 0, APPROVED: 1, PAID: 2, REJECTED: 3, CANCELLED: 4 };
+  withdrawals.sort(
+    (a, b) =>
+      (statusPriority[a.status] ?? 9) - (statusPriority[b.status] ?? 9) ||
+      b.requestedAt.getTime() - a.requestedAt.getTime(),
+  );
 
   const filters = ["ALL", "PENDING", "APPROVED", "PAID", "REJECTED"];
 
