@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
-import { getMessageDirectory, type MessageDirectoryData } from "@/lib/messaging/directory";
+import { getAdminOversight, getMessageDirectory, type MessageDirectoryData } from "@/lib/messaging/directory";
 import { MessagingClient, type ConversationData, type ThreadData } from "./messaging-client";
 
 export const metadata: Metadata = { title: "Messages" };
@@ -66,12 +66,18 @@ export default async function MessagesPage() {
 
   const directory: MessageDirectoryData = await getMessageDirectory(user.role);
 
+  // Admin oversight: every teacher ↔ student conversation on the platform.
+  const oversight = ["ADMIN", "MODERATOR", "SUPPORT", "SUPER_ADMIN"].includes(user.role)
+    ? await getAdminOversight()
+    : [];
+
   return (
     <MessagingClient
       initialConversations={list}
       initialThread={emptyThread}
       currentUserId={user.id}
       directory={directory}
+      adminOversight={oversight}
     />
   );
 }

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CaptchaField } from "@/components/auth/captcha-field";
 import { useToast } from "@/components/ui/toast";
 import { homeFor } from "@/lib/nav";
 
@@ -16,6 +17,7 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [captchaRefresh, setCaptchaRefresh] = useState(0);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -26,11 +28,18 @@ export function LoginForm() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: form.get("email"), password: form.get("password") }),
+        body: JSON.stringify({
+          email: form.get("email"),
+          password: form.get("password"),
+          captchaId: form.get("captchaId"),
+          captchaAnswer: form.get("captchaAnswer"),
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
         setFormError(data.error?.message ?? "Sign in failed. Please try again.");
+        // A consumed challenge can't be retried — fetch a fresh one.
+        setCaptchaRefresh((k) => k + 1);
         return;
       }
       toast({ title: "Welcome back!", description: `Signed in as ${data.user.name}.`, variant: "success" });
@@ -80,6 +89,8 @@ export function LoginForm() {
             </button>
           }
         />
+
+        <CaptchaField refreshKey={captchaRefresh} />
 
         {formError && (
           <p role="alert" className="rounded-lg bg-danger-soft px-3 py-2 text-xs font-semibold text-danger">

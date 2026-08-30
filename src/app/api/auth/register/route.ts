@@ -1,4 +1,5 @@
 import { apiHandler, badRequest, json, parseJson } from "@/lib/api";
+import { verifyCaptcha } from "@/lib/captcha";
 import { registerSchema } from "@/lib/validation/auth";
 import { hashPassword } from "@/lib/auth/password";
 import { generateReferralCode, generateToken } from "@/lib/utils";
@@ -13,6 +14,11 @@ export const POST = apiHandler(async (req) => {
   if (!rl.ok) throw badRequest("Too many signup attempts. Please try again later.", "RATE_LIMITED");
 
   const input = await parseJson(req, registerSchema);
+  // Human check — one-time arithmetic challenge (see src/lib/captcha.ts).
+  if (!verifyCaptcha(input.captchaId, input.captchaAnswer)) {
+    throw badRequest("Captcha check failed. Please try again.", "CAPTCHA_FAILED");
+  }
+
   const email = input.email.toLowerCase().trim();
 
   const existing = await db.user.findUnique({ where: { email } });
@@ -48,6 +54,27 @@ export const POST = apiHandler(async (req) => {
 
   if (isTeacher) {
     await db.teacherWallet.create({ data: { teacherId: user.id } });
+    // Teacher accounts start locked — an admin must approve the
+    // verification documents before the account can sign in.
+    const docs = input.documents ?? [];
+    await db.teacherVerification.create({
+      data: {
+        teacherId: user.id,
+        status: "PENDING",
+        submittedAt: new Date(),
+        documents: docs.length > 0 ? docs : undefined,
+      },
+    });
+    if (docs.length > 0) {
+      await db.teacherDocument.createMany({
+        data: docs.map((d) => ({
+          teacherId: user.id,
+          type: d.type,
+          title: d.title,
+          url: d.url,
+        })),
+      });
+    }
   }
   if (referrerId) {
     await db.referral.create({

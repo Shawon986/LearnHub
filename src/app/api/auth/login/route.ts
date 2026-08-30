@@ -1,4 +1,5 @@
 import { apiHandler, json, parseJson, unauthorized } from "@/lib/api";
+import { verifyCaptcha } from "@/lib/captcha";
 import { loginSchema } from "@/lib/validation/auth";
 import { verifyPassword } from "@/lib/auth/password";
 import { setSessionCookie } from "@/lib/auth/session";
@@ -12,6 +13,12 @@ export const POST = apiHandler(async (req) => {
   if (!rl.ok) throw unauthorized("Too many login attempts. Please try again later.");
 
   const input = await parseJson(req, loginSchema);
+
+  // Human check — one-time arithmetic challenge (see src/lib/captcha.ts).
+  if (!verifyCaptcha(input.captchaId, input.captchaAnswer)) {
+    throw unauthorized("Captcha check failed. Please try again.");
+  }
+
   const email = input.email.toLowerCase().trim();
 
   const rlEmail = rateLimit(`login-email:${email}`, { limit: 5, windowMs: 15 * 60_000 });
@@ -29,6 +36,21 @@ export const POST = apiHandler(async (req) => {
 
   const ok = await verifyPassword(input.password, user.passwordHash);
   if (!ok) throw invalid;
+
+  // Teacher accounts are locked until an admin approves their verification.
+  if (user.role === "TEACHER") {
+    const verification = await db.teacherVerification.findUnique({ where: { teacherId: user.id } });
+    if (!verification || verification.status !== "APPROVED") {
+      if (!verification || verification.status === "PENDING") {
+        throw unauthorized(
+          "Your teacher account is under review. You can sign in once an admin approves your verification.",
+        );
+      }
+      throw unauthorized(
+        `Your teacher verification was ${verification.status.toLowerCase().replace("_", " ")}. Contact support for help.`,
+      );
+    }
+  }
 
   await db.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
   await setSessionCookie({

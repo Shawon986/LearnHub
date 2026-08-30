@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
-import { getMessageDirectory, type MessageDirectoryData } from "@/lib/messaging/directory";
+import { getAdminOversight, getMessageDirectory, type MessageDirectoryData } from "@/lib/messaging/directory";
 import { MessagingClient, type ConversationData, type ThreadData } from "../messaging-client";
 
 export const metadata: Metadata = { title: "Messages" };
@@ -19,7 +19,9 @@ export default async function ConversationPage({
   const member = await db.conversationParticipant.findUnique({
     where: { conversationId_userId: { conversationId, userId: user.id } },
   });
-  if (!member) notFound();
+  // Admins get read-only oversight over ANY conversation.
+  const isAdmin = ["ADMIN", "MODERATOR", "SUPPORT", "SUPER_ADMIN"].includes(user.role);
+  if (!member && !isAdmin) notFound();
 
   const [conversation, conversations] = await Promise.all([
     db.conversation.findUnique({
@@ -42,9 +44,17 @@ export default async function ConversationPage({
 
   const other = conversation.participants.find((p) => p.userId !== user.id);
 
+  // Admin oversight: label the thread with both sides of the pair.
+  const isOversight = isAdmin && !member;
+  const pairNames = conversation.participants
+    .filter((p) => p.user.role === "STUDENT" || p.user.role === "TEACHER")
+    .map((p) => p.user.name);
+
   const thread: ThreadData = {
     conversationId: conversation.id,
-    otherName: other?.user.name ?? "Conversation",
+    otherName: isOversight
+      ? pairNames.join(" ↔ ") || "Conversation"
+      : other?.user.name ?? "Conversation",
     otherAvatarUrl: other?.user.avatarUrl ?? null,
     otherRole: other?.user.role ?? "",
     partnerLastReadAt: other?.lastReadAt?.toISOString() ?? null,
@@ -91,12 +101,16 @@ export default async function ConversationPage({
 
   const directory: MessageDirectoryData = await getMessageDirectory(user.role);
 
+  const oversight = isAdmin ? await getAdminOversight() : [];
+
   return (
     <MessagingClient
       initialConversations={list}
       initialThread={thread}
       currentUserId={user.id}
       directory={directory}
+      adminOversight={oversight}
+      readOnly={isOversight}
     />
   );
 }

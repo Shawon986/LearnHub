@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { useReducedMotion } from "motion/react";
 import { PageLoader } from "@/components/ui/page-loader";
@@ -16,6 +17,10 @@ const FADE_MS = 400;
  *   • navigating HOME (e.g. clicking the logo)
  * All other page-to-page navigations stay instant (the server-side
  * `loading.tsx` boundary still handles genuinely slow renders).
+ *
+ * Rendered through a portal onto <body> so no ancestor (transform, filter,
+ * backdrop-blur…) can trap `position: fixed` and make the loader scroll or
+ * shift with the page — it stays glued to the viewport.
  */
 export function RouteLoaderVeil() {
   const pathname = usePathname();
@@ -52,10 +57,11 @@ export function RouteLoaderVeil() {
 
   if (phase === "hidden") return null;
 
-  return (
+  const overlay = (
     <div
       className={cn(
-        "fixed inset-0 z-[150] flex items-center justify-center bg-background transition-opacity",
+        // Exact viewport size, clipped, and centered — can never shift.
+        "fixed inset-0 z-[150] flex h-dvh items-center justify-center overflow-hidden bg-background transition-opacity duration-300",
         phase === "leave" ? "pointer-events-none opacity-0" : "opacity-100",
       )}
       style={{ transitionDuration: `${FADE_MS}ms` }}
@@ -64,4 +70,6 @@ export function RouteLoaderVeil() {
       <PageLoader />
     </div>
   );
+
+  return createPortal(overlay, document.body);
 }

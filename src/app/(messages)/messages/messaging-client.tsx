@@ -96,12 +96,18 @@ export function MessagingClient({
   initialThread,
   currentUserId,
   directory = null,
+  adminOversight = [],
+  readOnly = false,
 }: {
   initialConversations: ConversationData[];
   initialThread: ThreadData;
   currentUserId: string;
   /** Contact directory: admins see teachers, everyone else gets support. */
   directory?: MessageDirectoryData | null;
+  /** Admin oversight: every teacher ↔ student conversation on the platform. */
+  adminOversight?: { id: string; pairName: string; lastContent: string; lastAt: string }[];
+  /** True when an admin is viewing a conversation they're not part of. */
+  readOnly?: boolean;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -440,6 +446,38 @@ export function MessagingClient({
           </div>
         )}
 
+        {adminOversight.length > 0 && (
+          <div className="border-b border-line p-3">
+            <p className="mb-1.5 px-1 text-[10px] font-extrabold uppercase tracking-wide text-faint-fg">
+              All conversations (oversight)
+            </p>
+            <ul className="max-h-44 space-y-0.5 overflow-y-auto no-scrollbar">
+              {adminOversight.map((c) => (
+                <li key={c.id}>
+                  <button
+                    type="button"
+                    onClick={() => open(c.id)}
+                    className={cn(
+                      "flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-card-2",
+                      activeId === c.id && "bg-brand-soft/50",
+                    )}
+                  >
+                    <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-muted-fg" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[12px] font-bold text-foreground">
+                        {c.pairName}
+                      </span>
+                      <span className="block truncate text-[10px] text-faint-fg">
+                        {timeAgo(c.lastAt)} · {c.lastContent}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="min-h-0 flex-1 overflow-y-auto">
           {conversations.length === 0 ? (
             <div className="p-6">
@@ -617,7 +655,15 @@ export function MessagingClient({
               <div ref={bottomRef} />
             </div>
 
-            {/* Composer */}
+            {/* Composer (hidden for read-only admin oversight threads) */}
+            {readOnly ? (
+              <div className="border-t border-line px-5 py-3">
+                <p className="flex items-center gap-2 text-[12px] font-semibold text-faint-fg">
+                  <ShieldCheck className="h-3.5 w-3.5" /> Read-only — you are viewing this
+                  conversation as an admin.
+                </p>
+              </div>
+            ) : (
             <div className="border-t border-line p-4">
               {isOtherTyping && (
                 <p className="mb-1.5 text-[11px] font-bold text-brand-fg">{threadName} is typing…</p>
@@ -694,6 +740,7 @@ export function MessagingClient({
                 </button>
               </div>
             </div>
+            )}
           </>
         )}
       </section>

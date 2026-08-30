@@ -14,6 +14,19 @@ export const registerSchema = z.object({
   role: z.enum(["STUDENT", "TEACHER"], {
     error: "Role must be STUDENT or TEACHER.",
   }),
+  captchaId: z.string().optional(),
+  captchaAnswer: z.coerce.string().optional(),
+  // Teacher verification documents uploaded BEFORE the account exists.
+  documents: z
+    .array(
+      z.object({
+        type: z.enum(["ID_CARD", "RESUME", "EDUCATION", "PHOTO", "OTHER"]),
+        title: z.string().trim().min(2).max(120),
+        url: z.string().trim().min(1).max(300),
+      }),
+    )
+    .max(10)
+    .optional(),
   referralCode: z
     .string()
     .trim()
@@ -25,6 +38,8 @@ export const registerSchema = z.object({
 export const loginSchema = z.object({
   email: z.email("Enter a valid email address."),
   password: z.string().min(1, "Password is required."),
+  captchaId: z.string().optional(),
+  captchaAnswer: z.coerce.string().optional(),
 });
 
 export const forgotPasswordSchema = z.object({
