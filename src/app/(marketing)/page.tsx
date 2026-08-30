@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { safeJsonParse } from "@/lib/utils";
 import { Hero } from "@/components/landing/hero";
+import { SpecialCourses } from "@/components/landing/special-courses";
 import { CategoriesSection, type CategoryCardData } from "@/components/landing/categories-section";
 import { AiSection } from "@/components/landing/ai-section";
 import { FaqSection } from "@/components/landing/faq-section";
@@ -167,6 +168,9 @@ export default async function HomePage() {
           avgRating: 4.9,
         }}
       />
+
+      {/* Signature programs — the main attraction */}
+      <SpecialCourses />
 
       {/* Subject marquee */}
       <section className="border-b border-line bg-card/50 py-5" aria-label="Popular subjects">

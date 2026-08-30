@@ -192,6 +192,41 @@
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
   }
+  /* Special courses stage — layered, slow, smooth ambience. */
+  @keyframes sc-aurora {
+    from { transform: rotate(0deg) scale(1.18); }
+    50% { transform: rotate(180deg) scale(1.05); }
+    to { transform: rotate(360deg) scale(1.18); }
+  }
+  @keyframes sc-orb {
+    0%, 100% { transform: translate(-10%, -6%) scale(1); }
+    33% { transform: translate(9%, 7%) scale(1.16); }
+    66% { transform: translate(4%, -11%) scale(0.94); }
+  }
+  @keyframes sc-orb-b {
+    0%, 100% { transform: translate(10%, 12%) scale(1); }
+    50% { transform: translate(-12%, -9%) scale(1.2); }
+  }
+  @keyframes sc-orb-c {
+    0%, 100% { transform: translate(0%, 16%) scale(0.92); }
+    50% { transform: translate(9%, -8%) scale(1.1); }
+  }
+  @keyframes sc-twinkle {
+    0%, 100% { opacity: 0.15; transform: scale(0.7); }
+    50% { opacity: 0.9; transform: scale(1.15); }
+  }
+  @keyframes sc-ring-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes sc-card-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  @keyframes sc-shine {
+    from { transform: translateX(-160%) skewX(-18deg); }
+    to { transform: translateX(340%) skewX(-18deg); }
+  }
 }
 
 /* All loader + logo animation classes disable themselves for reduced motion. */
@@ -207,6 +242,14 @@
   .pl-breathe { animation: pl-breathe 3.2s ease-in-out infinite; }
   .pl-synapse { animation: pl-synapse 2.4s ease-in-out infinite; }
   .pl-sweep { animation: pl-sweep 1.4s ease-in-out infinite; }
+  .sc-aurora { animation: sc-aurora 26s linear infinite; will-change: transform; }
+  .sc-orb { animation: sc-orb 19s ease-in-out infinite; will-change: transform; }
+  .sc-orb-b { animation: sc-orb-b 24s ease-in-out infinite; will-change: transform; }
+  .sc-orb-c { animation: sc-orb-c 21s ease-in-out infinite; will-change: transform; }
+  .sc-twinkle { animation: sc-twinkle var(--d, 3s) ease-in-out infinite; }
+  .sc-ring-spin { animation: sc-ring-spin 44s linear infinite; will-change: transform; }
+  .sc-card-float { animation: sc-card-float var(--d, 6s) ease-in-out infinite; }
+  .sc-shine { animation: sc-shine 3.4s ease-in-out infinite; }
   .logo-enter {
     animation: logo-enter 9s cubic-bezier(0.22, 1, 0.36, 1) infinite;
     will-change: transform, opacity;

@@ -25,13 +25,21 @@ const SIZES = {
 export function Modal({ open, onClose, title, description, children, footer, size = "md", className }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
+  // Callers pass inline onClose arrows, so keep the latest in a ref — the
+  // effect must depend ONLY on `open`. Depending on the callback identity
+  // re-ran the effect on every parent render and re-focused the panel,
+  // stealing focus from textareas on each keystroke (inputs were untypable).
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   // Escape to close + focus management + scroll lock.
   useEffect(() => {
     if (!open) return;
     const prev = document.activeElement as HTMLElement | null;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
       if (e.key === "Tab") {
         const panel = panelRef.current;
         if (!panel) return;
@@ -58,7 +66,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
       document.body.style.overflow = "";
       prev?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   return (
     <AnimatePresence>

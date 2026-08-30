@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Menu, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,18 @@ export function SiteHeader({
   const [mobileOpen, setMobileOpen] = useState(false);
   const reduceMotion = useReducedMotion();
   const { t } = useLanguage();
+  const pathname = usePathname();
+  // Teacher profile previews never show the hamburger — on ANY device
+  // (the button also appears at small desktop widths below xl).
+  const hideMenu = /^\/teachers\/[^/]+\/?$/.test(pathname);
+
+  useEffect(() => {
+    if (!hideMenu) return;
+    // Close any open sheet when landing on a profile (async so the state
+    // update never cascades synchronously out of an effect).
+    const raf = requestAnimationFrame(() => setMobileOpen(false));
+    return () => cancelAnimationFrame(raf);
+  }, [hideMenu]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -126,22 +139,24 @@ export function SiteHeader({
             </div>
           )}
 
-          {/* Mobile menu button */}
-          <button
-            type="button"
-            onClick={() => setMobileOpen((v) => !v)}
-            aria-label={mobileOpen ? "Close menu" : "Open menu"}
-            aria-expanded={mobileOpen}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-fg transition-colors hover:bg-card-2 xl:hidden"
-          >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          {/* Mobile menu button (hidden entirely on teacher profiles) */}
+          {!hideMenu && (
+            <button
+              type="button"
+              onClick={() => setMobileOpen((v) => !v)}
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileOpen}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-fg transition-colors hover:bg-card-2 xl:hidden"
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          )}
         </div>
       </div>
 
       {/* Mobile sheet */}
       <AnimatePresence>
-        {mobileOpen && (
+        {mobileOpen && !hideMenu && (
           <motion.div
             className="fixed inset-x-0 top-16 bottom-0 z-30 lg:hidden"
             initial={reduceMotion ? false : { opacity: 0 }}
