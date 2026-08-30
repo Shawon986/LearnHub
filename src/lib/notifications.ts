@@ -38,6 +38,7 @@ export async function createNotification(input: CreateNotificationInput) {
   messagingBus.publishTo(input.userId, {
     type: "notification",
     id: notification.id,
+    notificationType: notification.type,
     title: notification.title,
     body: notification.body,
     data: (input.data ?? {}) as Record<string, unknown>,
@@ -69,6 +70,7 @@ export async function createNotificationMany(
     messagingBus.publishTo(n.userId, {
       type: "notification",
       id: n.id,
+      notificationType: n.type,
       title: n.title,
       body: n.body,
       data: (n.data ?? {}) as Record<string, unknown>,

@@ -22,6 +22,8 @@ export type MessageEvent =
   | {
       type: "notification";
       id: string;
+      /** The Notification.type value (NEW_MESSAGE, TEACHER_APPLICATION, …). */
+      notificationType: string;
       title: string;
       body: string | null;
       data: Record<string, unknown>;

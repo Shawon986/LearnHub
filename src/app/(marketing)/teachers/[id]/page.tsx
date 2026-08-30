@@ -171,7 +171,9 @@ export default async function TeacherProfilePage({ params, searchParams }: PageP
   }));
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+    /* inert = pure preview: every option on this profile is unclickable on
+       every device (the site header stays interactive for navigation). */
+    <div className="mx-auto max-w-7xl select-none px-4 py-10 sm:px-6" inert>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       {/* Header card */}
       <Card className="overflow-hidden">

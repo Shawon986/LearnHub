@@ -22,15 +22,26 @@ interface NotificationItem {
 
 const ADMIN_ROLES = new Set(["ADMIN", "MODERATOR", "SUPPORT", "SUPER_ADMIN"]);
 
-/** Actionable link inside a notification, resolved per role (admins land on /admin/*). */
+/** Actionable link inside a notification, resolved per role (admins land on
+ *  /admin/*, teachers on /teacher/*, students on /dashboard/*). */
 function linkFor(item: NotificationItem, role?: string): string | null {
   const isAdmin = Boolean(role && ADMIN_ROLES.has(role));
+  const isTeacher = role === "TEACHER";
   if (item.data?.checkoutPath) return item.data.checkoutPath;
   if (item.data?.conversationId) return `/messages/${item.data.conversationId}`;
   if (item.data?.disputeId) return isAdmin ? "/admin/disputes" : "/dashboard/disputes";
-  if (item.data?.liveClassId) return isAdmin ? "/admin" : "/dashboard/live";
-  if (item.data?.courseId) return isAdmin ? "/admin/courses" : "/dashboard/courses";
-  if (item.data?.bookingId) return isAdmin ? "/admin/bookings" : item.data?.checkoutPath ? item.data.checkoutPath : "/dashboard/bookings";
+  if (item.data?.liveClassId)
+    return isAdmin ? "/admin" : isTeacher ? "/teacher/live-classes" : "/dashboard/live";
+  if (item.data?.courseId)
+    return isAdmin ? "/admin/courses" : isTeacher ? "/teacher/courses" : "/dashboard/courses";
+  if (item.data?.bookingId)
+    return isAdmin
+      ? "/admin/bookings"
+      : isTeacher
+        ? "/teacher/bookings"
+        : item.data?.checkoutPath
+          ? item.data.checkoutPath
+          : "/dashboard/bookings";
   if (item.data?.withdrawalId) return isAdmin ? "/admin/withdrawals" : "/teacher/earnings";
   if (item.data?.paymentId) return isAdmin ? "/admin/payments" : "/dashboard/payments";
   if (item.data?.teacherId) return isAdmin ? "/admin/verification" : null;

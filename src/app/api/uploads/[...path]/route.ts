@@ -109,10 +109,12 @@ export async function GET(req: Request, ctx: { params: Promise<{ path: string[] 
   const contentType =
     MIME[ext] ?? (rel.startsWith("thumbnail/") ? "image/webp" : "application/octet-stream");
 
-  // Chat images render inline in the thread; documents and course resources
-  // download as attachments.
+  // Verification documents and chat images render INLINE (admins review a
+  // teacher's NID/CV right in the browser tab — no save dialog). Course
+  // resources and non-image chat files download as attachments.
   const isChat = rel.startsWith("chat/");
-  const disposition = !isChat || rel.startsWith("resource/") || (isChat && !isImage) ? "attachment" : "inline";
+  const disposition =
+    rel.startsWith("resource/") || (isChat && !isImage) ? "attachment" : "inline";
 
   return new NextResponse(createReadStream(filePath) as unknown as ReadableStream, {
     status: 200,

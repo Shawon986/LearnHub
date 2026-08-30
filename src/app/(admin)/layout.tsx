@@ -19,7 +19,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <DashboardShell
-      user={{ name: user.name, email: user.email, role: user.role, avatarUrl: user.avatarUrl }}
+      user={{ id: user.id, name: user.name, email: user.email, role: user.role, avatarUrl: user.avatarUrl }}
       role={user.role}
       accent="admin"
       unreadNotifications={unread}

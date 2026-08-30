@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useRealtimeStream } from "@/lib/realtime/provider";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ChevronsLeft, ChevronsRight, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,7 +17,7 @@ import { useLanguage } from "@/components/i18n/language-provider";
 import { navFor } from "@/lib/nav";
 
 interface DashboardShellProps {
-  user: { name: string; email: string; role: string; avatarUrl: string | null };
+  user: { id: string; name: string; email: string; role: string; avatarUrl: string | null };
   /** Resolved client-side so icon components never cross the server/client boundary. */
   role: string;
   accent?: "student" | "teacher" | "admin";
@@ -62,6 +63,10 @@ export function DashboardShell({
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifUnread, setNotifUnread] = useState(unreadNotifications);
+  const [msgUnread, setMsgUnread] = useState(unreadMessages);
+  const [pendVerif, setPendVerif] = useState(pendingVerifications);
+  const [pendWithdrawals, setPendWithdrawals] = useState(pendingWithdrawals);
+  const [pendPayments, setPendPayments] = useState(pendingPayments);
   const reduceMotion = useReducedMotion();
   const { t } = useLanguage();
 
@@ -74,6 +79,34 @@ export function DashboardShell({
     window.addEventListener("learnhub-unread", handler);
     return () => window.removeEventListener("learnhub-unread", handler);
   }, []);
+
+  // Live menu counters: messages and admin queue badges follow the shared
+  // SSE stream in real time — a message bumps the Messages badge, and new
+  // verifications/withdrawals/payments bump their queue badges without any
+  // reload (fresh counts come back on the next server render).
+  const seenMsgIds = useRef(new Set<string>());
+  const seenQueueIds = useRef(new Set<string>());
+  useRealtimeStream((raw) => {
+    let event: { type?: string; id?: string; senderId?: string; notificationType?: string };
+    try {
+      event = JSON.parse(raw);
+    } catch {
+      return;
+    }
+    if (event.type === "message") {
+      if (!event.id || event.senderId === user.id || seenMsgIds.current.has(event.id)) return;
+      seenMsgIds.current.add(event.id);
+      setMsgUnread((n) => n + 1);
+      return;
+    }
+    if (event.type === "notification") {
+      if (!event.id || seenQueueIds.current.has(event.id)) return;
+      seenQueueIds.current.add(event.id);
+      if (event.notificationType === "TEACHER_APPLICATION") setPendVerif((n) => n + 1);
+      else if (event.notificationType === "WITHDRAWAL_REQUESTED") setPendWithdrawals((n) => n + 1);
+      else if (event.notificationType === "PAYMENT_SUCCESS") setPendPayments((n) => n + 1);
+    }
+  });
 
   const viewAllHref =
     role === "TEACHER"
@@ -116,13 +149,13 @@ export function DashboardShell({
           const active = isActive(item.href);
           const count =
             item.href === "/messages"
-              ? unreadMessages
+              ? msgUnread
               : item.href === "/admin/verification"
-                ? pendingVerifications
+                ? pendVerif
                 : item.href === "/admin/withdrawals"
-                  ? pendingWithdrawals
+                  ? pendWithdrawals
                   : item.href === "/admin/payments"
-                    ? pendingPayments
+                    ? pendPayments
                     : (item.href === "/admin/notifications/view" ||
                       (item.href.endsWith("/notifications") && item.href !== "/admin/notifications"))
                     ? notifUnread

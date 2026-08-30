@@ -17,7 +17,7 @@ export default async function TeacherLayout({ children }: { children: React.Reac
 
   return (
     <DashboardShell
-      user={{ name: user.name, email: user.email, role: user.role, avatarUrl: user.avatarUrl }}
+      user={{ id: user.id, name: user.name, email: user.email, role: user.role, avatarUrl: user.avatarUrl }}
       role={user.role}
       accent="teacher"
       unreadNotifications={unread}

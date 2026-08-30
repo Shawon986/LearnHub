@@ -4,6 +4,7 @@ import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { unreadNotificationCount } from "@/lib/notifications";
 import { unreadMessageCount } from "@/lib/messaging/unread";
 import { sendDueBookingReminders } from "@/lib/reminders";
+import { updateStreak } from "@/lib/gamification";
 import { homeFor } from "@/lib/nav";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -14,6 +15,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Opportunistic reminders (scheduled job in Phase 9+).
   sendDueBookingReminders().catch(() => {});
 
+  // Daily streak — any dashboard visit counts as an active day.
+  updateStreak(user.id).catch(() => {});
+
   const [unread, unreadMessages] = await Promise.all([
     unreadNotificationCount(user.id),
     unreadMessageCount(user.id),
@@ -21,7 +25,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <DashboardShell
-      user={{ name: user.name, email: user.email, role: user.role, avatarUrl: user.avatarUrl }}
+      user={{ id: user.id, name: user.name, email: user.email, role: user.role, avatarUrl: user.avatarUrl }}
       role={user.role}
       accent="student"
       unreadNotifications={unread}

@@ -64,6 +64,12 @@ export function CourseCard({
           <meta.icon className="h-3 w-3" />
           {meta.label}
         </Badge>
+        {/* Freshly published, no enrollments yet — disappears after the first one. */}
+        {course.enrollmentCount < 1 && (
+          <Badge variant="gold" className="absolute bottom-3 left-3">
+            NEW LAUNCHED
+          </Badge>
+        )}
         <span className="absolute bottom-3 right-3 rounded-md bg-black/50 px-2 py-1 text-[11px] font-bold text-white">
           {course.totalDurationMinutes > 0 ? `${Math.round(course.totalDurationMinutes / 60)}h · ` : ""}
           {course.totalLessons} lessons
