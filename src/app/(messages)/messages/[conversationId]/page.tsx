@@ -104,7 +104,13 @@ export default async function ConversationPage({
       otherAvatarUrl: otherP?.user.avatarUrl ?? null,
       otherRole: otherP?.user.role ?? "",
       partnerLastReadAt: otherP?.lastReadAt?.toISOString() ?? null,
-      lastContent: last ? (last.type === "IMAGE" ? "📷 Image" : last.content) : "Say hello 👋",
+      lastContent: last
+        ? last.type === "IMAGE"
+          ? "📷 Image"
+          : last.type === "FILE"
+            ? `📎 ${last.content}`
+            : last.content
+        : "Say hello 👋",
       lastAt: last?.createdAt.toISOString() ?? c.updatedAt.toISOString(),
       lastFromMe: last ? last.senderId === user.id : false,
       unread: unreadCounts[i] ?? 0,

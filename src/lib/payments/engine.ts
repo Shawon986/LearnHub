@@ -415,9 +415,15 @@ export async function refundPayment(
  * for real money.
  */
 export function devPaymentsEnabled(): boolean {
-  // Build-time hard block: the sandbox completion path can NEVER run in
-  // production, regardless of environment configuration.
-  if (process.env.NODE_ENV === "production") return false;
   const providers = (env.PAYMENT_PROVIDERS ?? "DEV").toUpperCase().split(",").map((s) => s.trim());
-  return providers.includes("DEV");
+  if (!providers.includes("DEV")) return false;
+  // Production requires an EXPLICIT operator opt-in (ALLOW_DEV_PAYMENTS=true
+  // AND "DEV" listed in PAYMENT_PROVIDERS). Two deliberate signals — the
+  // sandbox completion path can never run in production by accident, only
+  // as a deliberate trial. Sandbox payments stay provider="DEV" so they are
+  // auditable and never mistaken for real money.
+  if (process.env.NODE_ENV === "production") {
+    return process.env.ALLOW_DEV_PAYMENTS === "true";
+  }
+  return true;
 }

@@ -34,7 +34,8 @@ export async function GET(req: Request, ctx: { params: Promise<{ path: string[] 
 
   // SECURITY: private content is never served without authorization.
   // - verification/ documents (NID, CV, photos): admin-only.
-  // - chat/ images: only conversation participants.
+  // - chat/ images + files: conversation participants (admins may view any
+  //   chat attachment through their oversight access).
   // - resource/ files: enrollment (course/lesson) or recording access.
   if (rel.startsWith("verification/")) {
     const user = await getCurrentUser();
@@ -53,7 +54,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ path: string[] 
           where: { conversationId_userId: { conversationId: message.conversationId, userId: user.id } },
         })
       : null;
-    if (!message || !participant) {
+    if (!message || (!participant && !isAdminRole(user.role))) {
       return NextResponse.json({ error: "Access denied." }, { status: 403 });
     }
   } else if (rel.startsWith("resource/")) {
@@ -84,23 +85,41 @@ export async function GET(req: Request, ctx: { params: Promise<{ path: string[] 
     }
   }
 
+  const ext = rel.slice(rel.lastIndexOf(".") + 1).toLowerCase();
+  const MIME: Record<string, string> = {
+    pdf: "application/pdf",
+    svg: "image/svg+xml",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    webp: "image/webp",
+    gif: "image/gif",
+    avif: "image/avif",
+    doc: "application/msword",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    xls: "application/vnd.ms-excel",
+    xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ppt: "application/vnd.ms-powerpoint",
+    pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    txt: "text/plain",
+    csv: "text/csv",
+    zip: "application/zip",
+  };
+  const isImage = /\.(png|jpe?g|webp|gif|avif)$/i.test(rel);
   const contentType =
-    rel.endsWith(".pdf")
-      ? "application/pdf"
-      : rel.endsWith(".svg")
-        ? "image/svg+xml"
-        : /\.(png|jpe?g|webp|gif|avif)$/i.test(rel)
-          ? `image/${rel.endsWith(".jpg") ? "jpeg" : rel.slice(rel.lastIndexOf(".") + 1)}`
-          : rel.startsWith("thumbnail/")
-            ? "image/webp"
-            : "application/octet-stream";
+    MIME[ext] ?? (rel.startsWith("thumbnail/") ? "image/webp" : "application/octet-stream");
+
+  // Chat images render inline in the thread; documents and course resources
+  // download as attachments.
+  const isChat = rel.startsWith("chat/");
+  const disposition = !isChat || rel.startsWith("resource/") || (isChat && !isImage) ? "attachment" : "inline";
 
   return new NextResponse(createReadStream(filePath) as unknown as ReadableStream, {
     status: 200,
     headers: {
       "Content-Type": contentType,
       "Content-Length": String(size),
-      "Content-Disposition": rel.startsWith("resource/") ? "attachment" : "inline",
+      "Content-Disposition": disposition,
       "Cache-Control": "private, max-age=3600",
     },
   });

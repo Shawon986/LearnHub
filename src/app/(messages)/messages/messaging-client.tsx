@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ImagePlus, MessageSquare, Search, Send, ShieldCheck, X } from "lucide-react";
+import { FileText, ImagePlus, MessageSquare, Search, Send, ShieldCheck, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -16,7 +16,7 @@ import {
   startConversation,
   startConversationWithAdmin,
 } from "@/lib/actions/messages";
-import { uploadChatImage } from "@/lib/actions/uploads";
+import { uploadChatAttachment } from "@/lib/actions/uploads";
 import { useRealtimeStream } from "@/lib/realtime/provider";
 import type { AdminOversightEntry, MessageDirectoryData } from "@/lib/messaging/directory";
 
@@ -154,7 +154,7 @@ export function MessagingClient({
   const [partnerLastReadAt, setPartnerLastReadAt] = useState<string | null>(
     initialThread.partnerLastReadAt,
   );
-  const [pendingAttachment, setPendingAttachment] = useState<{ file: File; url: string } | null>(null);
+  const [pendingAttachment, setPendingAttachment] = useState<{ file: File; url: string; kind: "image" | "file" } | null>(null);
   
   const seenIds = useRef<Set<string>>(new Set());
   const [attachmentUploading, setAttachmentUploading] = useState(false);
@@ -221,7 +221,12 @@ export function MessagingClient({
         if (idx >= 0) {
           next[idx] = {
             ...next[idx],
-            lastContent: msg.messageType === "IMAGE" ? "📷 Image" : msg.content,
+            lastContent:
+              msg.messageType === "IMAGE"
+                ? "📷 Image"
+                : msg.messageType === "FILE"
+                  ? `📎 ${msg.content}`
+                  : msg.content,
             lastAt: msg.createdAt,
             lastFromMe: msg.senderId === currentUserId,
             unread: msg.conversationId === activeId ? 0 : next[idx].unread + (msg.senderId === currentUserId ? 0 : 1),
@@ -351,40 +356,43 @@ export function MessagingClient({
     if (!pendingAttachment || !activeId) return;
     const attachment = pendingAttachment;
     setPendingAttachment(null);
-    // Optimistic: the photo appears in the thread instantly (local blob
-    // preview) while the upload runs — the SSE echo replaces it with the
-    // confirmed message, same as text.
+    const isImage = attachment.kind === "image";
+    // Optimistic: the attachment appears in the thread instantly (local blob
+    // preview for images, a file chip for documents) while the upload runs —
+    // the SSE echo replaces it with the confirmed message, same as text.
     const tempId = `local-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     setThreadMessages((prev) => [
       ...prev,
       {
         id: tempId,
         senderId: currentUserId,
-        content: "📷 Image",
-        type: "IMAGE",
-        attachmentUrl: attachment.url,
+        content: isImage ? "📷 Image" : `📎 ${attachment.file.name}`,
+        type: isImage ? "IMAGE" : "FILE",
+        attachmentUrl: isImage ? attachment.url : null,
         createdAt: new Date().toISOString(),
       },
     ]);
     setAttachmentUploading(true);
     try {
-      const upload = await uploadChatImage(attachment.file);
+      const upload = await uploadChatAttachment(attachment.file);
       if (!upload.ok) {
         setThreadMessages((prev) => prev.filter((m) => m.id !== tempId));
         toast({ title: upload.error, variant: "error" });
         return;
       }
       const sent = await sendMessage(activeId, {
-        content: "📷 Image",
+        // The message content carries the file name so the conversation list
+        // and notifications show what was sent.
+        content: isImage ? "📷 Image" : attachment.file.name,
         attachmentUrl: upload.path,
-        messageType: "IMAGE",
-        // Idempotent like text sends — a retry never duplicates the image.
+        messageType: isImage ? "IMAGE" : "FILE",
+        // Idempotent like text sends — a retry never duplicates the upload.
         clientId: safeUuid(),
       });
       if (!sent.ok) {
         setThreadMessages((prev) => prev.filter((m) => m.id !== tempId));
         toast({ title: sent.error ?? "Message not sent.", variant: "error" });
-      } else {
+      } else if (isImage) {
         URL.revokeObjectURL(attachment.url);
       }
     } finally {
@@ -712,6 +720,21 @@ export function MessagingClient({
                                 className="max-h-56 rounded-xl transition-transform hover:scale-[1.02]"
                               />
                             </button>
+                          ) : m.type === "FILE" && m.attachmentUrl ? (
+                            <a
+                              href={attachmentSrc(m.attachmentUrl)!}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2.5 rounded-xl border border-white/20 bg-white/10 px-3 py-2"
+                            >
+                              <FileText className="h-4 w-4 shrink-0" />
+                              <span className="min-w-0">
+                                <span className="block max-w-[16rem] truncate text-[12px] font-bold">
+                                  {m.content}
+                                </span>
+                                <span className="block text-[10px] opacity-80">Download file</span>
+                              </span>
+                            </a>
                           ) : (
                             m.content
                           )}
@@ -744,12 +767,26 @@ export function MessagingClient({
               {pendingAttachment && (
                 <div className="mb-2 flex items-center gap-2">
                   <div className="relative">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={pendingAttachment.url} alt="Attachment preview" className="h-14 w-14 rounded-lg object-cover" />
+                    {pendingAttachment.kind === "image" ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={pendingAttachment.url} alt="Attachment preview" className="h-14 w-14 rounded-lg object-cover" />
+                    ) : (
+                      <span className="flex h-14 max-w-[16rem] items-center gap-2 rounded-lg border border-line bg-card-2 px-3">
+                        <FileText className="h-4 w-4 shrink-0 text-muted-fg" />
+                        <span className="min-w-0">
+                          <span className="block truncate text-[11px] font-bold text-foreground">
+                            {pendingAttachment.file.name}
+                          </span>
+                          <span className="block text-[10px] text-faint-fg">
+                            {(pendingAttachment.file.size / 1024).toFixed(0)} KB
+                          </span>
+                        </span>
+                      </span>
+                    )}
                     <button
                       type="button"
                       onClick={() => {
-                        URL.revokeObjectURL(pendingAttachment.url);
+                        if (pendingAttachment.kind === "image") URL.revokeObjectURL(pendingAttachment.url);
                         setPendingAttachment(null);
                       }}
                       aria-label="Remove attachment"
@@ -766,12 +803,16 @@ export function MessagingClient({
                   {attachmentUploading ? <SpinnerDots /> : <ImagePlus className="h-4 w-4" />}
                   <input
                     type="file"
-                    accept="image/jpeg,image/png,image/webp"
+                    accept="image/jpeg,image/png,image/webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
                     className="hidden"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        setPendingAttachment({ file, url: URL.createObjectURL(file) });
+                        setPendingAttachment({
+                          file,
+                          kind: file.type.startsWith("image/") ? "image" : "file",
+                          url: file.type.startsWith("image/") ? URL.createObjectURL(file) : "",
+                        });
                       }
                       e.target.value = "";
                     }}

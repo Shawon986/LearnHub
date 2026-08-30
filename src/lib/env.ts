@@ -14,6 +14,10 @@ const envSchema = z.object({
   VIDEO_LOCAL_DIR: z.string().default("./uploads"),
   AI_PROVIDER: z.string().default("dev"),
   PAYMENT_PROVIDERS: z.string().optional(),
+  // Explicit operator opt-in that lets the DEV sandbox complete payments on
+  // a production deployment (demo/trial). Off by default — production can
+  // never fake a payment unless the operator turns this on deliberately.
+  ALLOW_DEV_PAYMENTS: z.string().optional(),
 });
 
 function loadEnv() {

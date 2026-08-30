@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { DashboardGrid } from "@/components/admin/dashboard-grid";
 import { formatBDT, timeAgo } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Admin Dashboard" };
 
@@ -29,6 +30,20 @@ const ROLE_VARIANT: Record<string, "brand" | "accent" | "gold" | "neutral" | "da
   SUPPORT: "gold",
   SUPER_ADMIN: "danger",
 };
+
+/** Admin-panel destination for a notification's payload keys. */
+function adminLinkFor(data: Record<string, unknown> | null): string | null {
+  if (!data) return null;
+  if (data.withdrawalId) return "/admin/withdrawals";
+  if (data.teacherId) return "/admin/verification";
+  if (data.disputeId) return "/admin/disputes";
+  if (data.courseId) return "/admin/courses";
+  if (data.bookingId) return "/admin/bookings";
+  if (data.paymentId) return "/admin/payments";
+  if (data.conversationId) return `/messages/${data.conversationId}`;
+  if (data.liveClassId) return "/admin";
+  return null;
+}
 
 export default async function AdminDashboardPage() {
   const user = await getCurrentUser();
@@ -46,6 +61,7 @@ export default async function AdminDashboardPage() {
     openDisputes,
     recentUsers,
     reviewQueue,
+    latestNotifications,
   ] = await Promise.all([
     db.user.count(),
     db.user.count({ where: { role: "STUDENT" } }),
@@ -58,6 +74,12 @@ export default async function AdminDashboardPage() {
     db.dispute.count({ where: { status: { in: ["OPEN", "TEACHER_RESPONSE", "UNDER_REVIEW"] } } }),
     db.user.findMany({ orderBy: { createdAt: "desc" }, take: 6 }),
     db.course.count({ where: { status: "REVIEW" } }),
+    // Newest first — teacher verification/withdrawal messages land on top.
+    db.notification.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+    }),
   ]);
 
   const moderation = [
@@ -79,6 +101,76 @@ export default async function AdminDashboardPage() {
 
       <DashboardGrid
         widgets={[
+          {
+            key: "latest-notifications",
+            title: "Latest notifications",
+            content: (
+              <Card>
+                <CardContent className="p-0">
+                  {latestNotifications.length === 0 ? (
+                    <p className="px-5 py-8 text-center text-[12px] text-faint-fg">
+                      No notifications yet — new teacher applications and withdrawal
+                      requests will appear here.
+                    </p>
+                  ) : (
+                    <ul className="divide-y divide-line">
+                      {latestNotifications.map((n) => {
+                        const link = adminLinkFor((n.data ?? null) as Record<string, unknown> | null);
+                        const inner = (
+                          <span className="flex items-start gap-3">
+                            <span
+                              className={cn(
+                                "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full",
+                                n.read ? "bg-transparent" : "bg-brand",
+                              )}
+                              aria-hidden
+                            />
+                            <span className="min-w-0 flex-1">
+                              <span className="flex flex-wrap items-center gap-2">
+                                <span
+                                  className={cn(
+                                    "text-[13px]",
+                                    n.read ? "font-medium text-foreground" : "font-bold text-foreground",
+                                  )}
+                                >
+                                  {n.title}
+                                </span>
+                                {!n.read && <Badge variant="brand" size="sm">New</Badge>}
+                                <span className="ml-auto text-[11px] text-faint-fg">
+                                  {timeAgo(n.createdAt)}
+                                </span>
+                              </span>
+                              {n.body && (
+                                <span className="mt-0.5 block text-[12px] leading-relaxed text-muted-fg line-clamp-2">
+                                  {n.body}
+                                </span>
+                              )}
+                              {link && (
+                                <span className="mt-1 inline-block text-[12px] font-bold text-brand-fg">
+                                  Open →
+                                </span>
+                              )}
+                            </span>
+                          </span>
+                        );
+                        return (
+                          <li key={n.id} className="px-5 py-3.5 transition-colors hover:bg-card-2">
+                            {link ? (
+                              <Link href={link} className="block">
+                                {inner}
+                              </Link>
+                            ) : (
+                              inner
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
+            ),
+          },
           {
             key: "stats",
             title: "Key statistics",

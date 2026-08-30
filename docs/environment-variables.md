@@ -12,6 +12,7 @@ Copy `.env.example` → `.env`. Everything has a safe dev default except
 | `RESEND_API_KEY` | — | Resend API key |
 | `EMAIL_FROM` | — | Sender address |
 | `PAYMENT_PROVIDERS` | `DEV` | Comma-separated checkout methods (remove DEV in prod) |
+| `ALLOW_DEV_PAYMENTS` | — | `true` enables the DEV sandbox on a production deployment (explicit trial opt-in; payments stay `provider=DEV`) |
 | `BKASH_APP_KEY/APP_SECRET/USERNAME/PASSWORD/BASE_URL` | — | bKash tokenized checkout |
 | `NAGAD_MERCHANT_ID/PUBLIC_KEY/PRIVATE_KEY/BASE_URL` | — | Nagad PGW |
 | `ROCKET_USER_ID/PASSWORD/BASE_URL` | — | Rocket PGW |

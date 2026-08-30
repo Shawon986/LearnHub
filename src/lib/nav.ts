@@ -10,6 +10,7 @@ import {
   GraduationCap,
   Heart,
   LayoutDashboard,
+  Megaphone,
   MessageSquare,
   MonitorPlay,
   PlayCircle,
@@ -90,7 +91,8 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin/disputes", label: "Disputes", icon: ShieldCheck },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/messages", label: "Messages", icon: MessageSquare },
-  { href: "/admin/notifications", label: "Announcements", icon: Bell },
+  { href: "/admin/notifications/view", label: "Notifications", icon: Bell },
+  { href: "/admin/notifications", label: "Announcements", icon: Megaphone },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

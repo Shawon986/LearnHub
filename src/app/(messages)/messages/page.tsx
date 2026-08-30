@@ -47,7 +47,9 @@ export default async function MessagesPage() {
       lastContent: last
         ? last.type === "IMAGE"
           ? "📷 Image"
-          : last.content
+          : last.type === "FILE"
+            ? `📎 ${last.content}`
+            : last.content
         : "Say hello 👋",
       lastAt: last?.createdAt.toISOString() ?? c.updatedAt.toISOString(),
       lastFromMe: last ? last.senderId === user.id : false,

@@ -145,7 +145,12 @@ export async function sendMessage(
           userId: p.userId,
           type: "NEW_MESSAGE",
           title: `New message from ${user.name}`,
-          body: message.type === "IMAGE" ? "📷 Sent an image" : message.content.slice(0, 120),
+          body:
+            message.type === "IMAGE"
+              ? "📷 Sent an image"
+              : message.type === "FILE"
+                ? `📎 ${message.content.slice(0, 120)}`
+                : message.content.slice(0, 120),
           data: { conversationId },
         });
       }

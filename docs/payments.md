@@ -13,7 +13,11 @@ All gateways implement `PaymentProvider` (`src/lib/payments/types.ts`):
 | `STRIPE` | `StripeProvider` | Production-ready (Checkout via REST + signed webhooks) | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY` |
 
 `PAYMENT_PROVIDERS` (comma-separated, e.g. `BKASH,NAGAD,STRIPE`) controls which methods
-appear at checkout. **Production deployments must remove `DEV`.** Real gateways throw
+appear at checkout. **Production deployments must remove `DEV`** — unless running a
+deliberate sandbox trial: setting `ALLOW_DEV_PAYMENTS=true` AND listing `DEV` in
+`PAYMENT_PROVIDERS` enables the simulated gateway on production (two explicit operator
+signals). Sandbox payments are always recorded `provider=DEV` so they are auditable and
+never mistaken for real money. Real gateways throw
 clear `ProviderNotConfiguredError`s until their credentials exist, so adding a provider
 never breaks the others.
 

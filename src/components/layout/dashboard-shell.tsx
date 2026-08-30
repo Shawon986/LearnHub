@@ -93,7 +93,11 @@ export function DashboardShell({
   }, [collapsed]);
 
   const isActive = (href: string) =>
-    href === pathname || (href !== "/" && pathname.startsWith(`${href}/`));
+    href === pathname ||
+    (href !== "/" &&
+      // /admin/notifications/view must not light up the Announcements item.
+      href !== "/admin/notifications" &&
+      pathname.startsWith(`${href}/`));
 
   const sidebar = (
     <div className="flex h-full flex-col">
@@ -113,7 +117,8 @@ export function DashboardShell({
                 ? pendingVerifications
                 : item.href === "/admin/withdrawals"
                   ? pendingWithdrawals
-                  : item.href.endsWith("/notifications") && item.href !== "/admin/notifications"
+                  : (item.href === "/admin/notifications/view" ||
+                      (item.href.endsWith("/notifications") && item.href !== "/admin/notifications"))
                     ? notifUnread
                     : 0;
           return (

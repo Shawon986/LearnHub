@@ -37,7 +37,13 @@ export async function getAdminOversight(): Promise<AdminOversightEntry[]> {
         pairName: pairName || "Conversation",
         teacherName: teacher?.user.name ?? "Teacher",
         studentName: student?.user.name ?? "Student",
-        lastContent: last ? (last.type === "IMAGE" ? "📷 Image" : last.content) : "No messages yet",
+        lastContent: last
+          ? last.type === "IMAGE"
+            ? "📷 Image"
+            : last.type === "FILE"
+              ? `📎 ${last.content}`
+              : last.content
+          : "No messages yet",
         lastAt: last?.createdAt.toISOString() ?? c.updatedAt.toISOString(),
       };
     });

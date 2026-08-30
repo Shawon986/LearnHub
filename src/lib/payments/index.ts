@@ -21,7 +21,7 @@ export function availablePaymentMethods(): { key: string; label: string; dev: bo
     NAGAD: "Nagad",
     ROCKET: "Rocket",
     STRIPE: "Stripe (international cards)",
-    DEV: "Sandbox (development only)",
+    DEV: "Sandbox (test payments)",
   };
   return enabledPaymentProviders()
     .filter((p) => REGISTRY[p])
