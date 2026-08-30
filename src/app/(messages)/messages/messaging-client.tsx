@@ -17,6 +17,7 @@ import {
   startConversationWithAdmin,
 } from "@/lib/actions/messages";
 import { uploadChatImage } from "@/lib/actions/uploads";
+import { useRealtimeStream } from "@/lib/realtime/provider";
 import type { AdminOversightEntry, MessageDirectoryData } from "@/lib/messaging/directory";
 
 export interface ConversationData {
@@ -130,7 +131,7 @@ export function MessagingClient({
     initialThread.partnerLastReadAt,
   );
   const [pendingAttachment, setPendingAttachment] = useState<{ file: File; url: string } | null>(null);
-  const [streamState, setStreamState] = useState<"connecting" | "live" | "reconnecting">("connecting");
+  
   const seenIds = useRef<Set<string>>(new Set());
   const [attachmentUploading, setAttachmentUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState<{ src: string; alt: string } | null>(null);
@@ -153,9 +154,11 @@ export function MessagingClient({
   }, [activeId]);
 
   /* ---- Realtime stream ---- */
+  const handleRef = useRef<(raw: string) => void>(() => {});
+  const { connection: streamConnection } = useRealtimeStream((raw) => {
+    void handleRef.current(raw);
+  });
   useEffect(() => {
-    const es = new EventSource("/api/messages/stream");
-
     const handle = (raw: string) => {
       let event: BusMessage & { type?: string; userId?: string; online?: boolean; at?: string };
       try {
@@ -230,19 +233,19 @@ export function MessagingClient({
       }
     };
 
-    es.onmessage = (m) => {
-      if (m.data.startsWith(":")) return;
-      handle(m.data);
-    };
-    es.onopen = () => {
-      setStreamState("live");
-      // After a reconnect, refetch so nothing published during the gap is lost.
-      if (streamState !== "connecting") router.refresh();
-    };
-    es.onerror = () => setStreamState("reconnecting");
-    return () => es.close();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    handleRef.current = handle;
+     
   }, [activeId, currentUserId]);
+
+  const prevConn = useRef(streamConnection);
+  useEffect(() => {
+    if (prevConn.current === "reconnecting" && streamConnection === "live") {
+      // Reconnected → refetch canonical thread/conversations (reconciliation).
+      router.refresh();
+    }
+    prevConn.current = streamConnection;
+  }, [streamConnection, router]);
+
 
   // Scroll to bottom on new messages.
   useEffect(() => {

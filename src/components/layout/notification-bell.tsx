@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, BellRing, CheckCheck } from "lucide-react";
 import { Dropdown, DropdownSeparator } from "@/components/ui/dropdown";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/components/i18n/language-provider";
+import { useRealtimeStream } from "@/lib/realtime/provider";
 import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -92,39 +93,37 @@ export function NotificationBell({
     return () => window.removeEventListener("learnhub-unread", handler);
   }, []);
 
-  // Real-time delivery: notifications arrive over the personal SSE
-  // channel (the same stream the messaging inbox uses).
+  // Real-time delivery: notifications arrive over the SHARED SSE stream
+  // (one connection per app — the messaging inbox uses the same one).
+  const { connection } = useRealtimeStream((raw) => {
+    let event: { type?: string } & Partial<NotificationItem>;
+    try {
+      event = JSON.parse(raw);
+    } catch {
+      return;
+    }
+    if (event.type === "notification") {
+      // Idempotency: ignore an event we've already rendered (reconnects).
+      setItems((prev) => {
+        const list = prev ?? [];
+        if (list.some((i) => i.id === (event as NotificationItem).id)) return list;
+        return [{ ...(event as NotificationItem) }, ...list.slice(0, 49)];
+      });
+      setUnread((u) => {
+        const next = u + 1;
+        publishUnread(next);
+        return next;
+      });
+    }
+  });
+  const prevConn = useRef(connection);
   useEffect(() => {
-    const es = new EventSource("/api/messages/stream");
-    es.onmessage = (m) => {
-      if (m.data.startsWith(":")) return;
-      let event: { type?: string } & Partial<NotificationItem>;
-      try {
-        event = JSON.parse(m.data);
-      } catch {
-        return;
-      }
-      if (event.type === "notification") {
-        // Idempotency: ignore an event we've already rendered (reconnects).
-        setItems((prev) => {
-          const list = prev ?? [];
-          if (list.some((i) => i.id === (event as NotificationItem).id)) return list;
-          return [{ ...(event as NotificationItem) }, ...list.slice(0, 49)];
-        });
-        setUnread((u) => {
-          const next = u + 1;
-          publishUnread(next);
-          return next;
-        });
-      }
-    };
-    es.onopen = () => {
-      // After a reconnect, refetch so nothing published during the gap
-      // is missed.
+    // Reconnected → refetch canonical state (reconciliation).
+    if (prevConn.current === "reconnecting" && connection === "live") {
       load().catch(() => {});
-    };
-    return () => es.close();
-  }, [load]);
+    }
+    prevConn.current = connection;
+  }, [connection, load]);
 
   async function markAll() {
     setUnread(0);
