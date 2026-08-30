@@ -47,13 +47,13 @@ export async function createNotification(input: CreateNotificationInput) {
   return notification;
 }
 
-/** Notify many users at once (announcements). */
+/** Notify many users at once (announcements, admin fan-out). */
 export async function createNotificationMany(
   userIds: string[],
   input: Omit<CreateNotificationInput, "userId">,
 ) {
   if (userIds.length === 0) return;
-  return db.notification.createMany({
+  const result = await db.notification.createMany({
     data: userIds.map((userId) => ({
       userId,
       type: input.type,
@@ -62,6 +62,31 @@ export async function createNotificationMany(
       data: (input.data ?? {}) as object,
     })),
   });
+  // Realtime: push the event to every recipient's open bell/stream.
+  for (const userId of userIds) {
+    messagingBus.publishTo(userId, {
+      type: "notification",
+      id: `fanout-${Date.now()}-${userId}`,
+      title: input.title,
+      body: input.body ?? null,
+      data: (input.data ?? {}) as Record<string, unknown>,
+      createdAt: new Date().toISOString(),
+    });
+  }
+  return result;
+}
+
+/** Notify every admin/mod/support account — platform activity feed. */
+export async function notifyAdmins(input: Omit<CreateNotificationInput, "userId">): Promise<void> {
+  try {
+    const admins = await db.user.findMany({
+      where: { role: { in: ["ADMIN", "MODERATOR", "SUPPORT", "SUPER_ADMIN"] }, status: "ACTIVE" },
+      select: { id: true },
+    });
+    await createNotificationMany(admins.map((a) => a.id), input);
+  } catch (e) {
+    console.error("[notifications] admin fan-out failed:", e);
+  }
 }
 
 /**

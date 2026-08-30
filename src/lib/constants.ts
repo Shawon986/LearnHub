@@ -142,6 +142,10 @@ export const NOTIFICATION_TYPES = [
   "CERTIFICATE_ISSUED",
   "ADMIN_ANNOUNCEMENT",
   "SYSTEM",
+  "TEACHER_APPLICATION",
+  "COURSE_SUBMITTED",
+  "WITHDRAWAL_REQUESTED",
+  "NEW_DISPUTE",
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 

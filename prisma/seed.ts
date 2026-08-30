@@ -1416,6 +1416,46 @@ async function main() {
     msgIdx++;
   }
 
+  // A few more teacher ↔ student conversations so the admin oversight
+  // list in the messaging inbox has real pairs to show.
+  const extraConvos: { teacherKey: string; studentKey: string; lines: [string, string][] }[] = [
+    {
+      teacherKey: "tanvir",
+      studentKey: "shawon",
+      lines: [
+        ["student", "Sir, is the ML course suitable for someone with no statistics background?"],
+        ["teacher", "Yes — we start with the math basics in module one. Just follow the sequence."],
+      ],
+    },
+    {
+      teacherKey: "nusrat",
+      studentKey: "mim",
+      lines: [
+        ["student", "Apu, can I submit the Figma assignment by Sunday?"],
+        ["teacher", "Sure, Sunday night works. Ping me if you get stuck on auto-layout."],
+        ["student", "Thank you! 🙏"],
+      ],
+    },
+  ];
+  for (const extra of extraConvos) {
+    const conv = await db.conversation.create({ data: { type: "DIRECT" } });
+    await db.conversationParticipant.create({ data: { conversationId: conv.id, userId: students[extra.studentKey].id } });
+    await db.conversationParticipant.create({ data: { conversationId: conv.id, userId: teachers[extra.teacherKey].id } });
+    let i = 0;
+    for (const [who, content] of extra.lines) {
+      await db.message.create({
+        data: {
+          conversationId: conv.id,
+          senderId: who === "student" ? students[extra.studentKey].id : teachers[extra.teacherKey].id,
+          type: "TEXT",
+          content,
+          createdAt: hoursFromNow(-40 + i * 3),
+        },
+      });
+      i++;
+    }
+  }
+
   // ---------------- Wishlist (Phase 4) ----------------
   const webCourse = courses.web.id;
   await db.wishlistItem.create({

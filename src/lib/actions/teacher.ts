@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/session";
 import { logAudit } from "@/lib/audit";
-import { createNotification, createNotificationMany, emailIfEnabled } from "@/lib/notifications";
+import { createNotification, createNotificationMany, notifyAdmins, emailIfEnabled } from "@/lib/notifications";
 import { getWithdrawalMinimum } from "@/lib/settings";
 import { slugify } from "@/lib/utils";
 import {
@@ -487,6 +487,12 @@ export async function requestWithdrawal(input: {
         balanceAfter: wallet.availableBalance - data.amount,
       },
     });
+    await notifyAdmins({
+      type: "WITHDRAWAL_REQUESTED",
+      title: "New withdrawal request",
+      body: `${user.name} requested ৳${data.amount.toLocaleString()} via ${data.method}.`,
+      data: { withdrawalId: withdrawal.id },
+    });
     await logAudit({
       actorId: user.id,
       actorEmail: user.email,
@@ -541,13 +547,9 @@ export async function createCourse(input: {
       },
     });
 
-    const admins = await db.user.findMany({
-      where: { role: { in: ["ADMIN", "SUPER_ADMIN"] } },
-      select: { id: true },
-    });
-    await createNotificationMany(admins.map((a) => a.id), {
-      type: "SYSTEM",
-      title: "Course submitted for review",
+    await notifyAdmins({
+      type: "COURSE_SUBMITTED",
+      title: "New course submitted for review",
       body: `"${data.title}" by ${user.name} is waiting for approval.`,
       data: { courseId: course.id },
     });

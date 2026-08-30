@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAdmin, requireRole } from "@/lib/auth/session";
 import { logAudit } from "@/lib/audit";
-import { createNotification, createNotificationMany } from "@/lib/notifications";
+import { createNotification, notifyAdmins } from "@/lib/notifications";
 import { refundPayment } from "@/lib/payments/engine";
 import { z } from "zod";
 import { actionError, type ActionResult } from "@/lib/actions/shared";
@@ -67,12 +67,8 @@ export async function openDispute(input: {
       },
     });
 
-    const admins = await db.user.findMany({
-      where: { role: { in: ["ADMIN", "SUPER_ADMIN"] } },
-      select: { id: true },
-    });
-    await createNotificationMany(admins.map((a) => a.id), {
-      type: "SYSTEM",
+    await notifyAdmins({
+      type: "NEW_DISPUTE",
       title: "New dispute opened ⚖️",
       body: `${user.name} opened a dispute: ${data.reason}.`,
       data: { disputeId: dispute.id },

@@ -7,6 +7,7 @@ import { sendVerificationEmail } from "@/lib/email";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { logAudit } from "@/lib/audit";
 import { db } from "@/lib/db";
+import { notifyAdmins } from "@/lib/notifications";
 
 export const POST = apiHandler(async (req) => {
   const ip = clientIp(req);
@@ -54,6 +55,21 @@ export const POST = apiHandler(async (req) => {
 
   if (isTeacher) {
     await db.teacherWallet.create({ data: { teacherId: user.id } });
+    // Contact details + recent education provided at sign-up (shown to admins).
+    const details = input.teacherDetails ?? {};
+    if (details.phone) {
+      await db.user.update({ where: { id: user.id }, data: { phone: details.phone } });
+    }
+    if (details.institution && details.degree) {
+      await db.teacherEducation.create({
+        data: {
+          teacherId: user.id,
+          institution: details.institution,
+          degree: details.degree,
+          startYear: new Date().getFullYear(),
+        },
+      });
+    }
     // Teacher accounts start locked — an admin must approve the
     // verification documents before the account can sign in.
     const docs = input.documents ?? [];
@@ -75,6 +91,13 @@ export const POST = apiHandler(async (req) => {
         })),
       });
     }
+    // Surface the application to every admin (bell + verification badge).
+    await notifyAdmins({
+      type: "TEACHER_APPLICATION",
+      title: "New teacher application",
+      body: `${user.name} applied as a teacher and is waiting for verification.`,
+      data: { teacherId: user.id },
+    });
   }
   if (referrerId) {
     await db.referral.create({

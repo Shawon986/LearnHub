@@ -17,7 +17,7 @@ interface NotificationItem {
   type: string;
   title: string;
   body: string | null;
-  data: { checkoutPath?: string; conversationId?: string; disputeId?: string; liveClassId?: string; courseId?: string } | null;
+  data: { checkoutPath?: string; conversationId?: string; disputeId?: string; liveClassId?: string; courseId?: string; bookingId?: string; withdrawalId?: string; paymentId?: string; teacherId?: string } | null;
   read: boolean;
   createdAt: string;
 }
@@ -31,6 +31,10 @@ function linkFor(item: NotificationItem, role?: string): string | null {
   if (item.data?.disputeId) return isAdmin ? "/admin/disputes" : "/dashboard/disputes";
   if (item.data?.liveClassId) return isAdmin ? "/admin" : "/dashboard/live";
   if (item.data?.courseId) return isAdmin ? "/admin/courses" : "/dashboard/courses";
+  if (item.data?.bookingId) return isAdmin ? "/admin/bookings" : item.data?.checkoutPath ? item.data.checkoutPath : "/dashboard/bookings";
+  if (item.data?.withdrawalId) return isAdmin ? "/admin/withdrawals" : "/teacher/earnings";
+  if (item.data?.paymentId) return isAdmin ? "/admin/payments" : "/dashboard/payments";
+  if (item.data?.teacherId) return isAdmin ? "/admin/verification" : null;
   return null;
 }
 

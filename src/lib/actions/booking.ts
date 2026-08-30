@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/session";
 import { logAudit } from "@/lib/audit";
-import { createNotification } from "@/lib/notifications";
+import { createNotification, notifyAdmins } from "@/lib/notifications";
 import { isBookingWindowValid } from "@/lib/availability";
 import { z } from "zod";
 import { actionError, type ActionResult } from "@/lib/actions/shared";
@@ -83,6 +83,12 @@ export async function requestBooking(input: {
       type: "NEW_BOOKING",
       title: "New booking request 📅",
       body: `${user.name} requested ${data.durationMinutes} min on ${startsAt.toDateString()} (৳${price.toLocaleString()}).`,
+      data: { bookingId: booking.id },
+    });
+    await notifyAdmins({
+      type: "NEW_BOOKING",
+      title: "New booking request",
+      body: `${user.name} → ${teacher.name}: ${data.durationMinutes} min (৳${price.toLocaleString()}).`,
       data: { bookingId: booking.id },
     });
     await createNotification({

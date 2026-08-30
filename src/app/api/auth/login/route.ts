@@ -9,7 +9,7 @@ import { db } from "@/lib/db";
 
 export const POST = apiHandler(async (req) => {
   const ip = clientIp(req);
-  const rl = rateLimit(`login:${ip}`, { limit: 10, windowMs: 15 * 60_000 });
+  const rl = rateLimit(`login:${ip}`, { limit: 30, windowMs: 10 * 60_000 });
   if (!rl.ok) throw unauthorized("Too many login attempts. Please try again later.");
 
   const input = await parseJson(req, loginSchema);
@@ -21,7 +21,7 @@ export const POST = apiHandler(async (req) => {
 
   const email = input.email.toLowerCase().trim();
 
-  const rlEmail = rateLimit(`login-email:${email}`, { limit: 5, windowMs: 15 * 60_000 });
+  const rlEmail = rateLimit(`login-email:${email}`, { limit: 10, windowMs: 10 * 60_000 });
   if (!rlEmail.ok) throw unauthorized("Too many attempts for this account. Try again later.");
 
   const user = await db.user.findUnique({ where: { email } });
@@ -46,8 +46,12 @@ export const POST = apiHandler(async (req) => {
           "Your teacher account is under review. You can sign in once an admin approves your verification.",
         );
       }
+      // Pass the admin's message through so the teacher knows what to fix.
+      const reason = verification.rejectionReason
+        ? ` Reason: ${verification.rejectionReason}`
+        : "";
       throw unauthorized(
-        `Your teacher verification was ${verification.status.toLowerCase().replace("_", " ")}. Contact support for help.`,
+        `Your teacher verification was ${verification.status.toLowerCase().replace("_", " ")}.${reason}`,
       );
     }
   }

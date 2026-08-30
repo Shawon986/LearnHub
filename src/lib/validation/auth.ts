@@ -16,6 +16,14 @@ export const registerSchema = z.object({
   }),
   captchaId: z.string().optional(),
   captchaAnswer: z.coerce.string().optional(),
+  // Extra fields teachers provide at registration (shown to admins).
+  teacherDetails: z
+    .object({
+      phone: z.string().trim().min(6).max(20).optional(),
+      institution: z.string().trim().min(2).max(120).optional(),
+      degree: z.string().trim().min(2).max(120).optional(),
+    })
+    .optional(),
   // Teacher verification documents uploaded BEFORE the account exists.
   documents: z
     .array(

@@ -62,6 +62,14 @@ export function RegisterForm({ initialReferralCode }: { initialReferralCode?: st
           role,
           referralCode: form.get("referralCode") || undefined,
           documents: role === "TEACHER" ? documents : undefined,
+          teacherDetails:
+            role === "TEACHER"
+              ? {
+                  phone: String(form.get("teacherPhone") ?? ""),
+                  institution: String(form.get("teacherInstitution") ?? ""),
+                  degree: String(form.get("teacherDegree") ?? ""),
+                }
+              : undefined,
           captchaId: form.get("captchaId"),
           captchaAnswer: form.get("captchaAnswer"),
         }),
@@ -94,6 +102,15 @@ export function RegisterForm({ initialReferralCode }: { initialReferralCode?: st
             Verify your email to activate your account.
           </p>
         </div>
+        {role === "TEACHER" && (
+          <div className="rounded-xl border border-gold/40 bg-gold-soft p-4 text-left">
+            <p className="text-[13px] font-bold text-foreground">⏳ Your teacher account is under review</p>
+            <p className="mt-1 text-[12px] leading-relaxed text-muted-fg">
+              Our team is checking your documents. You&apos;ll be able to sign in as soon as an
+              admin approves your verification.
+            </p>
+          </div>
+        )}
         {done.devVerificationUrl && (
           <div className="rounded-xl border border-gold/30 bg-gold-soft p-3.5 text-left">
             <p className="text-xs font-bold uppercase tracking-wide text-gold">Development mode</p>
@@ -170,6 +187,22 @@ export function RegisterForm({ initialReferralCode }: { initialReferralCode?: st
           defaultValue={initialReferralCode}
           autoCapitalize="characters"
         />
+        {role === "TEACHER" && (
+          <div className="space-y-3 rounded-xl border border-line bg-card-2/40 p-4">
+            <div>
+              <p className="text-[13px] font-bold text-foreground">Teacher details</p>
+              <p className="text-[11px] leading-relaxed text-muted-fg">
+                Your contact info and recent education — reviewed by the admin team.
+              </p>
+            </div>
+            <Input label="Phone number" name="teacherPhone" placeholder="+8801XXXXXXXXX" autoComplete="tel" required />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Input label="Recent institution" name="teacherInstitution" placeholder="e.g. University of Dhaka" required />
+              <Input label="Degree" name="teacherDegree" placeholder="e.g. BSc in CSE" required />
+            </div>
+          </div>
+        )}
+
         {role === "TEACHER" && (
           <div className="space-y-3 rounded-xl border border-line bg-card-2/40 p-4">
             <div>

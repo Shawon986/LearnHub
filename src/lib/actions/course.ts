@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth/session";
 import { logAudit } from "@/lib/audit";
-import { createNotificationMany } from "@/lib/notifications";
+import { notifyAdmins } from "@/lib/notifications";
 import { splitList } from "@/lib/validation/course";
 import {
   assignmentSchema,
@@ -125,14 +125,11 @@ export async function submitCourseForReview(courseId: string): Promise<ActionRes
 
     await db.course.update({ where: { id: courseId }, data: { status: "REVIEW" } });
 
-    const admins = await db.user.findMany({
-      where: { role: { in: ["ADMIN", "SUPER_ADMIN"] } },
-      select: { id: true },
-    });
-    await createNotificationMany(admins.map((a) => a.id), {
-      type: "SYSTEM",
-      title: "Course submitted for review",
+    await notifyAdmins({
+      type: "COURSE_SUBMITTED",
+      title: "New course submitted for review",
       body: `"${course.title}" by ${user.name} is waiting for approval.`,
+      data: { courseId },
     });
     await logAudit({
       actorId: user.id,

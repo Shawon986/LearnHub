@@ -58,6 +58,13 @@ export default async function ConversationPage({
     otherAvatarUrl: other?.user.avatarUrl ?? null,
     otherRole: other?.user.role ?? "",
     partnerLastReadAt: other?.lastReadAt?.toISOString() ?? null,
+    // Admin oversight: label every message with its sender's name + role.
+    senderNames: isOversight
+      ? Object.fromEntries(conversation.participants.map((p) => [p.user.id, p.user.name]))
+      : undefined,
+    senderRoles: isOversight
+      ? Object.fromEntries(conversation.participants.map((p) => [p.user.id, p.user.role]))
+      : undefined,
     messages: conversation.messages.map((m) => ({
       id: m.id,
       senderId: m.senderId,

@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { safeJsonParse } from "@/lib/utils";
 import { TeacherProfileEditor } from "./teacher-profile-editor";
+import { ProfilePreview } from "./profile-preview";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ShieldCheck } from "lucide-react";
@@ -31,21 +32,25 @@ export default async function TeacherProfilePage() {
             This is what students see when they discover you.
           </p>
         </div>
-        <Badge
-          variant={profile?.verified ? "accent" : verification?.status === "PENDING" ? "gold" : "neutral"}
-          size="md"
-        >
-          <ShieldCheck className="h-3.5 w-3.5" />
-          {profile?.verified
-            ? "Verified"
-            : verification?.status === "PENDING"
-              ? "Verification pending"
-              : verification?.status === "REJECTED"
-                ? "Verification rejected"
-                : verification?.status === "CHANGES_REQUESTED"
-                  ? "Changes requested"
-                  : "Not verified"}
-        </Badge>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge
+            variant={profile?.verified ? "accent" : verification?.status === "PENDING" ? "gold" : "neutral"}
+            size="md"
+          >
+            <ShieldCheck className="h-3.5 w-3.5" />
+            {profile?.verified
+              ? "Verified"
+              : verification?.status === "PENDING"
+                ? "Verification pending"
+                : verification?.status === "REJECTED"
+                  ? "Verification rejected"
+                  : verification?.status === "CHANGES_REQUESTED"
+                    ? "Changes requested"
+                    : "Not verified"}
+          </Badge>
+          {/* One-click preview — opens the public profile in a modal. */}
+          <ProfilePreview teacherId={user.id} />
+        </div>
       </div>
 
       <TeacherProfileEditor

@@ -33,9 +33,18 @@ export default async function VerificationPage() {
 
   const applications = await db.teacherVerification.findMany({
     include: {
-      teacher: { include: { teacherProfile: true, teacherEducation: true, teacherExperience: true } },
+      teacher: {
+        include: {
+          teacherProfile: true,
+          teacherEducation: true,
+          teacherExperience: true,
+          teacherSkills: true,
+          teacherDocuments: { orderBy: { createdAt: "asc" } },
+        },
+      },
     },
-    orderBy: [{ status: "asc" }, { submittedAt: "asc" }],
+    // Newest applications first — the queue never buries fresh requests.
+    orderBy: { submittedAt: "desc" },
   });
 
   const pending = applications.filter((a) => a.status === "PENDING");
@@ -72,6 +81,63 @@ export default async function VerificationPage() {
                       {app.teacher.teacherProfile?.headline ?? app.teacher.email}
                     </p>
 
+                    {/* Full applicant details for review */}
+                    <div className="mt-3 grid gap-3 rounded-xl border border-line bg-card-2/40 p-3.5 sm:grid-cols-2">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-extrabold uppercase tracking-wide text-faint-fg">Contact</p>
+                        <p className="truncate text-[12px] font-semibold text-foreground">
+                          ✉️ {app.teacher.email}
+                        </p>
+                        <p className="truncate text-[12px] text-muted-fg">
+                          📞 {app.teacher.phone ?? "No phone number"}
+                        </p>
+                        {app.teacher.teacherProfile?.location && (
+                          <p className="truncate text-[12px] text-muted-fg">
+                            📍 {app.teacher.teacherProfile.location}
+                          </p>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-extrabold uppercase tracking-wide text-faint-fg">Skills</p>
+                        <p className="text-[12px] leading-relaxed text-muted-fg">
+                          {app.teacher.teacherSkills.length > 0
+                            ? app.teacher.teacherSkills.map((s) => s.name).join(", ")
+                            : "—"}
+                        </p>
+                      </div>
+                      {app.teacher.teacherEducation.length > 0 && (
+                        <div className="min-w-0 sm:col-span-2">
+                          <p className="text-[10px] font-extrabold uppercase tracking-wide text-faint-fg">Education</p>
+                          <ul className="mt-0.5 space-y-1">
+                            {app.teacher.teacherEducation.map((e) => (
+                              <li key={e.id} className="text-[12px] text-muted-fg">
+                                🎓 {e.degree}{e.fieldOfStudy ? ` in ${e.fieldOfStudy}` : ""} — {e.institution}{" "}
+                                ({e.startYear}–{e.endYear ?? "Present"})
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {app.teacher.teacherExperience.length > 0 && (
+                        <div className="min-w-0 sm:col-span-2">
+                          <p className="text-[10px] font-extrabold uppercase tracking-wide text-faint-fg">Experience</p>
+                          <ul className="mt-0.5 space-y-1">
+                            {app.teacher.teacherExperience.map((e) => (
+                              <li key={e.id} className="text-[12px] text-muted-fg">
+                                💼 {e.title} at {e.company} ({e.current ? "current" : e.startDate.toISOString().slice(0, 4)})
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {app.teacher.bio && (
+                        <div className="min-w-0 sm:col-span-2">
+                          <p className="text-[10px] font-extrabold uppercase tracking-wide text-faint-fg">Bio</p>
+                          <p className="mt-0.5 text-[12px] leading-relaxed text-muted-fg">{app.teacher.bio}</p>
+                        </div>
+                      )}
+                    </div>
+
                     <div className="mt-3 flex flex-wrap items-center gap-2 text-[12px] text-muted-fg">
                       <Badge variant="neutral" size="sm">
                         {app.teacher.teacherEducation.length} education
@@ -85,15 +151,24 @@ export default async function VerificationPage() {
                       <span>Submitted {formatDate(app.submittedAt)}</span>
                     </div>
 
-                    {/* Documents */}
+                    {/* Documents — clickable so the admin can review each file */}
                     <ul className="mt-3 flex flex-wrap gap-2">
+                      {docs.length === 0 && (
+                        <li className="text-[12px] font-semibold text-faint-fg">
+                          No documents submitted yet.
+                        </li>
+                      )}
                       {docs.map((d, i) => (
-                        <li
-                          key={i}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-card-2 px-2.5 py-1.5 text-[11px] font-semibold text-muted-fg"
-                        >
-                          <FileText className="h-3 w-3" />
-                          {d.title}
+                        <li key={i}>
+                          <a
+                            href={`/api/uploads/${String(d.url).replace(/^\/+/, "")}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-card-2 px-2.5 py-1.5 text-[11px] font-semibold text-muted-fg transition-colors hover:border-brand hover:text-brand-fg"
+                          >
+                            <FileText className="h-3 w-3" />
+                            {d.title} ↗
+                          </a>
                         </li>
                       ))}
                     </ul>

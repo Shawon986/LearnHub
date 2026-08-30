@@ -17,7 +17,7 @@ import {
   startConversationWithAdmin,
 } from "@/lib/actions/messages";
 import { uploadChatImage } from "@/lib/actions/uploads";
-import type { MessageDirectoryData } from "@/lib/messaging/directory";
+import type { AdminOversightEntry, MessageDirectoryData } from "@/lib/messaging/directory";
 
 export interface ConversationData {
   id: string;
@@ -39,6 +39,9 @@ export interface ThreadData {
   otherAvatarUrl: string | null;
   otherRole: string;
   partnerLastReadAt: string | null;
+  /** Sender display names (admin oversight threads show who wrote what). */
+  senderNames?: Record<string, string>;
+  senderRoles?: Record<string, string>;
   messages: {
     id: string;
     senderId: string;
@@ -105,7 +108,7 @@ export function MessagingClient({
   /** Contact directory: admins see teachers, everyone else gets support. */
   directory?: MessageDirectoryData | null;
   /** Admin oversight: every teacher ↔ student conversation on the platform. */
-  adminOversight?: { id: string; pairName: string; lastContent: string; lastAt: string }[];
+  adminOversight?: AdminOversightEntry[];
   /** True when an admin is viewing a conversation they're not part of. */
   readOnly?: boolean;
 }) {
@@ -464,8 +467,11 @@ export function MessagingClient({
                   >
                     <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-muted-fg" />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[12px] font-bold text-foreground">
-                        {c.pairName}
+                      <span className="block truncate text-[11px] font-bold text-accent">
+                        👩‍🏫 {c.teacherName}
+                      </span>
+                      <span className="block truncate text-[11px] font-bold text-brand-fg">
+                        🎓 {c.studentName}
                       </span>
                       <span className="block truncate text-[10px] text-faint-fg">
                         {timeAgo(c.lastAt)} · {c.lastContent}
@@ -612,6 +618,21 @@ export function MessagingClient({
                         ) : null}
                       </div>
                       <div className={cn("max-w-[75%] min-w-0", own && "text-right")}>
+                        {/* Admin oversight: label every message with its sender. */}
+                        {initialThread.senderNames && (
+                          <p
+                            className={cn(
+                              "mb-0.5 text-[10px] font-bold",
+                              initialThread.senderRoles?.[m.senderId] === "TEACHER"
+                                ? "text-accent"
+                                : "text-brand-fg",
+                            )}
+                          >
+                            {initialThread.senderNames[m.senderId] ?? "Unknown"}
+                            {" · "}
+                            {roleLabel(initialThread.senderRoles?.[m.senderId] ?? "")}
+                          </p>
+                        )}
                         <div
                           className={cn(
                             "inline-block rounded-2xl px-4 py-2.5 text-left text-[13px] leading-relaxed",

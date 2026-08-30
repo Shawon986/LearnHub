@@ -166,8 +166,12 @@ export async function matchTeachers(
       return { teacher: t, matched, softMatches, score };
     });
 
+    // Deterministic provider → re-running the same query would return the
+    // identical list. Shuffle + a tiny score jitter makes each run fresh
+    // (real ordering still dominates — jitter is always < 1 point).
     const matches: TeacherMatch[] = scored
       .filter((s) => s.matched.length > 0 || s.softMatches.length > 0)
+      .map((s) => ({ ...s, score: s.score + Math.random() * 0.9 }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 4)
       .map((s) => ({
@@ -236,7 +240,11 @@ export async function aiRecommendCourses(): Promise<
       include: { category: true },
     });
 
-    const scored = candidates.map((c) => {
+    const scored = candidates
+      .map((c) => ({ c, jitter: Math.random() }))
+      .sort((a, b) => a.jitter - b.jitter)
+      .map(({ c }) => c)
+      .map((c) => {
       let score = 0;
       let reason = "Popular with learners";
       if (topCategory && c.categoryId === topCategory) {
@@ -257,7 +265,9 @@ export async function aiRecommendCourses(): Promise<
       return { c, score, reason };
     });
 
+    // Tiny jitter (<1) keeps the real ranking but makes each Refresh vary.
     const recommendations = scored
+      .map((s) => ({ ...s, score: s.score + Math.random() * 0.9 }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 6)
       .map((s) => ({

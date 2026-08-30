@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { logAudit } from "@/lib/audit";
-import { createNotification, emailIfEnabled } from "@/lib/notifications";
+import { createNotification, emailIfEnabled, notifyAdmins } from "@/lib/notifications";
 import { formatBDT } from "@/lib/format";
 import { splitFor } from "@/lib/payments/commission";
 import { applyCouponAtCompletion } from "@/lib/coupons";
@@ -195,6 +195,12 @@ export async function handlePaymentSuccess(
     type: "PAYMENT_SUCCESS",
     title: "Payment successful ✅",
     body: `${formatBDT(payment.amount)} paid for "${courseTitle}".`,
+  });
+  await notifyAdmins({
+    type: "PAYMENT_SUCCESS",
+    title: "New payment received 💰",
+    body: `${formatBDT(payment.amount)} for "${courseTitle}" (${payment.purpose}).`,
+    data: { paymentId: payment.id },
   });
   // Transactional receipt (opt-in email).
   emailIfEnabled(

@@ -3,6 +3,9 @@ import { db } from "@/lib/db";
 export interface AdminOversightEntry {
   id: string;
   pairName: string;
+  /** Split names so the sidebar can show BOTH people on their own lines. */
+  teacherName: string;
+  studentName: string;
   lastContent: string;
   lastAt: string;
 }
@@ -26,12 +29,14 @@ export async function getAdminOversight(): Promise<AdminOversightEntry[]> {
     )
     .map((c) => {
       const last = c.messages[0] ?? null;
+      const teacher = c.participants.find((p) => p.user.role === "TEACHER");
+      const student = c.participants.find((p) => p.user.role === "STUDENT");
+      const pairName = [teacher?.user.name, student?.user.name].filter(Boolean).join(" ↔ ");
       return {
         id: c.id,
-        pairName: c.participants
-          .filter((p) => p.user.role === "STUDENT" || p.user.role === "TEACHER")
-          .map((p) => p.user.name)
-          .join(" ↔ "),
+        pairName: pairName || "Conversation",
+        teacherName: teacher?.user.name ?? "Teacher",
+        studentName: student?.user.name ?? "Student",
         lastContent: last ? (last.type === "IMAGE" ? "📷 Image" : last.content) : "No messages yet",
         lastAt: last?.createdAt.toISOString() ?? c.updatedAt.toISOString(),
       };
