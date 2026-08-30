@@ -10,6 +10,10 @@ const MAX_UPLOAD_BYTES = 500 * 1024 * 1024; // 500 MB
 // status is provider-driven (local = READY immediately).
 export const POST = apiHandler(async (req) => {
   const actor = await requireUser();
+  // Only teachers and admins may upload video assets (students get 403).
+  if (!["TEACHER", "ADMIN", "MODERATOR", "SUPPORT", "SUPER_ADMIN"].includes(actor.role)) {
+    return json({ error: "forbidden", message: "Teachers and admins only." }, { status: 403 });
+  }
 
   const form = await req.formData();
   const file = form.get("file");

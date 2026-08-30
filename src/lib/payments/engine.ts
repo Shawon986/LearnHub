@@ -265,10 +265,14 @@ async function maybeAwardReferral(payment: { id: string; studentId: string; amou
   if (payment.amount < min) return;
 
   await db.$transaction(async (tx) => {
-    await tx.referral.update({
-      where: { id: referral.id },
+    // Conditional claim: exactly one concurrent completion can flip the
+    // PENDING row — the other transaction's update matches 0 rows and
+    // gets no credit (prevents double rewards).
+    const claimed = await tx.referral.updateMany({
+      where: { id: referral.id, status: "PENDING" },
       data: { status: "REWARDED", rewardAmount: reward, rewardedAt: new Date() },
     });
+    if (claimed.count === 0) return;
     await tx.studentProfile.update({
       where: { userId: referral.referrerId },
       data: { referralBalance: { increment: reward } },

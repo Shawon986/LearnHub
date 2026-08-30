@@ -71,14 +71,9 @@ export class NagadProvider implements PaymentProvider {
     return { redirectUrl: data.callBackUrl, providerPaymentId: data.sensitiveData };
   }
 
-  async verifyWebhook(req: Request): Promise<VerifiedWebhookEvent> {
+  async verifyWebhook(_req: Request): Promise<VerifiedWebhookEvent> {
     this.assertConfigured();
-    let payload: { orderId?: string; issuerPaymentRefNo?: string; amount?: string };
-    try {
-      payload = (await req.json()) as typeof payload;
-    } catch {
-      throw new WebhookVerificationError("Invalid Nagad webhook body.");
-    }
+    void _req;
     // SECURITY: a payment may ONLY be marked COMPLETED by a verified,
     // signature-checked webhook. Signature validation requires the Nagad
     // public key integration — until then every webhook is rejected so an
@@ -88,8 +83,9 @@ export class NagadProvider implements PaymentProvider {
     );
   }
 
-  async verifyReturn(input: { providerPaymentId: string }): Promise<VerifiedWebhookEvent> {
+  async verifyReturn(_input: { providerPaymentId: string }): Promise<VerifiedWebhookEvent> {
     this.assertConfigured();
+    void _input;
     // SECURITY: never self-complete from the browser return — the return
     // page cannot prove payment. Verification requires the gateway status
     // query (not yet integrated); until then the order stays PENDING and

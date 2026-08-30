@@ -105,10 +105,12 @@ export function NotificationBell({
         return;
       }
       if (event.type === "notification") {
-        setItems((prev) => [
-          { ...(event as NotificationItem) },
-          ...(prev ?? []).slice(0, 49),
-        ]);
+        // Idempotency: ignore an event we've already rendered (reconnects).
+        setItems((prev) => {
+          const list = prev ?? [];
+          if (list.some((i) => i.id === (event as NotificationItem).id)) return list;
+          return [{ ...(event as NotificationItem) }, ...list.slice(0, 49)];
+        });
         setUnread((u) => {
           const next = u + 1;
           publishUnread(next);
@@ -116,8 +118,13 @@ export function NotificationBell({
         });
       }
     };
+    es.onopen = () => {
+      // After a reconnect, refetch so nothing published during the gap
+      // is missed.
+      load().catch(() => {});
+    };
     return () => es.close();
-  }, []);
+  }, [load]);
 
   async function markAll() {
     setUnread(0);

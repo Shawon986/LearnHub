@@ -194,7 +194,7 @@ export function signPlaybackToken(videoId: string, userId: string, ttlSeconds = 
 export function verifyPlaybackToken(
   videoId: string,
   token: string,
-  _expParam: string | null,
+  _expParam?: string | null, // eslint-disable-line @typescript-eslint/no-unused-vars
 ): { userId: string } | null {
   const parts = token.split(".");
   if (parts.length !== 4) return null;

@@ -130,6 +130,8 @@ export function MessagingClient({
     initialThread.partnerLastReadAt,
   );
   const [pendingAttachment, setPendingAttachment] = useState<{ file: File; url: string } | null>(null);
+  const [streamState, setStreamState] = useState<"connecting" | "live" | "reconnecting">("connecting");
+  const seenIds = useRef<Set<string>>(new Set());
   const [attachmentUploading, setAttachmentUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState<{ src: string; alt: string } | null>(null);
   // Two separate timers: one throttles outgoing typing events, the other
@@ -202,10 +204,14 @@ export function MessagingClient({
         return next;
       });
       if (msg.conversationId === activeId) {
+        // Idempotency: never append the same message twice (reconnect races).
+        if (seenIds.current.has(msg.id)) return;
+        seenIds.current.add(msg.id);
         setThreadMessages((prev) => {
           // Replace the optimistic row with the confirmed message.
           const withoutTemp =
             msg.senderId === currentUserId ? prev.filter((m) => !m.id.startsWith("local-")) : prev;
+          if (withoutTemp.some((m) => m.id === msg.id)) return withoutTemp;
           return [
             ...withoutTemp,
             {
@@ -228,7 +234,14 @@ export function MessagingClient({
       if (m.data.startsWith(":")) return;
       handle(m.data);
     };
+    es.onopen = () => {
+      setStreamState("live");
+      // After a reconnect, refetch so nothing published during the gap is lost.
+      if (streamState !== "connecting") router.refresh();
+    };
+    es.onerror = () => setStreamState("reconnecting");
     return () => es.close();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId, currentUserId]);
 
   // Scroll to bottom on new messages.
@@ -283,8 +296,10 @@ export function MessagingClient({
     setDraft("");
     if (textareaRef.current) textareaRef.current.style.height = "auto";
     // Optimistic render: the message appears instantly; the SSE echo
-    // replaces the temporary row with the confirmed one.
+    // replaces the temporary row with the confirmed one. The clientId makes
+    // the send idempotent server-side (retries never duplicate).
     const tempId = `local-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const clientId = crypto.randomUUID();
     setThreadMessages((prev) => [
       ...prev,
       {
@@ -297,7 +312,7 @@ export function MessagingClient({
       },
     ]);
     startTransition(async () => {
-      const result = await sendMessage(activeId, { content });
+      const result = await sendMessage(activeId, { content, clientId });
       if (!result.ok) {
         setThreadMessages((prev) => prev.filter((m) => m.id !== tempId));
         toast({ title: result.error ?? "Message not sent.", variant: "error" });

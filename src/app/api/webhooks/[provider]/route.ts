@@ -54,6 +54,9 @@ export const POST = apiHandler(async (req, ctx) => {
     const result = await handlePaymentSuccess(payment.id, event);
     if (!result.ok) {
       console.error(`[webhooks] completion failed for payment ${payment.id}`);
+      // Amount mismatches are final (ack so the gateway stops retrying);
+      // anything else is transient → 5xx so the gateway retries later.
+      return json({ received: true }, { status: result.mismatch ? 200 : 500 });
     }
   }
   return json({ ok: true });

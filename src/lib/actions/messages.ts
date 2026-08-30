@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth/session";
 import { messagingBus } from "@/lib/messaging/bus";
 import { createNotification } from "@/lib/notifications";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { actionError, type ActionResult } from "@/lib/actions/shared";
 
@@ -69,11 +70,12 @@ const messageSchema = z.object({
   content: z.string().trim().min(1).max(2000),
   attachmentUrl: z.string().max(300).optional().nullable(),
   messageType: z.enum(["TEXT", "IMAGE", "FILE"]).default("TEXT"),
+  clientId: z.string().min(8).max(64).optional(),
 });
 
 export async function sendMessage(
   conversationId: string,
-  input: { content: string; attachmentUrl?: string | null; messageType?: string },
+  input: { content: string; attachmentUrl?: string | null; messageType?: string; clientId?: string },
 ): Promise<ActionResult> {
   try {
     const user = await requireUser();
@@ -87,15 +89,35 @@ export async function sendMessage(
     });
     if (!participant) return actionError("You are not part of this conversation.");
 
-    const message = await db.message.create({
-      data: {
-        conversationId,
-        senderId: user.id,
-        type: data.messageType,
-        content: data.content,
-        attachmentUrl: data.attachmentUrl ?? null,
-      },
-    });
+    // Idempotent send: a client retry with the SAME clientId returns the
+    // already-persisted message instead of creating a duplicate.
+    let message;
+    if (data.clientId) {
+      const existing = await db.message.findUnique({
+        where: { senderId_clientId: { senderId: user.id, clientId: data.clientId } },
+      });
+      if (existing) {
+        return { ok: true };
+      }
+    }
+    try {
+      message = await db.message.create({
+        data: {
+          conversationId,
+          senderId: user.id,
+          clientId: data.clientId ?? null,
+          type: data.messageType,
+          content: data.content,
+          attachmentUrl: data.attachmentUrl ?? null,
+        },
+      });
+    } catch (e) {
+      // P2002 = duplicate clientId raced (double-tap / two devices).
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+        return { ok: true };
+      }
+      throw e;
+    }
     await db.conversation.update({ where: { id: conversationId }, data: { updatedAt: new Date() } });
     await db.conversationParticipant.update({
       where: { conversationId_userId: { conversationId, userId: user.id } },

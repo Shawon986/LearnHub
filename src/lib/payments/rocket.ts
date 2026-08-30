@@ -59,22 +59,18 @@ export class RocketProvider implements PaymentProvider {
     return { redirectUrl: data.redirect_url, providerPaymentId: data.transaction_id ?? null };
   }
 
-  async verifyWebhook(req: Request): Promise<VerifiedWebhookEvent> {
+  async verifyWebhook(_req: Request): Promise<VerifiedWebhookEvent> {
     this.assertConfigured();
-    let payload: { merchant_tran_id?: string; transaction_id?: string; amount?: string; status?: string };
-    try {
-      payload = (await req.json()) as typeof payload;
-    } catch {
-      throw new WebhookVerificationError("Invalid Rocket webhook body.");
-    }
+    void _req;
     // SECURITY: unsigned webhook bodies must never complete a payment.
     throw new WebhookVerificationError(
       "Rocket webhook signature verification is not configured — refusing to trust this webhook.",
     );
   }
 
-  async verifyReturn(input: { providerPaymentId: string }): Promise<VerifiedWebhookEvent> {
+  async verifyReturn(_input: { providerPaymentId: string }): Promise<VerifiedWebhookEvent> {
     this.assertConfigured();
+    void _input;
     // SECURITY: never self-complete from the browser return.
     throw new WebhookVerificationError(
       "Rocket return verification requires a gateway status query — payment stays pending until the webhook confirms it.",

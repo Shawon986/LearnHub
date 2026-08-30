@@ -723,6 +723,7 @@ model Message {
   id             String   @id @default(cuid())
   conversationId String
   senderId       String
+  clientId       String? // client-generated id — idempotent send dedupe
   type           String   @default("TEXT") // TEXT|IMAGE|FILE|SYSTEM
   content        String
   attachmentUrl  String?
@@ -732,6 +733,7 @@ model Message {
   sender       User         @relation(fields: [senderId], references: [id])
 
   @@index([conversationId, createdAt])
+  @@unique([senderId, clientId])
 }
 
 // ============================== REVIEWS ==============================

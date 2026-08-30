@@ -40,7 +40,7 @@ export async function sendDueBookingReminders(): Promise<number> {
         data: { liveClassId: live.id },
       });
     }
-    await db.liveClass.update({ where: { id: live.id }, data: { remindedAt: now } });
+    await db.liveClass.updateMany({ where: { id: live.id, remindedAt: null }, data: { remindedAt: now } });
   }
 
   for (const booking of due) {
@@ -58,8 +58,8 @@ export async function sendDueBookingReminders(): Promise<number> {
       body: `Your session with ${booking.student.name} starts in under 24 hours.`,
       data: { bookingId: booking.id },
     });
-    await db.booking.update({
-      where: { id: booking.id },
+    await db.booking.updateMany({
+      where: { id: booking.id, remindedAt: null },
       data: { remindedAt: now },
     });
   }
