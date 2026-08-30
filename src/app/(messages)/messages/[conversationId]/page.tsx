@@ -65,6 +65,11 @@ export default async function ConversationPage({
     senderRoles: isOversight
       ? Object.fromEntries(conversation.participants.map((p) => [p.user.id, p.user.role]))
       : undefined,
+    senderAvatars: isOversight
+      ? Object.fromEntries(
+          conversation.participants.map((p) => [p.user.id, p.user.avatarUrl ?? ""]),
+        )
+      : undefined,
     messages: conversation.messages.map((m) => ({
       id: m.id,
       senderId: m.senderId,

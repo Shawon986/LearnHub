@@ -42,8 +42,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function TeacherProfilePage({ params }: PageProps) {
+export default async function TeacherProfilePage({ params, searchParams }: PageProps & {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { id } = await params;
+  const raw = await searchParams;
+  // ?preview=1 → pure view-only mode (teacher preview modal): no wishlist,
+  // no review form, nothing interactive.
+  const isPreview = raw.preview === "1";
   const teacher = await db.user.findFirst({
     where: { id, role: "TEACHER" },
     include: {
@@ -197,15 +203,17 @@ export default async function TeacherProfilePage({ params }: PageProps) {
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <WishlistButton
-                type="TEACHER"
-                targetId={id}
-                initialSaved={saved}
-                label={saved ? "Saved" : "Save"}
-                className="border border-white/25 bg-white/15 text-white hover:bg-white/25"
-              />
-            </div>
+            {!isPreview && (
+              <div className="flex items-center gap-2">
+                <WishlistButton
+                  type="TEACHER"
+                  targetId={id}
+                  initialSaved={saved}
+                  label={saved ? "Saved" : "Save"}
+                  className="border border-white/25 bg-white/15 text-white hover:bg-white/25"
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -392,23 +400,25 @@ export default async function TeacherProfilePage({ params }: PageProps) {
               )}
             </div>
 
-            {/* Review form */}
-            <div className="mt-6">
-              <ReviewForm
-                targetType="TEACHER"
-                targetId={id}
-                targetName={teacher.name}
-                existing={myReview}
-                canReview={canReview}
-                ineligibleReason={
-                  currentUser?.id === id
-                    ? "You cannot review your own profile."
-                    : currentUser
-                      ? "Book a 1-on-1 session or enroll in one of this teacher's courses to leave a review (booking arrives in Phase 5)."
-                      : undefined
-                }
-              />
-            </div>
+            {/* Review form — hidden in preview mode (view-only). */}
+            {!isPreview && (
+              <div className="mt-6">
+                <ReviewForm
+                  targetType="TEACHER"
+                  targetId={id}
+                  targetName={teacher.name}
+                  existing={myReview}
+                  canReview={canReview}
+                  ineligibleReason={
+                    currentUser?.id === id
+                      ? "You cannot review your own profile."
+                      : currentUser
+                        ? "Book a 1-on-1 session or enroll in one of this teacher's courses to leave a review (booking arrives in Phase 5)."
+                        : undefined
+                  }
+                />
+              </div>
+            )}
           </section>
         </div>
 

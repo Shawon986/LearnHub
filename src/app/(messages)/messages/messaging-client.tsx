@@ -42,6 +42,8 @@ export interface ThreadData {
   /** Sender display names (admin oversight threads show who wrote what). */
   senderNames?: Record<string, string>;
   senderRoles?: Record<string, string>;
+  /** Sender avatars — each message shows its author's own photo. */
+  senderAvatars?: Record<string, string>;
   messages: {
     id: string;
     senderId: string;
@@ -614,7 +616,13 @@ export function MessagingClient({
                     <div className={cn("flex gap-2.5", own ? "flex-row-reverse" : "", firstOfGroup && !newDay ? "mt-2.5" : "mt-0.5")}>
                       <div className={cn("w-8 shrink-0", own && "hidden")}>
                         {!own && firstOfGroup ? (
-                          <Avatar name={threadName} src={threadAvatar} size="sm" />
+                          /* Oversight threads: each sender keeps their own
+                             profile photo (teacher/student logos differ). */
+                          <Avatar
+                            name={initialThread.senderNames?.[m.senderId] ?? threadName}
+                            src={initialThread.senderAvatars?.[m.senderId] || threadAvatar}
+                            size="sm"
+                          />
                         ) : null}
                       </div>
                       <div className={cn("max-w-[75%] min-w-0", own && "text-right")}>
