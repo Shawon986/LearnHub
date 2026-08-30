@@ -6,12 +6,16 @@ import { AlertTriangle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const STUCK_AFTER_MS = 12_000;
+/** Instant navigations show NOTHING — the bar appears only if a route is
+ *  genuinely slow. */
+const BAR_AFTER_MS = 600;
 
 /**
  * Loading watchdog — the app can NEVER be stuck loading forever, and route
  * changes stay standard: a slim indeterminate bar along the top of the
- * viewport (nothing covers the page). Only the branded PageLoader veil
- * (RouteLoaderVeil) still shows for initial entry / navigating home.
+ * viewport, shown only when a navigation is actually slow (instant page
+ * changes render nothing). The branded PageLoader veil (RouteLoaderVeil)
+ * only shows for initial entry / hard refresh.
  *
  * If the underlying Suspense boundary is still pending after 12s (stalled
  * server fetch, hung DB, dead network), the bar swaps to an actionable
@@ -20,13 +24,17 @@ const STUCK_AFTER_MS = 12_000;
  */
 export function LoadingWatchdog() {
   const [stuck, setStuck] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [barVisible, setBarVisible] = useState(false);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const router = useRouter();
 
   useEffect(() => {
-    timer.current = setTimeout(() => setStuck(true), STUCK_AFTER_MS);
+    timers.current = [
+      setTimeout(() => setBarVisible(true), BAR_AFTER_MS),
+      setTimeout(() => setStuck(true), STUCK_AFTER_MS),
+    ];
     return () => {
-      if (timer.current) clearTimeout(timer.current);
+      for (const t of timers.current) clearTimeout(t);
     };
   }, []);
 
@@ -62,9 +70,11 @@ export function LoadingWatchdog() {
     );
   }
 
-  // Standard loading state: a thin indeterminate bar pinned to the top of
-  // the viewport. It never blocks interaction and disappears the moment
-  // the route resolves.
+  // Instant navigations render nothing at all. Only when the route is
+  // genuinely slow does the thin indeterminate bar appear (and only when
+  // it is truly stuck does the recovery screen take over).
+  if (!barVisible) return null;
+
   return (
     <div
       className="fixed inset-x-0 top-0 z-[140] h-0.5 overflow-hidden bg-transparent"

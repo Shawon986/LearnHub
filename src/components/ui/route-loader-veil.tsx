@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { useReducedMotion } from "motion/react";
@@ -13,10 +13,11 @@ const FADE_MS = 400;
 /**
  * Keeps the branded page loader on screen long enough to be seen — but only
  * for the moments that matter:
- *   • the FIRST entry into the website (initial page load / full refresh)
- *   • navigating HOME (e.g. clicking the logo)
- * All other page-to-page navigations stay instant (the server-side
- * `loading.tsx` boundary still handles genuinely slow renders).
+ *   • the FIRST entry into the website (initial page load)
+ *   • a full refresh
+ * Page-to-page navigations stay instant and show nothing (the server-side
+ * `loading.tsx` boundary renders a slim bar only when a render is genuinely
+ * slow).
  *
  * Rendered through a portal onto <body> so no ancestor (transform, filter,
  * backdrop-blur…) can trap `position: fixed` and make the loader scroll or
@@ -26,8 +27,13 @@ export function RouteLoaderVeil() {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
   const [phase, setPhase] = useState<"hidden" | "show" | "shown" | "leave">("hidden");
+  // Only the FIRST mount of the app (initial load / hard refresh) veils.
+  // Client-side navigations never re-trigger it.
+  const isInitial = useRef(true);
 
   useEffect(() => {
+    if (!isInitial.current) return;
+    isInitial.current = false;
     // Chat/conversation switching must stay instant — never veil it.
     if (pathname.startsWith("/messages")) return;
     const min = reduceMotion ? 700 : MIN_VISIBLE_MS;

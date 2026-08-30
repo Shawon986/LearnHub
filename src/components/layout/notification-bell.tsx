@@ -66,6 +66,8 @@ export function NotificationBell({
         const data = await res.json();
         setItems(data.notifications);
         setUnread(data.unread);
+        // Keep sidebar badges in sync with the authoritative count.
+        publishUnread(data.unread);
       }
     } catch {
       // Non-critical — the bell just stays empty.
@@ -116,6 +118,15 @@ export function NotificationBell({
         publishUnread(next);
         return next;
       });
+    }
+    if (event.type === "notification.read") {
+      // Another device (or this one's sidebar click) marked notifications
+      // read — refetch the authoritative count so this device's counter
+      // clears too.
+      const ids = (event as { ids?: string[] }).ids;
+      if (Array.isArray(ids) && ids.length > 0) {
+        load().catch(() => {});
+      }
     }
   });
   const prevConn = useRef(connection);

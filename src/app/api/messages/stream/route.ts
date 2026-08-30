@@ -128,6 +128,24 @@ export async function GET(req: Request) {
               });
             }
           }
+
+          // Cross-device notification read sync: rows whose read flag flipped
+          // since the cursor. Delivered as its own event so the bell/badges on
+          // OTHER devices clear the same moment they do here.
+          try {
+            const markedRead = await db.notification.findMany({
+              where: { userId: user.id, read: true, updatedAt: { gt: after } },
+              select: { id: true },
+              take: 500,
+            });
+            if (markedRead.length > 0) {
+              send({ type: "notification.read", ids: markedRead.map((n) => n.id) });
+            }
+          } catch (e) {
+            // Isolated: a pre-migration client/DB must never break the rest
+            // of the stream delivery.
+            console.error("[stream] read-sync poll failed:", e);
+          }
           cursor = new Date();
         } catch (e) {
           console.error("[stream] poll failed:", e);

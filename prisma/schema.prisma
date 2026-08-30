@@ -1073,10 +1073,12 @@ model Notification {
   data      Json?
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt // cross-device read sync
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, read, createdAt])
+  @@index([userId, updatedAt])
 }
 
 model NotificationPreference {
