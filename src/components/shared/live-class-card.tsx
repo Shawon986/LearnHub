@@ -19,16 +19,20 @@ export interface LiveClassCardData {
 }
 
 function CountdownChip({ target }: { target: string }) {
-  const [now, setNow] = useState(() => Date.now());
+  // `now` starts null so the SERVER and the first client render both paint
+  // the same stable label (no hydration mismatch), then the ticker takes
+  // over after mount.
+  const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
+    setNow(Date.now());
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
-  const isUpcoming = new Date(target).getTime() > now;
+  const isUpcoming = now === null || new Date(target).getTime() > now;
   return (
     <Badge variant={isUpcoming ? "accent" : "success"} className="tabular-nums">
       <Radio className="h-3 w-3 animate-pulse-soft" />
-      {isUpcoming ? `Starts in ${formatCountdown(target)}` : "Started"}
+      {now === null ? "Scheduled" : isUpcoming ? `Starts in ${formatCountdown(target)}` : "Started"}
     </Badge>
   );
 }

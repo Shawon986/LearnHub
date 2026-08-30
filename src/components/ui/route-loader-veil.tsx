@@ -26,7 +26,7 @@ export function RouteLoaderVeil() {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
   const firstRender = useRef(true);
-  const [phase, setPhase] = useState<"hidden" | "show" | "leave">("hidden");
+  const [phase, setPhase] = useState<"hidden" | "show" | "shown" | "leave">("hidden");
 
   useEffect(() => {
     const isInitial = firstRender.current;
@@ -37,8 +37,13 @@ export function RouteLoaderVeil() {
     const min = reduceMotion ? 700 : MIN_VISIBLE_MS;
     let leaveTimer: ReturnType<typeof setTimeout> | null = null;
     const raf = requestAnimationFrame(() => {
+      // Two-phase: paint at opacity-0 first, then fade IN smoothly
+      // (avoids the harsh instant-cover pop on refresh).
       setPhase("show");
-      leaveTimer = setTimeout(() => setPhase("leave"), min);
+      requestAnimationFrame(() => {
+        setPhase("shown");
+        leaveTimer = setTimeout(() => setPhase("leave"), min);
+      });
     });
     return () => {
       cancelAnimationFrame(raf);
@@ -60,11 +65,14 @@ export function RouteLoaderVeil() {
   const overlay = (
     <div
       className={cn(
-        // Exact viewport size, clipped, and centered — can never shift.
-        "fixed inset-0 z-[150] flex h-dvh items-center justify-center overflow-hidden bg-background transition-opacity duration-300",
-        phase === "leave" ? "pointer-events-none opacity-0" : "opacity-100",
+        // inset-0 alone pins the veil to the viewport (stable — dvh units
+        // jump when the mobile URL bar collapses, which made the loader
+        // "move" on refresh). Clipped and centered.
+        "fixed inset-0 z-[150] flex items-center justify-center overflow-hidden bg-background transition-opacity",
+        phase === "shown" ? "opacity-100" : "opacity-0",
+        phase === "leave" && "pointer-events-none",
       )}
-      style={{ transitionDuration: `${FADE_MS}ms` }}
+      style={{ transitionDuration: phase === "leave" ? `${FADE_MS}ms` : "250ms" }}
       aria-hidden
     >
       <PageLoader />
