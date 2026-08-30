@@ -29,11 +29,9 @@ export function RouteLoaderVeil() {
   const [phase, setPhase] = useState<"hidden" | "show" | "shown" | "leave">("hidden");
 
   useEffect(() => {
-    const isInitial = firstRender.current;
     firstRender.current = false;
-    // Show only on the initial load/refresh or when arriving at the home page.
-    if (!isInitial && pathname !== "/") return;
-
+    // Show on EVERY navigation — refresh, login, logout, page changes —
+    // pinned to the viewport via the portal so it can never shift.
     const min = reduceMotion ? 700 : MIN_VISIBLE_MS;
     let leaveTimer: ReturnType<typeof setTimeout> | null = null;
     const raf = requestAnimationFrame(() => {

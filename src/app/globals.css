@@ -11,46 +11,46 @@
    ============================================================ */
 
 :root {
-  --background: #f5f7fa;
-  --foreground: #0f172a;
+  --background: #f6f7fa;
+  --foreground: #111827;
   --card: #ffffff;
-  --card-2: #eef2f7;
-  --line: #e2e8f0;
-  --line-strong: #cbd5e1;
-  --muted-fg: #4a5568;
-  --faint-fg: #8a94a6;
-  --brand: #2563eb;
-  --brand-hover: #1d4ed8;
-  --brand-soft: #dbeafe;
-  --brand-fg: #1d4ed8;
-  --accent: #0d9488;
-  --accent-soft: #ccfbf1;
-  --gold: #d97706;
-  --gold-soft: #fef3c7;
+  --card-2: #f0f2f7;
+  --line: #e4e7ef;
+  --line-strong: #cdd3df;
+  --muted-fg: #4b5563;
+  --faint-fg: #8b93a5;
+  --brand: #4f46e5;
+  --brand-hover: #4338ca;
+  --brand-soft: #e0e7ff;
+  --brand-fg: #4338ca;
+  --accent: #b45309;
+  --accent-soft: #fdf1e0;
+  --gold: #b45309;
+  --gold-soft: #fdf1e0;
   --danger: #e11d48;
   --danger-soft: #ffe4e6;
   --success: #059669;
   --success-soft: #d1fae5;
-  --soft-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 6px 20px rgb(15 23 42 / 0.06);
-  --lift-shadow: 0 2px 4px rgb(15 23 42 / 0.05), 0 16px 40px rgb(15 23 42 / 0.12);
-  --glow-shadow: 0 0 0 1px rgb(37 99 235 / 0.12), 0 10px 40px rgb(37 99 235 / 0.25);
+  --soft-shadow: 0 1px 2px rgb(17 24 39 / 0.04), 0 6px 20px rgb(17 24 39 / 0.06);
+  --lift-shadow: 0 2px 4px rgb(17 24 39 / 0.05), 0 16px 40px rgb(17 24 39 / 0.12);
+  --glow-shadow: 0 0 0 1px rgb(79 70 229 / 0.12), 0 10px 40px rgb(79 70 229 / 0.25);
 }
 
 .dark {
-  --background: #0b1220;
-  --foreground: #eef2f9;
-  --card: #121a2a;
-  --card-2: #1a2334;
-  --line: #24304a;
-  --line-strong: #31405f;
-  --muted-fg: #93a1bc;
-  --faint-fg: #6b7a99;
-  --brand: #3b82f6;
-  --brand-hover: #60a5fa;
-  --brand-soft: #17294d;
-  --brand-fg: #93c5fd;
-  --accent: #2dd4bf;
-  --accent-soft: #0e3b36;
+  --background: #0b0e14;
+  --foreground: #eef0f6;
+  --card: #131722;
+  --card-2: #1a2030;
+  --line: #262d3f;
+  --line-strong: #34405a;
+  --muted-fg: #9ca3b8;
+  --faint-fg: #6b7280;
+  --brand: #6366f1;
+  --brand-hover: #818cf8;
+  --brand-soft: #232b4d;
+  --brand-fg: #a5b4fc;
+  --accent: #f59e0b;
+  --accent-soft: #3a2a10;
   --gold: #fbbf24;
   --gold-soft: #3a2d10;
   --danger: #fb7185;
@@ -59,7 +59,7 @@
   --success-soft: #0d3326;
   --soft-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 20px rgb(0 0 0 / 0.35);
   --lift-shadow: 0 2px 4px rgb(0 0 0 / 0.45), 0 16px 40px rgb(0 0 0 / 0.5);
-  --glow-shadow: 0 0 0 1px rgb(59 130 246 / 0.25), 0 10px 44px rgb(59 130 246 / 0.3);
+  --glow-shadow: 0 0 0 1px rgb(99 102 241 / 0.25), 0 10px 44px rgb(99 102 241 / 0.3);
 }
 
 @theme inline {

@@ -32,7 +32,7 @@ export function ProfilePreview({ teacherId }: { teacherId: string }) {
         <iframe
           src={`/teachers/${teacherId}?preview=1`}
           title="Public profile preview"
-          className="h-[70vh] w-full rounded-xl border border-line bg-background"
+          className="h-[62dvh] w-full rounded-xl border border-line bg-background sm:h-[70vh]"
         />
       </Modal>
     </>

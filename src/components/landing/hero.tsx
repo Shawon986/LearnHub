@@ -200,7 +200,7 @@ export function Hero({ stats }: HeroProps) {
             style={{ x: layer2X, y: layer2Y }}
             className="glass absolute inset-x-6 top-16 overflow-hidden rounded-2xl shadow-lift"
           >
-            <div className="relative flex h-52 items-center justify-center bg-gradient-to-br from-brand via-blue-600 to-accent">
+            <div className="relative flex h-52 items-center justify-center bg-gradient-to-br from-brand via-indigo-600 to-accent">
               <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/25 backdrop-blur-md">
                 <PlayCircle className="h-9 w-9 fill-white text-white" />
               </span>

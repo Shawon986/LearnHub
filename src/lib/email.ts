@@ -70,7 +70,7 @@ function layout(title: string, bodyHtml: string): string {
   return `<!doctype html><html><body style="margin:0;padding:0;background:#f5f5fa;font-family:Arial,Helvetica,sans-serif">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:40px 16px">
   <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e5f0">
-    <tr><td style="background:linear-gradient(135deg,#2563eb,#0d9488);padding:28px 32px;color:#fff">
+    <tr><td style="background:linear-gradient(135deg,#4f46e5,#b45309);padding:28px 32px;color:#fff">
       <div style="font-size:20px;font-weight:700">🎓 LearnHub</div>
     </td></tr>
     <tr><td style="padding:32px">
@@ -91,7 +91,7 @@ export async function sendVerificationEmail(to: string, name: string, token: str
     html: layout(
       "Verify your email",
       `<p style="margin:0 0 16px;color:#374151">Hi ${name}, thanks for joining! Verify your email to activate your account.</p>
-       <a href="${url}" style="display:inline-block;background:#2563eb;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600">Verify email</a>
+       <a href="${url}" style="display:inline-block;background:#4f46e5;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600">Verify email</a>
        <p style="margin:20px 0 0;color:#9ca3af;font-size:13px">This link expires in 24 hours.</p>`,
     ),
   });
@@ -107,7 +107,7 @@ export async function sendPasswordResetEmail(to: string, name: string, token: st
     html: layout(
       "Reset your password",
       `<p style="margin:0 0 16px;color:#374151">Hi ${name}, we received a request to reset your password.</p>
-       <a href="${url}" style="display:inline-block;background:#2563eb;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600">Reset password</a>
+       <a href="${url}" style="display:inline-block;background:#4f46e5;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600">Reset password</a>
        <p style="margin:20px 0 0;color:#9ca3af;font-size:13px">This link expires in 1 hour.</p>`,
     ),
   });

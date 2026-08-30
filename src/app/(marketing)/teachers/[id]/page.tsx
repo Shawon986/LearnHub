@@ -175,7 +175,7 @@ export default async function TeacherProfilePage({ params, searchParams }: PageP
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {/* Header card */}
       <Card className="overflow-hidden">
-        <div className="bg-gradient-to-r from-brand via-blue-700 to-accent p-6 sm:p-8">
+        <div className="bg-gradient-to-r from-brand via-indigo-700 to-accent p-6 sm:p-8">
           <div className="flex flex-wrap items-center gap-5 text-white">
             <Avatar name={teacher.name} src={teacher.avatarUrl} size="xl" className="ring-4 ring-white/25" />
             <div className="min-w-0 flex-1">

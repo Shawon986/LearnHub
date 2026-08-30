@@ -99,8 +99,8 @@ export function CategoryFormModal({
             <Input
               label="Color"
               name="color"
-              defaultValue={initial?.color ?? "#2563eb"}
-              placeholder="#2563eb"
+              defaultValue={initial?.color ?? "#4f46e5"}
+              placeholder="#4f46e5"
               hint="Hex color for the category accent."
             />
           </div>

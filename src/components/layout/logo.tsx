@@ -26,30 +26,30 @@ interface Particle {
 }
 
 const PARTICLES: Particle[] = [
-  { px: -620, py: -160, size: 3, color: "#2563eb", delay: "0s", drift: { dx: -8, dy: 5 } },
-  { px: -560, py: 60, size: 2, color: "#0d9488", delay: "0.06s" },
+  { px: -620, py: -160, size: 3, color: "#4f46e5", delay: "0s", drift: { dx: -8, dy: 5 } },
+  { px: -560, py: 60, size: 2, color: "#b45309", delay: "0.06s" },
   { px: -580, py: -60, size: 2, color: "#d97706", delay: "0.1s", drift: { dx: 6, dy: -7 } },
   { px: -520, py: 160, size: 3, color: "#ffffff", delay: "0.14s" },
-  { px: -500, py: -220, size: 2, color: "#2563eb", delay: "0.18s", drift: { dx: 9, dy: 4 } },
-  { px: -460, py: -20, size: 2, color: "#0d9488", delay: "0.22s" },
+  { px: -500, py: -220, size: 2, color: "#4f46e5", delay: "0.18s", drift: { dx: 9, dy: 4 } },
+  { px: -460, py: -20, size: 2, color: "#b45309", delay: "0.22s" },
   { px: -440, py: 200, size: 2, color: "#d97706", delay: "0.26s" },
-  { px: -400, py: -140, size: 3, color: "#2563eb", delay: "0.3s", drift: { dx: -6, dy: -8 } },
+  { px: -400, py: -140, size: 3, color: "#4f46e5", delay: "0.3s", drift: { dx: -6, dy: -8 } },
   { px: -360, py: 80, size: 2, color: "#ffffff", delay: "0.34s" },
-  { px: -320, py: -240, size: 2, color: "#0d9488", delay: "0.38s" },
-  { px: -280, py: 20, size: 2, color: "#2563eb", delay: "0.42s", drift: { dx: 7, dy: 6 } },
+  { px: -320, py: -240, size: 2, color: "#b45309", delay: "0.38s" },
+  { px: -280, py: 20, size: 2, color: "#4f46e5", delay: "0.42s", drift: { dx: 7, dy: 6 } },
   { px: -240, py: 140, size: 3, color: "#d97706", delay: "0.46s" },
-  { px: 240, py: -180, size: 2, color: "#2563eb", delay: "0.5s" },
+  { px: 240, py: -180, size: 2, color: "#4f46e5", delay: "0.5s" },
   { px: 300, py: 40, size: 2, color: "#ffffff", delay: "0.54s", drift: { dx: -5, dy: 7 } },
-  { px: 360, py: -80, size: 3, color: "#0d9488", delay: "0.58s" },
-  { px: 420, py: 120, size: 2, color: "#2563eb", delay: "0.62s" },
+  { px: 360, py: -80, size: 3, color: "#b45309", delay: "0.58s" },
+  { px: 420, py: 120, size: 2, color: "#4f46e5", delay: "0.62s" },
   { px: 480, py: -220, size: 2, color: "#d97706", delay: "0.66s", drift: { dx: 8, dy: -6 } },
-  { px: 540, py: 60, size: 2, color: "#2563eb", delay: "0.7s" },
+  { px: 540, py: 60, size: 2, color: "#4f46e5", delay: "0.7s" },
   { px: 600, py: -140, size: 3, color: "#ffffff", delay: "0.74s" },
-  { px: 620, py: 180, size: 2, color: "#0d9488", delay: "0.78s", drift: { dx: -7, dy: -5 } },
-  { px: -80, py: -300, size: 2, color: "#2563eb", delay: "0.5s" },
+  { px: 620, py: 180, size: 2, color: "#b45309", delay: "0.78s", drift: { dx: -7, dy: -5 } },
+  { px: -80, py: -300, size: 2, color: "#4f46e5", delay: "0.5s" },
   { px: 80, py: -320, size: 2, color: "#d97706", delay: "0.6s" },
-  { px: -140, py: 280, size: 2, color: "#0d9488", delay: "0.7s" },
-  { px: 140, py: 300, size: 2, color: "#2563eb", delay: "0.8s" },
+  { px: -140, py: 280, size: 2, color: "#b45309", delay: "0.7s" },
+  { px: 140, py: 300, size: 2, color: "#4f46e5", delay: "0.8s" },
 ];
 
 export function Logo({
@@ -138,7 +138,7 @@ export function Logo({
                 className={cn(
                   "pointer-events-none absolute -inset-[3px] animate-[logo-spin_4s_linear_infinite]",
                   sizes.ring,
-                  "[background:conic-gradient(from_0deg,#2563eb,#0d9488,#93c5fd,#2563eb)]",
+                  "[background:conic-gradient(from_0deg,#4f46e5,#b45309,#a5b4fc,#4f46e5)]",
                   "[mask:radial-gradient(farthest-side,transparent_calc(100%_-_2.5px),#000_calc(100%_-_2.5px))]",
                 )}
                 aria-hidden
@@ -154,7 +154,7 @@ export function Logo({
 
           <span
             className={cn(
-              "relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-brand via-blue-600 to-accent text-white shadow-glow transition-transform duration-300 group-hover:scale-105",
+              "relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-brand via-indigo-600 to-accent text-white shadow-glow transition-transform duration-300 group-hover:scale-105",
               sizes.box,
               animate && "animate-[logo-bob_3s_ease-in-out_infinite]",
             )}

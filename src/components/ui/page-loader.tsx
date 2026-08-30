@@ -57,11 +57,11 @@ export function PageLoader({ label = "Loading your learning space…" }: { label
     >
       {/* Slowly rotating particle backdrop (two counter-rotating layers). */}
       <div
-        className="pl-spin pointer-events-none absolute inset-0 opacity-60 will-change-transform [background-image:radial-gradient(circle,rgb(37_99_235/0.28)_1px,transparent_1px)] [background-size:26px_26px]"
+        className="pl-spin pointer-events-none absolute inset-0 opacity-60 will-change-transform [background-image:radial-gradient(circle,rgb(79_70_229/0.28)_1px,transparent_1px)] [background-size:26px_26px]"
         aria-hidden
       />
       <div
-        className="pl-spin-rev pointer-events-none absolute inset-0 opacity-40 will-change-transform [background-image:radial-gradient(circle,rgb(13_148_136/0.25)_1px,transparent_1px)] [background-size:44px_44px]"
+        className="pl-spin-rev pointer-events-none absolute inset-0 opacity-40 will-change-transform [background-image:radial-gradient(circle,rgb(180_83_9/0.25)_1px,transparent_1px)] [background-size:44px_44px]"
         aria-hidden
       />
 
@@ -111,7 +111,7 @@ export function PageLoader({ label = "Loading your learning space…" }: { label
         {/* The brain — line-art outline, gently breathing. */}
         <div className="absolute inset-0 flex items-center justify-center">
           <Brain
-            className="pl-breathe h-24 w-24 text-brand drop-shadow-[0_0_18px_rgba(37,99,235,0.45)] sm:h-28 sm:w-28"
+            className="pl-breathe h-24 w-24 text-brand drop-shadow-[0_0_18px_rgba(79,70,229,0.45)] sm:h-28 sm:w-28"
             strokeWidth={1.1}
             aria-hidden
           />
