@@ -24,9 +24,12 @@ function CountdownChip({ target }: { target: string }) {
   // over after mount.
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
-    setNow(Date.now());
+    const raf = requestAnimationFrame(() => setNow(Date.now()));
     const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearInterval(t);
+    };
   }, []);
   const isUpcoming = now === null || new Date(target).getTime() > now;
   return (
