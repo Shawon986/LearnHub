@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
-import { safeJsonParse } from "@/lib/utils";
+import { safeJsonParse, safeJsonLd } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Rating } from "@/components/ui/rating";
@@ -172,7 +172,7 @@ export default async function TeacherProfilePage({ params, searchParams }: PageP
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       {/* Header card */}
       <Card className="overflow-hidden">
         <div className="bg-gradient-to-r from-brand via-indigo-700 to-accent p-6 sm:p-8">

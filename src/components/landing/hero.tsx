@@ -1,6 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+
+
 import {
   motion,
   useMotionValue,
@@ -36,6 +38,13 @@ interface HeroProps {
 export function Hero({ stats }: HeroProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const reduceMotion = useReducedMotion();
+  // Mount-gated: server renders `false` and the first client render
+  // matches, then the real preference lands (no hydration mismatch).
+  const [reduceMotionGate, setGate] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setGate(Boolean(reduceMotion)));
+    return () => cancelAnimationFrame(raf);
+  }, [reduceMotion]);
   const { t } = useLanguage();
 
   // Mouse parallax (pointer-fine devices only)
@@ -49,14 +58,14 @@ export function Hero({ stats }: HeroProps) {
   const layer3Y = useTransform(sy, (v) => v * 14);
 
   function onMouseMove(e: React.MouseEvent) {
-    if (reduceMotion || !window.matchMedia("(pointer: fine)").matches) return;
+    if (reduceMotionGate || !window.matchMedia("(pointer: fine)").matches) return;
     const rect = sectionRef.current?.getBoundingClientRect();
     if (!rect) return;
     mx.set(((e.clientX - rect.left) / rect.width - 0.5) * 2);
     my.set(((e.clientY - rect.top) / rect.height - 0.5) * 2);
   }
 
-  const animate = !reduceMotion;
+  const animate = !reduceMotionGate;
 
   return (
     <section

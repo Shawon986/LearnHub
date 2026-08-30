@@ -65,10 +65,14 @@ function BookingModal({
 
   const loadDates = useCallback(async () => {
     try {
-      const res = await fetch(`/api/teachers/${teacherId}/availability`);
+      const res = await fetch(`/api/teachers/${teacherId}/availability`, {
+        signal: AbortSignal.timeout(10000),
+      });
       if (res.ok) setDates((await res.json()).dates);
+      else setDates([]);
     } catch {
-      // non-critical
+      // Never spin forever — surface an empty state the user can retry.
+      setDates([]);
     }
   }, [teacherId]);
 
@@ -77,10 +81,14 @@ function BookingModal({
       setSlots(null);
       setTime(null);
       try {
-        const res = await fetch(`/api/teachers/${teacherId}/availability?date=${isoDate}`);
+        const res = await fetch(`/api/teachers/${teacherId}/availability?date=${isoDate}`, {
+          signal: AbortSignal.timeout(10000),
+        });
         if (res.ok) setSlots((await res.json()).slots);
+        else setSlots([]);
       } catch {
-        // non-critical
+        // Never spin forever — empty state lets the user pick another date.
+        setSlots([]);
       }
     },
     [teacherId],

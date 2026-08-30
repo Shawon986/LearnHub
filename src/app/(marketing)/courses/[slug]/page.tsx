@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
-import { safeJsonParse } from "@/lib/utils";
+import { safeJsonParse, safeJsonLd } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Rating } from "@/components/ui/rating";
@@ -122,7 +122,7 @@ export default async function CourseDetailPage({ params }: PageProps) {
     <div className="bg-brand-surface min-h-screen pb-20">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
       {/* Hero */}
       <div className="relative overflow-hidden">

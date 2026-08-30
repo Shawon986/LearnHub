@@ -89,6 +89,16 @@ export async function completeLesson(lessonId: string): Promise<ActionResult> {
     const lesson = await db.lesson.findUnique({ where: { id: lessonId }, include: { module: true } });
     if (!lesson) return actionError("Lesson not found.");
 
+    // Authorization: only students enrolled in this course may complete it.
+    if (user.role === "STUDENT") {
+      const enrollment = await db.enrollment.findUnique({
+        where: { studentId_courseId: { studentId: user.id, courseId: lesson.module.courseId } },
+      });
+      if (!enrollment || !["ACTIVE", "COMPLETED"].includes(enrollment.status)) {
+        return actionError("Enroll in this course first.");
+      }
+    }
+
     await markLessonComplete(user.id, lessonId);
     revalidatePath(`/dashboard/courses/${lesson.module.courseId}/learn`);
     revalidatePath("/dashboard/courses");
@@ -115,7 +125,7 @@ export async function submitQuiz(
 
     const quiz = await db.quiz.findUnique({
       where: { id: quizId },
-      include: { questions: true, lesson: { include: { module: { include: { course: true } } } } },
+      include: { course: { select: { id: true } }, questions: true, lesson: { include: { module: { include: { course: true } } } } },
     });
     if (!quiz) return { ok: false, error: "Quiz not found." };
     if (quiz.questions.length === 0) return { ok: false, error: "This quiz has no questions yet." };
@@ -177,9 +187,16 @@ export async function submitAssignment(
     const data = assignmentSubmissionSchema.parse(input);
     const assignment = await db.assignment.findUnique({
       where: { id: assignmentId },
-      include: { course: { select: { teacherId: true, title: true } } },
+      include: { course: { select: { id: true, teacherId: true, title: true } } },
     });
-    if (!assignment) return actionError("Assignment not found.");
+    if (!assignment || !assignment.course) return actionError("Assignment not found.");
+    // Authorization: only enrolled students may submit work.
+    const enrollment = await db.enrollment.findUnique({
+      where: { studentId_courseId: { studentId: user.id, courseId: assignment.course.id } },
+    });
+    if (!enrollment || !["ACTIVE", "COMPLETED"].includes(enrollment.status)) {
+      return actionError("Enroll in this course first.");
+    }
 
     await db.assignmentSubmission.upsert({
       where: { assignmentId_studentId: { assignmentId, studentId: user.id } },

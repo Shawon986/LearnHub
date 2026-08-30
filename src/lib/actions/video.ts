@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth/session";
+import { canWatchRecording } from "@/lib/video/access";
 import { createNotification } from "@/lib/notifications";
 import { z } from "zod";
 import { actionError, type ActionResult } from "@/lib/actions/shared";
@@ -25,8 +26,12 @@ export async function saveVideoProgress(
     const user = await requireUser();
     const data = progressSchema.parse(input);
 
+    // Access control: progress may only be written for recordings the user
+    // can actually watch (mirrors the stream route's byte-level check).
     const rc = await db.recordedClass.findUnique({ where: { id: recordedClassId } });
     if (!rc) return actionError("Recording not found.");
+    const access = await canWatchRecording(recordedClassId, user.id);
+    if (!access.allowed) return actionError(access.reason ?? "Access denied.");
 
     const percent =
       data.durationSeconds > 0

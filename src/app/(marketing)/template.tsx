@@ -1,14 +1,23 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import { motion, useReducedMotion } from "motion/react";
 
 /**
  * Route-transition template: every navigation inside the marketing
- * group fades + slides in. Instant under prefers-reduced-motion.
+ * group fades + slides in. Instant under prefers-reducedGate-motion.
  */
 export default function MarketingTemplate({ children }: { children: React.ReactNode }) {
   const reduced = useReducedMotion();
-  if (reduced) return <>{children}</>;
+  // Mount-gated: server renders `false` and the first client render
+  // matches, then the real preference lands (no hydration mismatch).
+  const [reducedGate, setGate] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setGate(Boolean(reduced)));
+    return () => cancelAnimationFrame(raf);
+  }, [reduced]);
+  if (reducedGate) return <>{children}</>;
 
   return (
     <motion.div

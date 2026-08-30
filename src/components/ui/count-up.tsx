@@ -22,10 +22,17 @@ export function CountUp({
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: "-40px" });
   const reduceMotion = useReducedMotion();
+  // Mount-gated: server renders `false` and the first client render
+  // matches, then the real preference lands (no hydration mismatch).
+  const [reduceMotionGate, setGate] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setGate(Boolean(reduceMotion)));
+    return () => cancelAnimationFrame(raf);
+  }, [reduceMotion]);
   const [display, setDisplay] = useState(0);
 
   useEffect(() => {
-    if (!inView || reduceMotion) return;
+    if (!inView || reduceMotionGate) return;
     let raf = 0;
     const start = performance.now();
     const tick = (now: number) => {
@@ -36,10 +43,10 @@ export function CountUp({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [inView, value, duration, reduceMotion]);
+  }, [inView, value, duration, reduceMotionGate]);
 
   // Under reduced motion show the final value immediately.
-  const shown = reduceMotion ? value : display;
+  const shown = reduceMotionGate ? value : display;
   const text = format ? format(shown) : Math.round(shown).toLocaleString();
 
   return (

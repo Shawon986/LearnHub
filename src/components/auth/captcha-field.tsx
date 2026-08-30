@@ -21,14 +21,20 @@ export function CaptchaField({ refreshKey = 0 }: { refreshKey?: number }) {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/captcha")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (!cancelled) setCh(d as Challenge | null);
-      })
-      .catch(() => {
-        if (!cancelled) setCh(null);
-      });
+    let attempts = 0;
+    const tryLoad = () => {
+      fetch("/api/captcha", { signal: AbortSignal.timeout(8000) })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (!cancelled && d) setCh(d as Challenge | null);
+          else if (!cancelled && attempts++ < 2) setTimeout(tryLoad, 1500);
+        })
+        .catch(() => {
+          // Never block the form forever — auto-retry twice, then stop.
+          if (!cancelled && attempts++ < 2) setTimeout(tryLoad, 1500);
+        });
+    };
+    tryLoad();
     return () => {
       cancelled = true;
     };

@@ -158,10 +158,15 @@ export default async function VerificationPage() {
                           No documents submitted yet.
                         </li>
                       )}
-                      {docs.map((d, i) => (
+                      {docs.map((d, i) => {
+                        const docUrl = String(d.url).replace(/^\/+/, "");
+                        // SECURITY: only internal upload paths may be linked
+                        // (blocks javascript:/data: URLs in stored documents).
+                        if (!/^[a-z0-9_\-]+\//i.test(docUrl)) return null;
+                        return (
                         <li key={i}>
                           <a
-                            href={`/api/uploads/${String(d.url).replace(/^\/+/, "")}`}
+                            href={`/api/uploads/${docUrl}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-card-2 px-2.5 py-1.5 text-[11px] font-semibold text-muted-fg transition-colors hover:border-brand hover:text-brand-fg"
@@ -170,7 +175,8 @@ export default async function VerificationPage() {
                             {d.title} ↗
                           </a>
                         </li>
-                      ))}
+                        );
+                      })}
                     </ul>
 
                     {app.rejectionReason && (

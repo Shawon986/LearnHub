@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import { motion, useReducedMotion, type Variants } from "motion/react";
 import type { ReactNode } from "react";
 
@@ -21,11 +23,18 @@ export function Reveal({
   className?: string;
 }) {
   const reduceMotion = useReducedMotion();
+  // Mount-gated: server renders `false` and the first client render
+  // matches, then the real preference lands (no hydration mismatch).
+  const [reduceMotionGate, setGate] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setGate(Boolean(reduceMotion)));
+    return () => cancelAnimationFrame(raf);
+  }, [reduceMotion]);
 
   return (
     <motion.div
       className={className}
-      initial={reduceMotion ? false : { opacity: 0, y }}
+      initial={reduceMotionGate ? false : { opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once, margin: "-60px" }}
       transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
@@ -53,7 +62,14 @@ export function RevealGroup({
   className?: string;
 }) {
   const reduceMotion = useReducedMotion();
-  if (reduceMotion) return <div className={className}>{children}</div>;
+  // Mount-gated: server renders `false` and the first client render
+  // matches, then the real preference lands (no hydration mismatch).
+  const [reduceMotionGate, setGate] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setGate(Boolean(reduceMotion)));
+    return () => cancelAnimationFrame(raf);
+  }, [reduceMotion]);
+  if (reduceMotionGate) return <div className={className}>{children}</div>;
 
   return (
     <motion.div
@@ -70,7 +86,14 @@ export function RevealGroup({
 
 export function RevealItem({ children, className }: { children: ReactNode; className?: string }) {
   const reduceMotion = useReducedMotion();
-  if (reduceMotion) return <div className={className}>{children}</div>;
+  // Mount-gated: server renders `false` and the first client render
+  // matches, then the real preference lands (no hydration mismatch).
+  const [reduceMotionGate, setGate] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setGate(Boolean(reduceMotion)));
+    return () => cancelAnimationFrame(raf);
+  }, [reduceMotion]);
+  if (reduceMotionGate) return <div className={className}>{children}</div>;
 
   return (
     <motion.div className={className} variants={itemVariants}>

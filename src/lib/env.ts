@@ -29,10 +29,13 @@ function loadEnv() {
 
 export const env = loadEnv();
 
-/** Returns the comma-separated PAYMENT_PROVIDERS as a set, defaults to ["DEV"]. */
+/** Returns the comma-separated PAYMENT_PROVIDERS as a set.
+ *  Production NEVER defaults to the DEV sandbox: an unset list means no
+ *  provider is enabled (payments stay PENDING until real gateways are
+ *  configured). Local development keeps the DEV sandbox. */
 export function enabledPaymentProviders(): string[] {
   const raw = process.env.PAYMENT_PROVIDERS;
-  if (!raw) return ["DEV"];
+  if (!raw) return process.env.NODE_ENV === "production" ? [] : ["DEV"];
   return raw
     .split(",")
     .map((p) => p.trim().toUpperCase())

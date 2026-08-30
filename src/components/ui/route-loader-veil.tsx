@@ -25,26 +25,26 @@ const FADE_MS = 400;
 export function RouteLoaderVeil() {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
-  const firstRender = useRef(true);
   const [phase, setPhase] = useState<"hidden" | "show" | "shown" | "leave">("hidden");
 
   useEffect(() => {
-    firstRender.current = false;
-    // Show on EVERY navigation — refresh, login, logout, page changes —
-    // pinned to the viewport via the portal so it can never shift.
+    // Chat/conversation switching must stay instant — never veil it.
+    if (pathname.startsWith("/messages")) return;
     const min = reduceMotion ? 700 : MIN_VISIBLE_MS;
     let leaveTimer: ReturnType<typeof setTimeout> | null = null;
+    let innerRaf = 0;
     const raf = requestAnimationFrame(() => {
       // Two-phase: paint at opacity-0 first, then fade IN smoothly
       // (avoids the harsh instant-cover pop on refresh).
       setPhase("show");
-      requestAnimationFrame(() => {
+      innerRaf = requestAnimationFrame(() => {
         setPhase("shown");
         leaveTimer = setTimeout(() => setPhase("leave"), min);
       });
     });
     return () => {
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(innerRaf);
       if (leaveTimer) clearTimeout(leaveTimer);
     };
   }, [pathname, reduceMotion]);

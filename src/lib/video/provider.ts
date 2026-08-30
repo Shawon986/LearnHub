@@ -187,18 +187,21 @@ export function signPlaybackToken(videoId: string, userId: string, ttlSeconds = 
   return { token: `${payload}.${sig}`, exp };
 }
 
-/** Verifies a signed playback token. Returns the userId it was minted for. */
+/** Verifies a signed playback token. Returns the userId it was minted for.
+ *  Expiry is enforced from the SIGNED payload only — the query-string exp
+ *  parameter is ignored so a leaked/expired token cannot be replayed by
+ *  tampering with the URL. */
 export function verifyPlaybackToken(
   videoId: string,
   token: string,
-  expParam: string | null,
+  _expParam: string | null,
 ): { userId: string } | null {
   const parts = token.split(".");
   if (parts.length !== 4) return null;
   const [v, userId, exp, sig] = parts;
   if (v !== videoId) return null;
 
-  const expNumber = Number(expParam ?? exp);
+  const expNumber = Number(exp);
   if (!Number.isFinite(expNumber) || expNumber < Math.floor(Date.now() / 1000)) return null;
 
   const expected = createHmac("sha256", env.AUTH_SECRET).update(`${v}.${userId}.${exp}`).digest("hex");

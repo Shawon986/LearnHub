@@ -24,6 +24,7 @@ export interface SessionPayload extends JWTPayload {
   role: Role;
   name: string;
   email: string;
+  ver: number; // session version — bumped to revoke old tokens
 }
 
 function secretKey(): Uint8Array {
@@ -80,6 +81,9 @@ export async function getCurrentUser() {
   if (!session) return null;
   const user = await db.user.findUnique({ where: { id: session.sub } });
   if (!user || user.status !== "ACTIVE") return null;
+  // Revocation: a password change/reset bumps sessionVersion, which
+  // invalidates every previously issued token for this account.
+  if (user.sessionVersion !== session.ver) return null;
   return user;
 }
 

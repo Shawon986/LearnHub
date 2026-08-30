@@ -411,6 +411,9 @@ export async function refundPayment(
  * for real money.
  */
 export function devPaymentsEnabled(): boolean {
+  // Build-time hard block: the sandbox completion path can NEVER run in
+  // production, regardless of environment configuration.
+  if (process.env.NODE_ENV === "production") return false;
   const providers = (env.PAYMENT_PROVIDERS ?? "DEV").toUpperCase().split(",").map((s) => s.trim());
   return providers.includes("DEV");
 }

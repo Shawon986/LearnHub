@@ -76,3 +76,9 @@ export function initialsOf(name: string): string {
     .map((p) => p[0]!.toUpperCase())
     .join("");
 }
+
+/** Serialize user-controlled data into JSON-LD safely: escaping "<" as
+ *  "<" prevents "</script>" breakout inside <script type=ld+json>. */
+export function safeJsonLd(obj: unknown): string {
+  return JSON.stringify(obj).replace(/</g, "<");
+}

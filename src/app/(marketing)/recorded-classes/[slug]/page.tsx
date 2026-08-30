@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/session";
 import { canWatchRecording } from "@/lib/video/access";
 import { getVideoProvider } from "@/lib/video/provider";
-import { safeJsonParse } from "@/lib/utils";
+import { safeJsonParse, safeJsonLd } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Rating } from "@/components/ui/rating";
@@ -86,7 +86,7 @@ export default async function WatchPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       <nav className="mb-4 text-[12px] font-semibold text-muted-fg" aria-label="Breadcrumb">
         <Link href="/recorded-classes" className="hover:text-foreground">
           Recorded classes

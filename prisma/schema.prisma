@@ -36,6 +36,7 @@ model User {
   timezone      String   @default("Asia/Dhaka")
   referralCode  String   @unique
   referredById  String?
+  sessionVersion Int     @default(0)
   lastLoginAt   DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

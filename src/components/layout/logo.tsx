@@ -67,7 +67,14 @@ export function Logo({
   className?: string;
 }) {
   const reduceMotion = useReducedMotion();
-  const animate = animated && !reduceMotion;
+  // Mount-gated: server renders `false` and the first client render
+  // matches, then the real preference lands (no hydration mismatch).
+  const [reduceMotionGate, setGate] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setGate(Boolean(reduceMotion)));
+    return () => cancelAnimationFrame(raf);
+  }, [reduceMotion]);
+  const animate = animated && !reduceMotionGate;
   // The page-loader veil fires this event as it fades out; re-keying
   // restarts the entrance + particle loop so the logo assembles itself
   // right when the page is revealed (and repeats on its own cycle).

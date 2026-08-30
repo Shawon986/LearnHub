@@ -59,6 +59,11 @@ export async function upsertCoupon(input: {
     if (clash) return actionError("This coupon code is already in use.");
 
     if (data.id) {
+      // BOLA guard: teachers may only edit their OWN coupons; admins any.
+      if (!isAdmin) {
+        const existing = await db.coupon.findFirst({ where: { id: data.id, teacherId: actor.id } });
+        if (!existing) return actionError("Coupon not found.");
+      }
       await db.coupon.update({
         where: { id: data.id },
         data: {

@@ -1,15 +1,24 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import { useReducedMotion } from "motion/react";
 
 /**
  * CSS-driven marquee strip. The content is duplicated once and
- * translated -50% — seamless loop. Static under reduced motion.
+ * translated -50% — seamless loop. Static under reducedGate motion.
  */
 export function Marquee({ children }: { children: React.ReactNode }) {
   const reduced = useReducedMotion();
+  // Mount-gated: server renders `false` and the first client render
+  // matches, then the real preference lands (no hydration mismatch).
+  const [reducedGate, setGate] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setGate(Boolean(reduced)));
+    return () => cancelAnimationFrame(raf);
+  }, [reduced]);
 
-  if (reduced) {
+  if (reducedGate) {
     return (
       <div className="flex flex-wrap items-center justify-center gap-4">
         {children}

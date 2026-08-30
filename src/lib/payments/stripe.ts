@@ -102,10 +102,14 @@ export class StripeProvider implements PaymentProvider {
       return { status: "COMPLETED", providerPaymentId: null, amount: null, raw: { event: event.type } };
     }
     const object = event.data?.object;
+    // The stored providerPaymentId is the CHECKOUT SESSION id (set in
+    // createPayment), so resolve by session id — not the payment intent.
+    // Amounts: Stripe charges USD (static 110 BDT rate); convert back to
+    // integer BDT so the engine's amount check compares like-for-like.
     return {
-      providerPaymentId: (object?.payment_intent as string) ?? null,
-      trxId: (object?.id as string) ?? null,
-      amount: object?.amount_total ? Math.round(object.amount_total / 100) : null,
+      providerPaymentId: (object?.id as string) ?? null,
+      trxId: (object?.payment_intent as string) ?? null,
+      amount: object?.amount_total ? Math.round((object.amount_total / 100) * 110) : null,
       status: "COMPLETED",
     };
   }

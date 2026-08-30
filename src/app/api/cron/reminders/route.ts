@@ -11,6 +11,11 @@ export const dynamic = "force-dynamic";
 
 export const GET = apiHandler(async (req) => {
   const secret = process.env.CRON_SECRET;
+  // In production the endpoint must be secret-protected — an open cron
+  // route lets anyone trigger mass reminders.
+  if (process.env.NODE_ENV === "production" && !secret) {
+    throw unauthorized("Cron secret is not configured.");
+  }
   if (secret) {
     const auth = req.headers.get("authorization");
     if (auth !== `Bearer ${secret}`) throw unauthorized("Invalid cron secret.");

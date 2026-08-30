@@ -67,17 +67,17 @@ export class RocketProvider implements PaymentProvider {
     } catch {
       throw new WebhookVerificationError("Invalid Rocket webhook body.");
     }
-    if (!payload.merchant_tran_id) throw new WebhookVerificationError("Missing merchant_tran_id.");
-    return {
-      providerPaymentId: payload.transaction_id ?? null,
-      trxId: payload.transaction_id ?? null,
-      amount: payload.amount ? Number(payload.amount) : null,
-      status: payload.status === "FAILED" ? "FAILED" : "COMPLETED",
-    };
+    // SECURITY: unsigned webhook bodies must never complete a payment.
+    throw new WebhookVerificationError(
+      "Rocket webhook signature verification is not configured — refusing to trust this webhook.",
+    );
   }
 
   async verifyReturn(input: { providerPaymentId: string }): Promise<VerifiedWebhookEvent> {
     this.assertConfigured();
-    return { providerPaymentId: input.providerPaymentId, status: "COMPLETED" };
+    // SECURITY: never self-complete from the browser return.
+    throw new WebhookVerificationError(
+      "Rocket return verification requires a gateway status query — payment stays pending until the webhook confirms it.",
+    );
   }
 }

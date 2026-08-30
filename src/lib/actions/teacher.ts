@@ -456,36 +456,42 @@ export async function requestWithdrawal(input: {
 
     const minimum = await getWithdrawalMinimum();
     if (data.amount < minimum) return actionError(`Minimum withdrawal is ৳${minimum.toLocaleString()}.`);
-    if (data.amount > wallet.availableBalance) {
-      return actionError("Amount exceeds your available balance.");
-    }
 
-    const withdrawal = await db.withdrawal.create({
-      data: {
-        teacherId: user.id,
-        amount: data.amount,
-        method: data.method,
-        accountDetails: data.accountDetails,
-        status: "PENDING",
-      },
-    });
-    // Hold the funds while the withdrawal is under review.
-    await db.teacherWallet.update({
-      where: { id: wallet.id },
-      data: {
-        availableBalance: { decrement: data.amount },
-        pendingBalance: { increment: data.amount },
-      },
-    });
-    await db.walletTransaction.create({
-      data: {
-        walletId: wallet.id,
-        type: "DEBIT",
-        amount: data.amount,
-        description: "Withdrawal request (under review)",
-        withdrawalId: withdrawal.id,
-        balanceAfter: wallet.availableBalance - data.amount,
-      },
+    // Atomic hold: the balance check happens INSIDE the transaction so two
+    // concurrent requests can never both pass and overdraw the wallet.
+    const withdrawal = await db.$transaction(async (tx) => {
+      const fresh = await tx.teacherWallet.findUnique({ where: { teacherId: user.id } });
+      if (!fresh) throw new Error("Wallet not found.");
+      if (data.amount > fresh.availableBalance) {
+        throw new Error("Amount exceeds your available balance.");
+      }
+      const w = await tx.withdrawal.create({
+        data: {
+          teacherId: user.id,
+          amount: data.amount,
+          method: data.method,
+          accountDetails: data.accountDetails,
+          status: "PENDING",
+        },
+      });
+      await tx.teacherWallet.update({
+        where: { id: wallet.id },
+        data: {
+          availableBalance: { decrement: data.amount },
+          pendingBalance: { increment: data.amount },
+        },
+      });
+      await tx.walletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          type: "DEBIT",
+          amount: data.amount,
+          description: "Withdrawal request (under review)",
+          withdrawalId: w.id,
+          balanceAfter: fresh.availableBalance - data.amount,
+        },
+      });
+      return w;
     });
     await notifyAdmins({
       type: "WITHDRAWAL_REQUESTED",

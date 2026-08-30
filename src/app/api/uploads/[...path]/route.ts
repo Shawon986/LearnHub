@@ -3,7 +3,7 @@ import { createReadStream, statSync } from "fs";
 import path from "path";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
-import { getCurrentUser } from "@/lib/auth/session";
+import { getCurrentUser, isAdminRole } from "@/lib/auth/session";
 import { canWatchRecording } from "@/lib/video/access";
 
 export const dynamic = "force-dynamic";
@@ -32,17 +32,55 @@ export async function GET(req: Request, ctx: { params: Promise<{ path: string[] 
     return NextResponse.json({ error: "File not found." }, { status: 404 });
   }
 
-  // Resources (kind "resource") may belong to a recorded class — enforce access.
-  if (rel.startsWith("resource/")) {
-    const resource = await db.resource.findFirst({
-      where: { url: rel, recordedClassId: { not: null } },
+  // SECURITY: private content is never served without authorization.
+  // - verification/ documents (NID, CV, photos): admin-only.
+  // - chat/ images: only conversation participants.
+  // - resource/ files: enrollment (course/lesson) or recording access.
+  if (rel.startsWith("verification/")) {
+    const user = await getCurrentUser();
+    if (!user || !isAdminRole(user.role)) {
+      return NextResponse.json({ error: "Access denied." }, { status: 403 });
+    }
+  } else if (rel.startsWith("chat/")) {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Sign in." }, { status: 401 });
+    const message = await db.message.findFirst({
+      where: { attachmentUrl: rel },
+      select: { conversationId: true },
     });
-    if (resource?.recordedClassId) {
-      const user = await getCurrentUser();
+    const participant = message
+      ? await db.conversationParticipant.findUnique({
+          where: { conversationId_userId: { conversationId: message.conversationId, userId: user.id } },
+        })
+      : null;
+    if (!message || !participant) {
+      return NextResponse.json({ error: "Access denied." }, { status: 403 });
+    }
+  } else if (rel.startsWith("resource/")) {
+    const user = await getCurrentUser();
+    const resource = await db.resource.findFirst({ where: { url: rel } });
+    if (!resource) {
+      return NextResponse.json({ error: "Not found." }, { status: 404 });
+    }
+    let allowed = false;
+    if (resource.recordedClassId) {
       const access = await canWatchRecording(resource.recordedClassId, user?.id ?? null);
-      if (!access.allowed) {
-        return NextResponse.json({ error: access.reason ?? "Access denied." }, { status: 403 });
-      }
+      allowed = access.allowed;
+    } else if (resource.courseId && user) {
+      // Course/lesson resources: enrolled students, the course teacher, admins.
+      allowed =
+        isAdminRole(user.role) ||
+        Boolean(
+          await db.enrollment.findFirst({
+            where: { courseId: resource.courseId, studentId: user.id, status: { in: ["ACTIVE", "COMPLETED"] } },
+          }),
+        ) ||
+        Boolean(
+          await db.course.findFirst({ where: { id: resource.courseId, teacherId: user.id } }),
+        );
+    }
+    if (!allowed) {
+      return NextResponse.json({ error: "Access denied." }, { status: 403 });
     }
   }
 

@@ -14,7 +14,12 @@ export const POST = apiHandler(async (req) => {
 
   const passwordHash = await hashPassword(password);
   const [user] = await db.$transaction([
-    db.user.update({ where: { id: record.userId }, data: { passwordHash } }),
+    // sessionVersion bump revokes all previously issued sessions for
+    // this account — the password reset logs everyone out everywhere.
+    db.user.update({
+      where: { id: record.userId },
+      data: { passwordHash, sessionVersion: { increment: 1 } },
+    }),
     db.authToken.update({ where: { id: record.id }, data: { usedAt: new Date() } }),
   ]);
 

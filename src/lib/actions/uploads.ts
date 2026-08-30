@@ -32,6 +32,10 @@ export async function uploadChatImage(
     const ext = file.name.includes(".")
       ? `.${file.name.split(".").pop()!.toLowerCase()}`
       : ".png";
+    // SECURITY: raster images only — SVG/HTML payloads can carry scripts.
+    if (![".jpg", ".jpeg", ".png", ".webp"].includes(ext)) {
+      return { ok: false, error: "Only JPG, PNG or WebP images are allowed." };
+    }
     const unique = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());
     await writeFile(pathModule.join(root, unique), buffer);

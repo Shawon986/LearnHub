@@ -62,6 +62,7 @@ export const POST = apiHandler(async (req) => {
     role: user.role as never,
     name: user.name,
     email: user.email,
+    ver: user.sessionVersion,
   });
   await logAudit({
     actorId: user.id,

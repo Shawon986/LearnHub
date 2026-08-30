@@ -70,7 +70,11 @@ export async function changePassword(input: {
     if (!valid) return actionError("Current password is incorrect.");
 
     const passwordHash = await hashPassword(data.newPassword);
-    await db.user.update({ where: { id: user.id }, data: { passwordHash } });
+    // Bump the session version: all other devices are signed out.
+    await db.user.update({
+      where: { id: user.id },
+      data: { passwordHash, sessionVersion: { increment: 1 } },
+    });
     await logAudit({
       actorId: user.id,
       actorEmail: user.email,
