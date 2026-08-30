@@ -229,6 +229,13 @@
   }
 }
 
+/* Offscreen landing sections skip rendering work entirely (perf).
+   Not motion-related — applies to everyone. */
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
+
 /* All loader + logo animation classes disable themselves for reduced motion. */
 @media (prefers-reduced-motion: no-preference) {
   .pl-spin { animation: pl-spin 70s linear infinite; }

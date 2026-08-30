@@ -91,10 +91,13 @@ function roleLabel(role: string): string {
   return role;
 }
 
-/** Local blob previews render directly; server files go through /api/uploads. */
+/** Local blob previews render directly; DB-stored attachments go through
+ *  /api/chat-attachments, legacy on-disk ones through /api/uploads. */
 function attachmentSrc(url: string | null): string | null {
   if (!url) return null;
-  return url.startsWith("blob:") ? url : `/api/uploads/${url}`;
+  if (url.startsWith("blob:")) return url;
+  if (url.startsWith("chat-att/")) return `/api/chat-attachments/${url.slice("chat-att/".length)}`;
+  return `/api/uploads/${url}`;
 }
 
 /**

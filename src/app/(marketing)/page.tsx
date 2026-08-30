@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { safeJsonParse } from "@/lib/utils";
 import { Hero } from "@/components/landing/hero";
-import { SpecialCourses } from "@/components/landing/special-courses";
+import { SpecialCourses, type SignatureCourseData } from "@/components/landing/special-courses";
 import { CategoriesSection, type CategoryCardData } from "@/components/landing/categories-section";
 import { AiSection } from "@/components/landing/ai-section";
 import { FaqSection } from "@/components/landing/faq-section";
@@ -31,6 +31,7 @@ export default async function HomePage() {
     liveClasses,
     recordedClasses,
     testimonialsRaw,
+    signatureCourses,
   ] = await Promise.all([
     db.user.count({ where: { role: "TEACHER" } }),
     db.user.count({ where: { role: "STUDENT" } }),
@@ -70,7 +71,25 @@ export default async function HomePage() {
       orderBy: { createdAt: "desc" },
       take: 6,
     }),
+    // Signature programs — real courses rendered by the flagship stage.
+    db.course.findMany({
+      where: { category: { slug: "signature-programs" }, status: "PUBLISHED" },
+      orderBy: { createdAt: "asc" },
+      take: 5,
+    }),
   ]);
+
+  const signatureCardData: SignatureCourseData[] = signatureCourses.map((c) => ({
+    slug: c.slug,
+    title: c.title,
+    subtitle: c.subtitle,
+    price: c.price,
+    compareAtPrice: c.compareAtPrice,
+    enrollmentCount: c.enrollmentCount,
+    avgRating: c.avgRating,
+    totalLessons: c.totalLessons,
+    totalDurationMinutes: c.totalDurationMinutes,
+  }));
 
   const categoryCards: CategoryCardData[] = await Promise.all(
     categories.map(async (cat) => ({
@@ -170,7 +189,7 @@ export default async function HomePage() {
       />
 
       {/* Signature programs — the main attraction */}
-      <SpecialCourses />
+      <SpecialCourses courses={signatureCardData} />
 
       {/* Subject marquee */}
       <section className="border-b border-line bg-card/50 py-5" aria-label="Popular subjects">
@@ -198,7 +217,7 @@ export default async function HomePage() {
       </section>
 
       {/* Popular categories */}
-      <section id="categories" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-20 sm:px-6">
+      <section id="categories" className="cv-auto mx-auto max-w-7xl scroll-mt-24 px-4 py-20 sm:px-6">
         <TranslatedSectionHeading
           eyebrow="Categories"
           title="What do you want to learn today?"
@@ -208,7 +227,7 @@ export default async function HomePage() {
       </section>
 
       {/* Featured courses */}
-      <section id="courses" className="scroll-mt-24 border-y border-line bg-card/50">
+      <section id="courses" className="cv-auto scroll-mt-24 border-y border-line bg-card/50">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
           <TranslatedSectionHeading
             eyebrow="Featured courses"
@@ -228,7 +247,7 @@ export default async function HomePage() {
       </section>
 
       {/* Live classes */}
-      <section id="live" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-20 sm:px-6">
+      <section id="live" className="cv-auto mx-auto max-w-7xl scroll-mt-24 px-4 py-20 sm:px-6">
         <TranslatedSectionHeading
           eyebrow="Live classes"
           title="Learn together, in real time"
@@ -244,7 +263,7 @@ export default async function HomePage() {
       </section>
 
       {/* Recorded classes */}
-      <section id="recorded" className="scroll-mt-24 border-y border-line bg-card/50">
+      <section id="recorded" className="cv-auto scroll-mt-24 border-y border-line bg-card/50">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
           <TranslatedSectionHeading
             eyebrow="Recorded classes"
@@ -262,7 +281,7 @@ export default async function HomePage() {
       </section>
 
       {/* Teachers */}
-      <section id="teachers" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-20 sm:px-6">
+      <section id="teachers" className="cv-auto mx-auto max-w-7xl scroll-mt-24 px-4 py-20 sm:px-6">
         <TranslatedSectionHeading
           eyebrow="Teachers"
           title="Learn from verified experts"
@@ -278,7 +297,7 @@ export default async function HomePage() {
       </section>
 
       {/* How it works */}
-      <section id="how-it-works" className="scroll-mt-24 border-t border-line bg-card/50">
+      <section id="how-it-works" className="cv-auto scroll-mt-24 border-t border-line bg-card/50">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
           <TranslatedSectionHeading
             eyebrow="How it works"
@@ -290,18 +309,18 @@ export default async function HomePage() {
       </section>
 
       {/* Why choose us */}
-      <section id="why" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-20 sm:px-6">
+      <section id="why" className="cv-auto mx-auto max-w-7xl scroll-mt-24 px-4 py-20 sm:px-6">
         <TranslatedSectionHeading eyebrow="Why LearnHub" title="Built for Bangladesh, made for the world" />
 <WhyLearnHub />
       </section>
 
       {/* AI */}
-      <section id="ai" className="mx-auto max-w-7xl scroll-mt-24 px-4 pb-20 sm:px-6">
+      <section id="ai" className="cv-auto mx-auto max-w-7xl scroll-mt-24 px-4 pb-20 sm:px-6">
         <AiSection />
       </section>
 
       {/* Testimonials */}
-      <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6">
+      <section className="cv-auto mx-auto max-w-7xl px-4 pb-20 sm:px-6">
         <TranslatedSectionHeading
           eyebrow="Success stories"
           title="Learners love LearnHub"
@@ -311,7 +330,7 @@ export default async function HomePage() {
       </section>
 
       {/* Pricing / commission */}
-      <section id="pricing" className="scroll-mt-24 border-t border-line bg-card/50">
+      <section id="pricing" className="cv-auto scroll-mt-24 border-t border-line bg-card/50">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
           <TranslatedSectionHeading
             eyebrow="Pricing"
@@ -323,13 +342,13 @@ export default async function HomePage() {
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-20 sm:px-6">
+      <section id="faq" className="cv-auto mx-auto max-w-7xl scroll-mt-24 px-4 py-20 sm:px-6">
         <TranslatedSectionHeading eyebrow="FAQ" title="Questions? Answered." />
         <FaqSection />
       </section>
 
       {/* Final CTA */}
-      <section className="mx-auto max-w-7xl px-4 pb-24 sm:px-6">
+      <section className="cv-auto mx-auto max-w-7xl px-4 pb-24 sm:px-6">
         <CtaSection />
       </section>
     </>

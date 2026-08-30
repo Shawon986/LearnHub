@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ChevronsLeft, ChevronsRight, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -58,6 +58,7 @@ export function DashboardShell({
 }: DashboardShellProps) {
   const nav = navFor(role);
   const pathname = usePathname();
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifUnread, setNotifUnread] = useState(unreadNotifications);
@@ -130,19 +131,26 @@ export function DashboardShell({
             <Link
               key={item.href}
               href={item.href}
-              onClick={() => {
+              onClick={(e) => {
                 setMobileOpen(false);
                 // Clicking the Notifications menu item clears both counters.
                 if (count > 0) {
+                  e.preventDefault();
                   setNotifUnread(0);
                   window.dispatchEvent(
                     new CustomEvent("learnhub-unread", { detail: { unread: 0 } }),
                   );
-                  fetch("/api/notifications", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ all: true }),
-                  }).catch(() => {});
+                  // Await the mark-read write BEFORE navigating — otherwise
+                  // the target page's server render races it and the badge
+                  // re-appears with the stale count.
+                  void (async () => {
+                    await fetch("/api/notifications", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ all: true }),
+                    }).catch(() => {});
+                    router.push(item.href);
+                  })();
                 }
               }}
               title={collapsed ? t(item.label) : undefined}

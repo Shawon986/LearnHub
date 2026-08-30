@@ -110,6 +110,7 @@ async function main() {
 
   // ---------------- Categories ----------------
   const categoryDefs = [
+    { name: "Signature Programs", icon: "Sparkles", color: "#f59e0b", featured: true, sort: 0 },
     { name: "Web Development", icon: "Code2", color: "#6d28d9", featured: true, sort: 1 },
     { name: "Programming & Software", icon: "Terminal", color: "#0d9488", featured: true, sort: 2 },
     { name: "Data Science & AI", icon: "BrainCircuit", color: "#2563eb", featured: true, sort: 3 },
@@ -444,6 +445,171 @@ async function main() {
   }
 
   const courseSeeds: CourseSeed[] = [
+    {
+      key: "sig-ellt",
+      teacherKey: "ayesha",
+      cat: "signature-programs",
+      title: "ELLT Ascend",
+      subtitle: "Climb every band of Oxford's English Level Test — reading, listening, writing and speaking",
+      type: "RECORDED",
+      difficulty: "INTERMEDIATE",
+      price: 5000,
+      compareAt: 8000,
+      featured: true,
+      modules: [
+        {
+          title: "ELLT Foundations",
+          lessons: [
+            { title: "Test format & band system decoded", type: "VIDEO", minutes: 25, preview: true },
+            { title: "Reading: skimming, scanning, speed", type: "VIDEO", minutes: 40 },
+            { title: "Listening: accent & note-taking drills", type: "VIDEO", minutes: 38 },
+          ],
+        },
+        {
+          title: "Writing & Speaking",
+          lessons: [
+            { title: "Writing structures that score", type: "VIDEO", minutes: 45 },
+            { title: "Speaking: fluency frames", type: "VIDEO", minutes: 42 },
+            { title: "Full mock test + grading", type: "QUIZ", minutes: 60 },
+          ],
+        },
+      ],
+      reviews: [
+        { name: "Sadia Afrin", rating: 5, content: "Went from B1 to B2+ in one attempt. The mock grading is gold." },
+      ],
+    },
+    {
+      key: "sig-duo",
+      teacherKey: "tanvir",
+      cat: "signature-programs",
+      title: "DuoScore Sprint",
+      subtitle: "A 30-day adaptive sprint to 120+ on the Duolingo English Test",
+      type: "RECORDED",
+      difficulty: "INTERMEDIATE",
+      price: 4500,
+      compareAt: 7500,
+      featured: true,
+      modules: [
+        {
+          title: "DET Bootcamp",
+          lessons: [
+            { title: "Adaptive scoring: how the test thinks", type: "VIDEO", minutes: 28, preview: true },
+            { title: "Read & Complete / Read & Select drills", type: "VIDEO", minutes: 36 },
+            { title: "Listen & Type: speed training", type: "VIDEO", minutes: 32 },
+          ],
+        },
+        {
+          title: "Production Skills",
+          lessons: [
+            { title: "Speak About the Photo & Read Aloud", type: "VIDEO", minutes: 40 },
+            { title: "Writing Sample frameworks", type: "VIDEO", minutes: 34 },
+            { title: "Full-length practice test", type: "ASSIGNMENT", minutes: 90 },
+          ],
+        },
+      ],
+      reviews: [
+        { name: "Farhan Kabir", rating: 5, content: "Hit 125 after 28 days. The adaptive drill structure just works." },
+      ],
+    },
+    {
+      key: "sig-pte",
+      teacherKey: "tanvir",
+      cat: "signature-programs",
+      title: "PTE FlowState",
+      subtitle: "Machine-scored fluency drills for Pearson PTE — speak and write at AI-grader speed",
+      type: "RECORDED",
+      difficulty: "INTERMEDIATE",
+      price: 5000,
+      compareAt: 8000,
+      featured: true,
+      modules: [
+        {
+          title: "PTE Engine Room",
+          lessons: [
+            { title: "How the AI grader scores you", type: "VIDEO", minutes: 30, preview: true },
+            { title: "Repeat Sentence & Describe Image", type: "VIDEO", minutes: 44 },
+            { title: "Retell Lecture templates", type: "VIDEO", minutes: 36 },
+          ],
+        },
+        {
+          title: "Written & Mastery",
+          lessons: [
+            { title: "Summarize Written Text: the formula", type: "VIDEO", minutes: 38 },
+            { title: "Essay skeletons that score 79+", type: "VIDEO", minutes: 40 },
+            { title: "Mock test + AI score report", type: "QUIZ", minutes: 75 },
+          ],
+        },
+      ],
+      reviews: [
+        { name: "Nadia Islam", rating: 5, content: "The machine-speed drills fixed my pacing. 82 on the real test." },
+      ],
+    },
+    {
+      key: "sig-ielts",
+      teacherKey: "ayesha",
+      cat: "signature-programs",
+      title: "SpeakBand 9",
+      subtitle: "A clinic for IELTS Speaking — from 6.0 to 9.0 with live mocks for Parts 1, 2 and 3",
+      type: "RECORDED",
+      difficulty: "INTERMEDIATE",
+      price: 5500,
+      compareAt: 9000,
+      featured: true,
+      modules: [
+        {
+          title: "Part 1 & 2 Mastery",
+          lessons: [
+            { title: "Part 1: everyday topics, natural answers", type: "VIDEO", minutes: 32, preview: true },
+            { title: "Part 2: the 1-minute note system", type: "VIDEO", minutes: 38 },
+            { title: "Story arcs that fill 2 minutes", type: "VIDEO", minutes: 30 },
+          ],
+        },
+        {
+          title: "Part 3 & Band 9 Polish",
+          lessons: [
+            { title: "Part 3: opinion → reason → example", type: "VIDEO", minutes: 42 },
+            { title: "Band 9 vocabulary & idioms", type: "VIDEO", minutes: 36 },
+            { title: "Live mock simulation", type: "ASSIGNMENT", minutes: 60 },
+          ],
+        },
+      ],
+      reviews: [
+        { name: "Rakibul Islam", rating: 5, content: "My speaking went from 6.0 to 8.0. The mocks felt like the real room." },
+      ],
+    },
+    {
+      key: "sig-spoken",
+      teacherKey: "ayesha",
+      cat: "signature-programs",
+      title: "Fluent Street",
+      subtitle: "Everyday English that flows — conversation-first practice for the street, campus and office",
+      type: "RECORDED",
+      difficulty: "BEGINNER",
+      price: 3500,
+      compareAt: 6000,
+      featured: true,
+      modules: [
+        {
+          title: "Confidence on Day One",
+          lessons: [
+            { title: "Greetings, small talk & icebreakers", type: "VIDEO", minutes: 26, preview: true },
+            { title: "Phone calls & ordering with ease", type: "VIDEO", minutes: 30 },
+            { title: "Asking questions like a native", type: "VIDEO", minutes: 28 },
+          ],
+        },
+        {
+          title: "Real-Life Fluency",
+          lessons: [
+            { title: "Market, rickshaw & everyday haggling", type: "VIDEO", minutes: 32 },
+            { title: "Office & classroom English", type: "VIDEO", minutes: 34 },
+            { title: "Storytelling & opinions", type: "ASSIGNMENT", minutes: 45 },
+          ],
+        },
+      ],
+      reviews: [
+        { name: "Mahmudul Hasan", rating: 5, content: "I finally speak without translating in my head first." },
+      ],
+    },
     {
       key: "web",
       teacherKey: "ayesha",

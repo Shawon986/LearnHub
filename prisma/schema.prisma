@@ -102,6 +102,7 @@ model User {
   settingUpdates   PlatformSetting[]         @relation("SettingUpdater")
   refundsProcessed Refund[]                  @relation("RefundProcessor")
   wallet           TeacherWallet?
+  chatAttachments  ChatAttachment[]          @relation("ChatAttachmentUploader")
 
   @@index([role, status])
 }
@@ -734,6 +735,23 @@ model Message {
 
   @@index([conversationId, createdAt])
   @@unique([senderId, clientId])
+}
+
+// Chat attachments live IN the database so uploads and downloads work
+// across every serverless instance (no per-instance /tmp files, no 404s
+// after upload). Bytes are TOASTed on Postgres / BLOB on SQLite.
+model ChatAttachment {
+  id        String   @id @default(cuid())
+  uploaderId String
+  mime      String
+  name      String
+  size      Int
+  data      Bytes
+  createdAt DateTime @default(now())
+
+  uploader User @relation("ChatAttachmentUploader", fields: [uploaderId], references: [id], onDelete: Cascade)
+
+  @@index([uploaderId])
 }
 
 // ============================== REVIEWS ==============================

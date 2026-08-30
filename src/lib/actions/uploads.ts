@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth/session";
-import { env } from "@/lib/env";
 
 // Chat attachments: images AND documents. Both MIME type and extension must
 // be on the same allowlist entry — a file whose type/extension disagree is
@@ -45,10 +44,11 @@ function extOf(name: string): string {
 
 /**
  * Authenticated chat attachment upload (images + documents).
- * Validates type + size server-side, stores under the uploads root
- * (VIDEO_LOCAL_DIR so Vercel's writable /tmp dir is used in production),
- * returns the protected /api/uploads path. The same upload powers
- * student↔teacher chat and the admin oversight view.
+ *
+ * Bytes are stored IN THE DATABASE (ChatAttachment row) — uploads and
+ * downloads then work across every serverless instance, unlike per-instance
+ * /tmp files which 404'd whenever the serving request landed elsewhere.
+ * Returns a `chat-att/<id>` path served by /api/chat-attachments/[id].
  */
 export async function uploadChatAttachment(
   file: { name: string; type: string; size: number; arrayBuffer: () => Promise<ArrayBuffer> },
@@ -85,30 +85,27 @@ export async function uploadChatAttachment(
       return { ok: false, error: `${kind === "image" ? "Image" : "File"} exceeds the ${limit} limit.` };
     }
 
-    const { mkdir, writeFile } = await import("fs/promises");
-    const pathModule = await import("path");
-    // Same root the /api/uploads serving route reads from — on Vercel that
-    // is the writable VIDEO_LOCAL_DIR (/tmp/uploads), never the read-only
-    // function bundle.
-    const root = pathModule.resolve(process.cwd(), env.VIDEO_LOCAL_DIR, "chat");
-    await mkdir(root, { recursive: true });
-
-    const unique = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(pathModule.join(root, unique), buffer);
-
-    const rel = pathModule.posix.join("chat", unique);
+    const attachment = await db.chatAttachment.create({
+      data: {
+        uploaderId: user.id,
+        mime,
+        name: file.name || `attachment${ext}`,
+        size: buffer.length,
+        data: buffer,
+      },
+    });
     await db.resource.create({
       data: {
         title: kind === "image" ? "Chat image" : "Chat file",
         type: kind === "image" ? "IMAGE" : "FILE",
-        url: rel,
+        url: `chat-att/${attachment.id}`,
         uploadedById: user.id,
       },
     });
 
     revalidatePath("/messages");
-    return { ok: true, path: rel, kind };
+    return { ok: true, path: `chat-att/${attachment.id}`, kind };
   } catch (e) {
     return {
       ok: false,
