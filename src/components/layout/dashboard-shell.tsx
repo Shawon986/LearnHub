@@ -27,6 +27,8 @@ interface DashboardShellProps {
   pendingVerifications?: number;
   /** Pending withdrawal requests (badge on the admin Withdrawals item). */
   pendingWithdrawals?: number;
+  /** Pending payments (badge on the admin Payments item). */
+  pendingPayments?: number;
   children: ReactNode;
 }
 
@@ -51,6 +53,7 @@ export function DashboardShell({
   unreadMessages = 0,
   pendingVerifications = 0,
   pendingWithdrawals = 0,
+  pendingPayments = 0,
   children,
 }: DashboardShellProps) {
   const nav = navFor(role);
@@ -117,7 +120,9 @@ export function DashboardShell({
                 ? pendingVerifications
                 : item.href === "/admin/withdrawals"
                   ? pendingWithdrawals
-                  : (item.href === "/admin/notifications/view" ||
+                  : item.href === "/admin/payments"
+                    ? pendingPayments
+                    : (item.href === "/admin/notifications/view" ||
                       (item.href.endsWith("/notifications") && item.href !== "/admin/notifications"))
                     ? notifUnread
                     : 0;

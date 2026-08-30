@@ -43,9 +43,17 @@ export default async function VerificationPage() {
         },
       },
     },
-    // Newest applications first — the queue never buries fresh requests.
     orderBy: { submittedAt: "desc" },
   });
+
+  // New applications always sit at the TOP of the queue: PENDING first
+  // (newest first), then already-reviewed applications below.
+  const statusPriority: Record<string, number> = { PENDING: 0, CHANGES_REQUESTED: 1, APPROVED: 2, REJECTED: 3, SUSPENDED: 4 };
+  applications.sort(
+    (a, b) =>
+      (statusPriority[a.status] ?? 9) - (statusPriority[b.status] ?? 9) ||
+      b.submittedAt.getTime() - a.submittedAt.getTime(),
+  );
 
   const pending = applications.filter((a) => a.status === "PENDING");
 

@@ -9,11 +9,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const user = await getCurrentUser();
   if (!user || !isAdminRole(user.role)) redirect("/login?next=/admin");
 
-  const [unread, unreadMessages, pendingVerifications, pendingWithdrawals] = await Promise.all([
+  const [unread, unreadMessages, pendingVerifications, pendingWithdrawals, pendingPayments] = await Promise.all([
     unreadNotificationCount(user.id),
     unreadMessageCount(user.id),
     db.teacherVerification.count({ where: { status: "PENDING" } }),
     db.withdrawal.count({ where: { status: "PENDING" } }),
+    db.payment.count({ where: { status: "PENDING" } }),
   ]);
 
   return (
@@ -25,6 +26,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       unreadMessages={unreadMessages}
       pendingVerifications={pendingVerifications}
       pendingWithdrawals={pendingWithdrawals}
+      pendingPayments={pendingPayments}
     >
       {children}
     </DashboardShell>

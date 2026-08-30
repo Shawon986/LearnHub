@@ -3,23 +3,20 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, RotateCcw } from "lucide-react";
-import { PageLoader } from "@/components/ui/page-loader";
 import { Button } from "@/components/ui/button";
 
 const STUCK_AFTER_MS = 12_000;
 
 /**
- * Loading watchdog — the app can NEVER be stuck on "Loading your learning
- * space…" forever. The branded loader shows normally; if the underlying
- * Suspense boundary is still pending after 12s (stalled server fetch,
- * hung DB, dead network), this component swaps in an actionable recovery
- * screen instead: Retry (refreshes the pending segment) or Go home.
- * Works on mobile Safari / Chrome Android — plain timers only.
+ * Loading watchdog — the app can NEVER be stuck loading forever, and route
+ * changes stay standard: a slim indeterminate bar along the top of the
+ * viewport (nothing covers the page). Only the branded PageLoader veil
+ * (RouteLoaderVeil) still shows for initial entry / navigating home.
  *
- * The loader is pinned to the viewport with the exact geometry of
- * RouteLoaderVeil (fixed inset-0, centered, opaque background). Without
- * this, a refresh showed the in-flow fallback below the header first and
- * the centered veil second — the loader visibly "changed position".
+ * If the underlying Suspense boundary is still pending after 12s (stalled
+ * server fetch, hung DB, dead network), the bar swaps to an actionable
+ * recovery screen instead: Retry (refreshes the pending segment) or Go
+ * home. Works on mobile Safari / Chrome Android — plain timers only.
  */
 export function LoadingWatchdog() {
   const [stuck, setStuck] = useState(false);
@@ -33,11 +30,9 @@ export function LoadingWatchdog() {
     };
   }, []);
 
-  return (
-    // Same geometry as RouteLoaderVeil's overlay (fixed, centered, opaque),
-    // so the loader stays in one place through the whole refresh cycle.
-    <div className="fixed inset-0 z-[140] flex items-center justify-center overflow-hidden bg-background">
-      {stuck ? (
+  if (stuck) {
+    return (
+      <div className="fixed inset-0 z-[140] flex items-center justify-center overflow-hidden bg-background">
         <div className="flex min-h-[55vh] w-full flex-col items-center justify-center gap-4 px-6 text-center">
           <span className="flex h-14 w-14 items-center justify-center rounded-full bg-gold-soft text-gold">
             <AlertTriangle className="h-7 w-7" />
@@ -63,9 +58,21 @@ export function LoadingWatchdog() {
             </Button>
           </div>
         </div>
-      ) : (
-        <PageLoader />
-      )}
+      </div>
+    );
+  }
+
+  // Standard loading state: a thin indeterminate bar pinned to the top of
+  // the viewport. It never blocks interaction and disappears the moment
+  // the route resolves.
+  return (
+    <div
+      className="fixed inset-x-0 top-0 z-[140] h-0.5 overflow-hidden bg-transparent"
+      role="status"
+      aria-live="polite"
+      aria-label="Loading"
+    >
+      <div className="pl-sweep h-full w-1/3 rounded-full bg-gradient-to-r from-brand via-accent to-gold" />
     </div>
   );
 }
