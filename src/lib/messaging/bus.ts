@@ -19,6 +19,7 @@ export type MessageEvent =
   | { type: "presence"; userId: string; online: boolean }
   | { type: "conversation.read"; conversationId: string; userId: string; at: string }
   | { type: "conversation.new"; conversationId: string }
+  | { type: "notification.deleted"; ids: string[]; all: boolean }
   | {
       type: "notification";
       id: string;

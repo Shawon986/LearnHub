@@ -737,6 +737,21 @@ model Message {
   @@unique([senderId, clientId])
 }
 
+// Teacher verification documents (NID, CV, certificates) — stored in the
+// database for the same reason: admins must be able to open them from any
+// device/instance. Uploaded anonymously at registration; admins view them
+// in /admin/verification.
+model VerificationDocument {
+  id        String   @id @default(cuid())
+  mime      String
+  name      String
+  size      Int
+  data      Bytes
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 // Chat attachments live IN the database so uploads and downloads work
 // across every serverless instance (no per-instance /tmp files, no 404s
 // after upload). Bytes are TOASTed on Postgres / BLOB on SQLite.

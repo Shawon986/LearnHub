@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell, CheckCheck, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
+import { useRealtimeStream } from "@/lib/realtime/provider";
 
 interface NotificationItem {
   id: string;
@@ -68,6 +69,45 @@ export function NotificationCenter({ role }: { role?: string }) {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Fully synchronized with every other device: new notifications prepend,
+  // reads and deletes made elsewhere apply here without any refresh.
+  const seenIds = useRef(new Set<string>());
+  useRealtimeStream((raw) => {
+    let event: {
+      type?: string;
+      id?: string;
+      ids?: string[];
+      all?: boolean;
+      notificationType?: string;
+    } & Partial<NotificationItem>;
+    try {
+      event = JSON.parse(raw);
+    } catch {
+      return;
+    }
+    if (event.type === "notification") {
+      const n = event as NotificationItem;
+      if (!n.id || seenIds.current.has(n.id)) return;
+      seenIds.current.add(n.id);
+      setItems((prev) => [n, ...(prev ?? []).slice(0, 49)]);
+      return;
+    }
+    if (event.type === "notification.read") {
+      load().catch(() => {});
+      return;
+    }
+    if (event.type === "notification.deleted") {
+      const { ids, all } = event as { ids: string[]; all: boolean };
+      if (all) {
+        setItems([]);
+      } else if (Array.isArray(ids) && ids.length > 0) {
+        const idSet = new Set(ids);
+        setItems((prev) => (prev ?? []).filter((i) => !idSet.has(i.id)));
+      }
+      load().catch(() => {});
+    }
+  });
 
   async function markRead(ids: string[]) {
     await fetch("/api/notifications", {

@@ -1,6 +1,7 @@
 import { apiHandler, json, parseJson } from "@/lib/api";
 import { requireUser } from "@/lib/auth/session";
 import { markNotificationsRead } from "@/lib/notifications";
+import { messagingBus } from "@/lib/messaging/bus";
 import { db } from "@/lib/db";
 import { z } from "zod";
 
@@ -50,6 +51,15 @@ export const DELETE = apiHandler(async (req) => {
   const where = input.all
     ? { userId: user.id }
     : { userId: user.id, id: { in: input.ids ?? [] } };
+  const deleted = await db.notification.findMany({ where, select: { id: true } });
   await db.notification.deleteMany({ where });
+  // Cross-device sync: other open tabs drop the deleted rows immediately.
+  // (Best effort — the DB poll cannot see deletions, so the bus carries
+  // them; on reconnect every client refetches anyway.)
+  messagingBus.publishTo(user.id, {
+    type: "notification.deleted",
+    ids: deleted.map((n) => n.id),
+    all: input.all === true,
+  });
   return json({ ok: true });
 });

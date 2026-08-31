@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth/session";
 import { safeJsonParse } from "@/lib/utils";
 import { Hero } from "@/components/landing/hero";
 import { SpecialCourses, type SignatureCourseData } from "@/components/landing/special-courses";
@@ -20,6 +21,7 @@ import { TiltCard } from "@/components/motion/tilt-card";
 import { Marquee } from "@/components/motion/marquee";
 
 export default async function HomePage() {
+  const viewer = await getCurrentUser();
   const [
     teacherCount,
     studentCount,
@@ -32,6 +34,7 @@ export default async function HomePage() {
     recordedClasses,
     testimonialsRaw,
     signatureCourses,
+    registeredLiveIds,
   ] = await Promise.all([
     db.user.count({ where: { role: "TEACHER" } }),
     db.user.count({ where: { role: "STUDENT" } }),
@@ -77,6 +80,12 @@ export default async function HomePage() {
       orderBy: { createdAt: "asc" },
       take: 5,
     }),
+    viewer
+      ? db.liveClassParticipant.findMany({
+          where: { userId: viewer.id },
+          select: { liveClassId: true },
+        })
+      : Promise.resolve([]),
   ]);
 
   const signatureCardData: SignatureCourseData[] = signatureCourses.map((c) => ({
@@ -144,6 +153,7 @@ export default async function HomePage() {
     totalLessons: c.totalLessons,
   }));
 
+  const registeredSet = new Set(registeredLiveIds.map((r) => r.liveClassId));
   const liveCards: LiveClassCardData[] = liveClasses.map((l) => ({
     id: l.id,
     title: l.title,
@@ -153,6 +163,9 @@ export default async function HomePage() {
     teacherName: l.teacher.name,
     teacherAvatarUrl: l.teacher.avatarUrl,
     durationSeconds: l.durationMinutes * 60,
+    meetingUrl: l.meetingUrl ?? null,
+    registered: registeredSet.has(l.id),
+    viewerSignedIn: Boolean(viewer),
   }));
 
   const recordedCards: RecordedClassCardData[] = recordedClasses.map((r) => ({

@@ -1,18 +1,25 @@
-import { promises as fs } from "fs";
 import path from "path";
 import { apiHandler, json } from "@/lib/api";
-import { env } from "@/lib/env";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { db } from "@/lib/db";
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB per document
 const ALLOWED_EXT = [".pdf", ".jpg", ".jpeg", ".png", ".webp"];
 
+const MIME_BY_EXT: Record<string, string> = {
+  ".pdf": "application/pdf",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+};
+
 /**
  * Anonymous document upload for teacher REGISTRATION (before the account
- * exists): NID, resume/CV, education certificates and photos. Files land in
- * uploads/verification/ and the registration request carries the returned
- * paths, which the register route then attaches to the teacher's
- * verification record.
+ * exists): NID, resume/CV, education certificates and photos. Bytes are
+ * stored IN THE DATABASE (VerificationDocument) so admins can open them
+ * from any device or serverless instance — the registration request then
+ * carries the returned `vdoc:<id>` references.
  */
 export const POST = apiHandler(async (req) => {
   const ip = clientIp(req);
@@ -38,10 +45,14 @@ export const POST = apiHandler(async (req) => {
     );
   }
 
-  const root = path.resolve(process.cwd(), env.VIDEO_LOCAL_DIR, "verification");
-  await fs.mkdir(root, { recursive: true });
-  const unique = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}${ext}`;
-  await fs.writeFile(path.join(root, unique), Buffer.from(await file.arrayBuffer()));
+  const doc = await db.verificationDocument.create({
+    data: {
+      mime: file.type || MIME_BY_EXT[ext],
+      name: file.name,
+      size: file.size,
+      data: Buffer.from(await file.arrayBuffer()),
+    },
+  });
 
-  return json({ ok: true, path: `verification/${unique}` }, { status: 201 });
+  return json({ ok: true, path: `vdoc:${doc.id}` }, { status: 201 });
 });

@@ -31,6 +31,9 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   href?: string;
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
+  /** Link-only props (passed through when `href` renders a Link). */
+  target?: string;
+  rel?: string;
 }
 
 export function Button({
@@ -43,6 +46,8 @@ export function Button({
   className,
   children,
   disabled,
+  target,
+  rel,
   ...rest
 }: ButtonProps) {
   const classes = cn(
@@ -63,7 +68,7 @@ export function Button({
 
   if (href) {
     return (
-      <Link href={href} className={classes} aria-disabled={disabled || loading}>
+      <Link href={href} target={target} rel={rel} className={classes} aria-disabled={disabled || loading}>
         {content}
       </Link>
     );

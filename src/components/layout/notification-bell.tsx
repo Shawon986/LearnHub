@@ -139,6 +139,20 @@ export function NotificationBell({
         load().catch(() => {});
       }
     }
+    if (event.type === "notification.deleted") {
+      // Another device deleted notifications — remove them here instantly,
+      // then refetch the authoritative list + count.
+      const { ids, all } = event as { ids: string[]; all: boolean };
+      if (all) {
+        setItems([]);
+        setUnread(0);
+        publishUnread(0);
+      } else if (Array.isArray(ids) && ids.length > 0) {
+        const idSet = new Set(ids);
+        setItems((prev) => (prev ?? []).filter((i) => !idSet.has(i.id)));
+      }
+      load().catch(() => {});
+    }
   });
   const prevConn = useRef(connection);
   useEffect(() => {
