@@ -160,6 +160,12 @@ export function MessagingClient({
   const [pendingAttachment, setPendingAttachment] = useState<{ file: File; url: string; kind: "image" | "file" } | null>(null);
   
   const seenIds = useRef<Set<string>>(new Set());
+  // Conversation ids this client knows about — a message for an unknown one
+  // (conversation started elsewhere) triggers an inbox refetch.
+  const knownConvoIds = useRef<Set<string>>(new Set(initialConversations.map((c) => c.id)));
+  useEffect(() => {
+    knownConvoIds.current = new Set(conversations.map((c) => c.id));
+  }, [conversations, router]);
   const [attachmentUploading, setAttachmentUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState<{ src: string; alt: string } | null>(null);
   // Two separate timers: one throttles outgoing typing events, the other
@@ -218,6 +224,13 @@ export function MessagingClient({
       }
       // "message"
       const msg = event as BusMessage;
+      // A conversation that isn't in this client's list yet (started while
+      // this device was open on another page) — refetch the inbox so it
+      // appears WITHOUT a manual refresh.
+      if (!knownConvoIds.current.has(msg.conversationId)) {
+        router.refresh();
+        return;
+      }
       setConversations((prev) => {
         const next = [...prev];
         const idx = next.findIndex((c) => c.id === msg.conversationId);

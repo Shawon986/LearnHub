@@ -22,21 +22,30 @@ const POLL_MS = 2000;
 export async function GET(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Sign in." }, { status: 401 });
+  const userId = user.id;
 
-  // Conversation partners (for presence broadcast) + conversation ids.
-  const conversations = await db.conversation.findMany({
-    where: { participants: { some: { userId: user.id } } },
-    include: { participants: { select: { userId: true } } },
-  });
-  const conversationIds = conversations.map((c) => c.id);
-  const partners = [
-    ...new Set(
-      conversations.flatMap((c) => c.participants.map((p) => p.userId)).filter((id) => id !== user.id),
-    ),
-  ];
+  // Conversation ids + partners are RE-RESOLVED every poll: a conversation
+  // started after this stream connected must deliver its messages live too
+  // (a connect-time snapshot silently dropped them until refresh).
+  let conversationIds: string[] = [];
+  let partners: string[] = [];
+  async function refreshConversations(): Promise<void> {
+    const conversations = await db.conversation.findMany({
+      where: { participants: { some: { userId } } },
+      include: { participants: { select: { userId: true } } },
+    });
+    conversationIds = conversations.map((c) => c.id);
+    partners = [
+      ...new Set(
+        conversations.flatMap((c) => c.participants.map((p) => p.userId)).filter((id) => id !== userId),
+      ),
+    ];
+  }
 
   const encoder = new TextEncoder();
-  let cursor = new Date();
+  // Cursor overlaps the last second by design: events committed mid-poll can
+  // never be skipped (duplicates are deduped by id on every client).
+  let cursor = new Date(Date.now() - 1000);
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -53,6 +62,7 @@ export async function GET(req: Request) {
         /* client gone */
       }
 
+      await refreshConversations();
       messagingBus.markOnline(user.id, partners);
       const unsubscribe = messagingBus.subscribe(user.id, send);
 
@@ -68,6 +78,9 @@ export async function GET(req: Request) {
       const poll = async () => {
         try {
           const after = cursor;
+          // Snapshot boundary for the cursor (see overlap note above).
+          const boundary = new Date(Date.now() - 1000);
+          await refreshConversations();
           const [messages, notifications, readUpdates] = await Promise.all([
             conversationIds.length > 0
               ? db.message.findMany({
@@ -147,7 +160,7 @@ export async function GET(req: Request) {
             // of the stream delivery.
             console.error("[stream] read-sync poll failed:", e);
           }
-          cursor = new Date();
+          cursor = boundary;
         } catch (e) {
           console.error("[stream] poll failed:", e);
           // Keep polling — a transient DB error must not kill the stream.
